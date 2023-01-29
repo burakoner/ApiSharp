@@ -48,7 +48,7 @@ public class StreamParameters
     /// <summary>
     /// The max amount of messages to send per second
     /// </summary>
-    public int? RatelimitPerSecond { get; set; }
+    public int? RateLimitPerSecond { get; set; }
 
     /// <summary>
     /// Origin header value to send in the connection handshake

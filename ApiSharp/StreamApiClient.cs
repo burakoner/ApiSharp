@@ -613,7 +613,7 @@ public abstract class StreamApiClient : BaseClient
             DataInterpreterString = DataInterpreterString,
             KeepAliveInterval = KeepAliveInterval,
             ReconnectInterval = Options.ReconnectInterval,
-            RatelimitPerSecond = RateLimitPerConnectionPerSecond,
+            RateLimitPerSecond = RateLimitPerConnectionPerSecond,
             Proxy = Options.Proxy,
             Timeout = Options.NoDataTimeout
         };

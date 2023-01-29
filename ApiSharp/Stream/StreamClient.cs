@@ -342,11 +342,11 @@ public class StreamClient
 
                 while (_sendBuffer.TryDequeue(out var data))
                 {
-                    if (Parameters.RatelimitPerSecond != null)
+                    if (Parameters.RateLimitPerSecond != null)
                     {
                         // Wait for rate limit
                         DateTime? start = null;
-                        while (MessagesSentLastSecond() >= Parameters.RatelimitPerSecond)
+                        while (MessagesSentLastSecond() >= Parameters.RateLimitPerSecond)
                         {
                             start ??= DateTime.UtcNow;
                             await Task.Delay(50).ConfigureAwait(false);
