@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Socket.Events
+﻿namespace ApiSharp.Events
 {
     public class OnServerStartedEventArgs : EventArgs
     {

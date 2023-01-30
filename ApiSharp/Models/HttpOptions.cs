@@ -6,5 +6,5 @@ public class HttpOptions
     public string AcceptMimeType { get; set; }
     public TimeSpan RequestTimeout { get; set; }
     public bool EncodeQueryString { get; set; }
-    public BodyFormat BodyFormat { get; set; }
+    public RestBodyFormat BodyFormat { get; set; }
 }

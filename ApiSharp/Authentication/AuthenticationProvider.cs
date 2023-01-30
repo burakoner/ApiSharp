@@ -34,7 +34,7 @@ public abstract class AuthenticationProvider
         Dictionary<string, object> providedParameters,
         bool auth,
         ArraySerialization arraySerialization,
-        HttpMethodParameterPosition parameterPosition,
+        RestParameterPosition parameterPosition,
         out SortedDictionary<string, object> uriParameters,
         out SortedDictionary<string, object> bodyParameters,
         out Dictionary<string, string> headers

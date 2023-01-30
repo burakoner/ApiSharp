@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Socket;
+﻿namespace ApiSharp.Security;
 
 /// <summary>
 /// Generated id is composed of

@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Socket;
 
-public class TcpSharpSocketClient
+public class SocketClient
 {
     #region Public Properties
     public string Host
@@ -189,11 +189,11 @@ public class TcpSharpSocketClient
     #endregion
 
     #region Constructors
-    public TcpSharpSocketClient() : this("127.0.0.1", 1024)
+    public SocketClient() : this("127.0.0.1", 1024)
     {
     }
 
-    public TcpSharpSocketClient(string host, int port)
+    public SocketClient(string host, int port)
     {
         this.Host = host;
         this.Port = port;
@@ -289,7 +289,7 @@ public class TcpSharpSocketClient
 
     public void Disconnect()
     {
-        this.Disconnect(DisconnectReason.None);
+        this.Disconnect(SocketDisconnectReason.None);
     }
 
     public long SendBytes(byte[] bytes)
@@ -401,7 +401,7 @@ public class TcpSharpSocketClient
         {
             if (ex.SocketErrorCode == SocketError.ConnectionAborted)
             {
-                Disconnect(DisconnectReason.ServerAborted);
+                Disconnect(SocketDisconnectReason.ServerAborted);
             }
         }
         catch (Exception ex)
@@ -413,11 +413,11 @@ public class TcpSharpSocketClient
             });
 
             // Disconnect
-            Disconnect(DisconnectReason.Exception);
+            Disconnect(SocketDisconnectReason.Exception);
         }
     }
 
-    private void Disconnect(DisconnectReason reason)
+    private void Disconnect(SocketDisconnectReason reason)
     {
         // Release the socket.    
         _socket.Shutdown(SocketShutdown.Both);

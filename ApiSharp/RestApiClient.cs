@@ -20,18 +20,18 @@ public abstract class RestApiClient : BaseClient
     /// <summary>
     /// Where to put the parameters for requests with different Http methods
     /// </summary>
-    protected Dictionary<HttpMethod, HttpMethodParameterPosition> ParameterPositions { get; set; } = new()
+    protected Dictionary<HttpMethod, RestParameterPosition> ParameterPositions { get; set; } = new()
     {
-        { HttpMethod.Get, HttpMethodParameterPosition.InUri },
-        { HttpMethod.Post, HttpMethodParameterPosition.InBody },
-        { HttpMethod.Delete, HttpMethodParameterPosition.InBody },
-        { HttpMethod.Put, HttpMethodParameterPosition.InBody }
+        { HttpMethod.Get, RestParameterPosition.InUri },
+        { HttpMethod.Post, RestParameterPosition.InBody },
+        { HttpMethod.Delete, RestParameterPosition.InBody },
+        { HttpMethod.Put, RestParameterPosition.InBody }
     };
 
     /// <summary>
     /// Request body content type
     /// </summary>
-    protected RequestBodyFormat RequestBodyFormat = RequestBodyFormat.Json;
+    protected RestRequestBodyFormat RequestBodyFormat = RestRequestBodyFormat.Json;
 
     /// <summary>
     /// Whether or not we need to manually parse an error instead of relying on the http status code
@@ -56,7 +56,7 @@ public abstract class RestApiClient : BaseClient
 
     protected RestApiClient(string name, RestApiClientOptions options) : base(name, options ?? new())
     {
-        RequestFactory.Configure(options.HttpOptions.RequestTimeout, options.Proxy, options.HttpClient);
+        RequestFactory.Configure(options.HttpOptions, options.Proxy, options.HttpClient);
     }
 
     /// <summary>
@@ -77,7 +77,7 @@ public abstract class RestApiClient : BaseClient
     CancellationToken cancellationToken,
     Dictionary<string, object> parameters = null,
     bool signed = false,
-    HttpMethodParameterPosition? parameterPosition = null,
+    RestParameterPosition? parameterPosition = null,
     ArraySerialization? arraySerialization = null,
     int requestWeight = 1,
     JsonSerializer deserializer = null,
@@ -113,7 +113,7 @@ public abstract class RestApiClient : BaseClient
         CancellationToken cancellationToken,
         Dictionary<string, object> parameters = null,
         bool signed = false,
-        HttpMethodParameterPosition? parameterPosition = null,
+        RestParameterPosition? parameterPosition = null,
         ArraySerialization? arraySerialization = null,
         int requestWeight = 1,
         JsonSerializer deserializer = null,
@@ -159,7 +159,7 @@ public abstract class RestApiClient : BaseClient
         var request = ConstructRequest(uri, method, parameters?.OrderBy(p => p.Key).ToDictionary(p => p.Key, p => p.Value), signed, paramsPosition, arraySerialization ?? this.ArraySerialization, requestId, additionalHeaders);
 
         string paramString = "";
-        if (paramsPosition == HttpMethodParameterPosition.InBody)
+        if (paramsPosition == RestParameterPosition.InBody)
             paramString = $" with request body '{request.Content}'";
 
         var headers = request.GetHeaders();
@@ -327,7 +327,7 @@ public abstract class RestApiClient : BaseClient
         HttpMethod method,
         Dictionary<string, object> parameters,
         bool signed,
-        HttpMethodParameterPosition parameterPosition,
+        RestParameterPosition parameterPosition,
         ArraySerialization arraySerialization,
         int requestId,
         Dictionary<string, string> additionalHeaders)
@@ -341,15 +341,15 @@ public abstract class RestApiClient : BaseClient
                 parameters[kvp.Key] = delegateValue();
         }
 
-        if (parameterPosition == HttpMethodParameterPosition.InUri)
+        if (parameterPosition == RestParameterPosition.InUri)
         {
             foreach (var parameter in parameters)
                 uri = uri.AddQueryParmeter(parameter.Key, parameter.Value.ToString());
         }
 
         var headers = new Dictionary<string, string>();
-        var uriParameters = parameterPosition == HttpMethodParameterPosition.InUri ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
-        var bodyParameters = parameterPosition == HttpMethodParameterPosition.InBody ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
+        var uriParameters = parameterPosition == RestParameterPosition.InUri ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
+        var bodyParameters = parameterPosition == RestParameterPosition.InBody ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
         AuthenticationProvider?.AuthenticateRestApi(this, uri, method, parameters, signed, arraySerialization, parameterPosition, out uriParameters, out bodyParameters, out headers);
 
         // Sanity check
@@ -387,9 +387,9 @@ public abstract class RestApiClient : BaseClient
             }
         }
 
-        if (parameterPosition == HttpMethodParameterPosition.InBody)
+        if (parameterPosition == RestParameterPosition.InBody)
         {
-            var contentType = RequestBodyFormat == RequestBodyFormat.Json ? RestApiConstants.JSON_CONTENT_HEADER : RestApiConstants.FORM_CONTENT_HEADER;
+            var contentType = RequestBodyFormat == RestRequestBodyFormat.Json ? RestApiConstants.JSON_CONTENT_HEADER : RestApiConstants.FORM_CONTENT_HEADER;
             if (bodyParameters.Any())
                 WriteParamBody(request, bodyParameters, contentType);
             else
@@ -407,13 +407,13 @@ public abstract class RestApiClient : BaseClient
     /// <param name="contentType">The content type of the data</param>
     protected virtual void WriteParamBody(IRequest request, SortedDictionary<string, object> parameters, string contentType)
     {
-        if (RequestBodyFormat == RequestBodyFormat.Json)
+        if (RequestBodyFormat == RestRequestBodyFormat.Json)
         {
             // Write the parameters as json in the body
             var stringData = JsonConvert.SerializeObject(parameters);
             request.SetContent(stringData, contentType);
         }
-        else if (RequestBodyFormat == RequestBodyFormat.FormData)
+        else if (RequestBodyFormat == RestRequestBodyFormat.FormData)
         {
             // Write the parameters as form data in the body
             var stringData = parameters.ToFormData();
@@ -477,310 +477,4 @@ public abstract class RestApiClient : BaseClient
         return new RestCallResult<bool>(null, null, null, null, null, null, null, null, true, null);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-    protected async Task<RestCallResult<T>> RequestAsync<T>(
-        Uri uri,
-        HttpMethod method,
-        Dictionary<string, string> headers = null,
-        List<KeyValuePair<string, string>> query = null,
-        object body = null,
-        bool signed = true,
-        int requestWeight = 1,
-        JsonSerializer deserializer = null,
-        CancellationToken ct = default)
-    {
-        // Request
-        var req = ConstructRequest(uri, method, headers, body, signed);
-        var request = req.Request;
-        var requestId = req.RequestId;
-
-        try
-        {
-            var sw = Stopwatch.StartNew();
-            var call = await ExecuteAsync(uri, req, signed, requestWeight, ct);
-            sw.Stop();
-
-            if (!call.Success)
-            {
-                return new RestCallResult<T>(call.Error);
-            }
-
-            // Shortcuts
-            var response = call.Data.Response;
-            var responseStream = await call.Data.Response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-
-            // Check Point
-            if (!response.IsSuccessStatusCode)
-            {
-                // Http status code indicates error
-                using var reader = new StreamReader(responseStream);
-                var data = await reader.ReadToEndAsync().ConfigureAwait(false);
-                log.Write(LogLevel.Warning, $"[{requestId}] Error received in {sw.ElapsedMilliseconds}ms: {data}");
-                responseStream.Close();
-                response.Dispose();
-
-                // Json Validation
-                var parseResult = ValidateJson(data);
-                var error = parseResult.Success ? ParseErrorResponse(parseResult.Data) : new ServerError(data)!;
-                if (error.Code == null || error.Code == 0)
-                    error.Code = (int)response.StatusCode;
-
-                // Error Response
-                return new RestCallResult<T>(
-                    response.StatusCode,
-                    response.Headers,
-                    sw.Elapsed,
-                    Options.OutputOriginalData ? data : null,
-                    request.RequestUri.ToString(),
-                    request.Content?.ToString(),
-                    request.Method,
-                    request.Headers,
-                    default,
-                    error);
-            }
-            else
-            {
-                // Read Response
-                var data = await response.Content.ReadAsStringAsync();
-                log.Write(LogLevel.Debug, $"[{requestId}] Response received in {sw.ElapsedMilliseconds}ms{(log.Level == LogLevel.Trace ? (": " + data) : "")}");
-
-                // Empty Success Response; Okay
-                if (string.IsNullOrEmpty(data))
-                {
-                    return new RestCallResult<T>(
-                        response.StatusCode,
-                        response.Headers,
-                        sw.Elapsed,
-                        Options.OutputOriginalData ? data : null,
-                        request.RequestUri.ToString(),
-                        request.Content?.ToString(),
-                        request.Method,
-                        request.Headers,
-                        default,
-                        default);
-                }
-
-                // Json Validation
-                var parseResult = ValidateJson(data);
-
-                // Not Empty, and Not Json
-                if (!parseResult.Success)
-                {
-                    return new RestCallResult<T>(
-                        response.StatusCode,
-                        response.Headers,
-                        sw.Elapsed,
-                        Options.OutputOriginalData ? data : null,
-                        request.RequestUri.ToString(),
-                        request.Content?.ToString(),
-                        request.Method,
-                        request.Headers,
-                        default,
-                        parseResult.Error!);
-                }
-
-                // Parse Error
-                var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
-
-                // Error Response
-                if (error != null)
-                {
-                    return new RestCallResult<T>(
-                        response.StatusCode,
-                        response.Headers,
-                        sw.Elapsed,
-                        Options.OutputOriginalData ? data : null,
-                        request.RequestUri.ToString(),
-                        request.Content?.ToString(),
-                        request.Method,
-                        request.Headers,
-                        default,
-                        error!);
-                }
-            }
-
-            // Success status code, and we don't have to check for errors.
-            // Continue deserializing directly from the stream
-            var desResult = await DeserializeAsync<T>(responseStream, deserializer, requestId, sw.ElapsedMilliseconds).ConfigureAwait(false);
-            responseStream.Close();
-            response.Dispose();
-
-            // Return
-            return new RestCallResult<T>(
-                response.StatusCode,
-                response.Headers,
-                sw.Elapsed,
-                Options.OutputOriginalData ? desResult.OriginalData : null,
-                request.RequestUri.ToString(),
-                request.Content?.ToString(),
-                request.Method,
-                request.Headers,
-                desResult.Data,
-                desResult.Error);
-        }
-        catch (HttpRequestException requestException)
-        {
-            // Request exception, can't reach server for instance
-            var exceptionInfo = requestException.ToLogString();
-            log.Write(LogLevel.Warning, $"[{requestId}] Request exception: " + exceptionInfo);
-            return new RestCallResult<T>(null, null, null, null, request.RequestUri.ToString(), request.Content?.ToString(), request.Method, request.Headers, default, new WebError(exceptionInfo));
-        }
-        catch (OperationCanceledException canceledException)
-        {
-            if (ct != default && canceledException.CancellationToken == ct)
-            {
-                // Cancellation token canceled by caller
-                log.Write(LogLevel.Warning, $"[{requestId}] Request canceled by cancellation token");
-                return new RestCallResult<T>(null, null, null, null, request.RequestUri.ToString(), request.Content?.ToString(), request.Method, request.Headers, default, new CancellationRequestedError());
-            }
-            else
-            {
-                // Request timed out
-                log.Write(LogLevel.Warning, $"[{requestId}] Request timed out: " + canceledException.ToLogString());
-                return new RestCallResult<T>(null, null, null, null, request.RequestUri.ToString(), request.Content?.ToString(), request.Method, request.Headers, default, new WebError($"[{requestId}] Request timed out"));
-            }
-        }
-    }
-
-    private async Task<CallResult<RestResponse>> ExecuteAsync(
-        Uri uri,
-        RestRequest request,
-        bool signed = false, int requestWeight = 1, CancellationToken ct = default)
-    {
-        // Rate Limiters
-        if (!Options.IgnoreRateLimiters)
-        {
-            foreach (var limiter in Options.RateLimiters)
-            {
-                var limitResult = await limiter.LimitRequestAsync(log, uri.AbsolutePath, request.Request.Method, signed, Options.ApiCredentials?.Key, Options.RateLimitingBehavior, requestWeight, ct).ConfigureAwait(false);
-                if (!limitResult.Success)
-                    return new CallResult<RestResponse>(limitResult.Error!);
-            }
-        }
-
-        // Proxy
-        var handler = new HttpClientHandler()
-        {
-            Proxy = this.Options.Proxy == null ? null : new WebProxy
-            {
-                Address = new Uri($"{this.Options.Proxy.Host}:{this.Options.Proxy.Port}"),
-                Credentials = this.Options.Proxy.Password == null ? null
-                : new NetworkCredential(this.Options.Proxy.Username.GetString(), this.Options.Proxy.Password.GetString())
-            }
-        };
-
-        // Http Client
-        using var client = new HttpClient(handler);
-        client.BaseAddress = new Uri(this.Options.BaseAddress);
-        client.DefaultRequestHeaders.Accept.Clear();
-        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(Options.HttpOptions.AcceptMimeType));
-        client.DefaultRequestHeaders.Add("User-Agent", Options.HttpOptions.UserAgent);
-        client.Timeout = Options.HttpOptions.Timeout;
-
-        // Send
-        var response = await client.SendAsync(request.Request, ct);
-
-        // Return
-        return new CallResult<RestResponse>(new RestResponse
-        {
-            Request = request,
-            Response = response
-        });
-    }
-
-    private RestRequest ConstructRequest(
-        Uri uri,
-        HttpMethod method,
-        Dictionary<string, string> headers,
-        // List<KeyValuePair<string, string>> query,
-        object body,
-        bool signed)
-    {
-        // Check Point
-        headers ??= new Dictionary<string, string>();
-        // query ??= new List<KeyValuePair<string, string>>();
-
-        // Authentication
-        this.Options.AuthenticationProvider?.AuthenticateRestApi(uri, method, headers, body, signed, Options);
-
-        // Headers
-        var request = new HttpRequestMessage(method, uri);
-        if (headers != null)
-        {
-            foreach (var header in headers)
-            {
-                request.Headers.Add(header.Key, header.Value);
-            }
-        }
-
-        // Method
-        request.Method = method;
-
-        // Body
-        if (body != null)
-        {
-            if (Options.HttpOptions.BodyFormat == BodyFormat.Json)
-            {
-                if (body is string bodyString) request.Content = new StringContent(bodyString, Options.Encoding, RestApiConstants.JSON_CONTENT_HEADER);
-                else request.Content = new StringContent(JsonConvert.SerializeObject(body), Options.Encoding, RestApiConstants.JSON_CONTENT_HEADER);
-            }
-
-            else if (Options.HttpOptions.BodyFormat == BodyFormat.Text)
-            {
-                if (body is string bodyString) request.Content = new StringContent(bodyString, Options.Encoding, RestApiConstants.TEXT_CONTENT_HEADER);
-                else request.Content = new StringContent(JsonConvert.SerializeObject(body), Options.Encoding, RestApiConstants.TEXT_CONTENT_HEADER);
-            }
-
-            else if (Options.HttpOptions.BodyFormat == BodyFormat.FormUrlEncoded)
-            {
-                var kvplist = body.GetType().GetProperties()
-                    .ToDictionary(p => p.Name, p => p.GetValue(body).ToString())
-                    .ToList();
-
-                request.Content = new FormUrlEncodedContent(kvplist);
-                request.Content.Headers.ContentType = new MediaTypeHeaderValue(RestApiConstants.FORM_CONTENT_HEADER);
-            }
-        }
-
-        // Return
-        return new RestRequest
-        {
-            RequestId = NextId(),
-            Request = request,
-        };
-    }
-    */
 }

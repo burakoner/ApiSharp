@@ -1,10 +1,10 @@
-﻿namespace ApiSharp.Models;
+﻿namespace ApiSharp.Rest;
 
 public class Request : IRequest
 {
     private readonly HttpRequestMessage request;
     private readonly HttpClient httpClient;
-      
+
     public Request(HttpRequestMessage request, HttpClient client, int requestId)
     {
         httpClient = client;

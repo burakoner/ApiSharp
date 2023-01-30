@@ -21,7 +21,7 @@ public abstract class SocketApiClient : BaseClient
     private readonly System.Timers.Timer _hbTimer;
     private readonly List<byte> _socketBuffer = new();
     private readonly BlockingCollection<byte[]> _packetBuffer = new();
-    private readonly TcpSharpSocketClient _socketClient;
+    private readonly SocketClient _socketClient;
 
     // Cancellation Token
     protected CancellationTokenSource CancellationTokenSource { get; set; }
@@ -34,7 +34,7 @@ public abstract class SocketApiClient : BaseClient
     protected SocketApiClient(string name, SocketApiClientOptions options) : base(name, options ?? new())
     {
         // Tcp Client
-        _socketClient = new TcpSharpSocketClient(Options.ServerHost, Options.ServerPort);
+        _socketClient = new SocketClient(Options.ServerHost, Options.ServerPort);
         _socketClient.OnConnected += Client_OnConnected;
         _socketClient.OnDisconnected += Client_OnDisconnected;
         _socketClient.OnDataReceived += Client_OnDataReceived;

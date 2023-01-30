@@ -1,10 +1,10 @@
-﻿namespace ApiSharp.Socket.Events
+﻿namespace ApiSharp.Events
 {
-    public class OnServerConnectionRequestEventArgs : EventArgs
+    public class OnServerConnectedEventArgs : EventArgs
     {
         public IPEndPoint IPEndPoint { get; internal set; }
         public string IPAddress { get; internal set; }
         public int Port { get; internal set; }
-        public bool Accept { get; set; } = true;
+        public long ConnectionId { get; internal set; }
     }
 }

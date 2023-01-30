@@ -3,7 +3,7 @@
     /// <summary>
     /// Where the parameters for a HttpMethod should be added in a request
     /// </summary>
-    public enum HttpMethodParameterPosition
+    public enum RestParameterPosition
     {
         /// <summary>
         /// Parameters in body

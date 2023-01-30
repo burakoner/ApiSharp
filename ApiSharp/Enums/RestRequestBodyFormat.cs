@@ -3,7 +3,7 @@
 /// <summary>
 /// The format of the request body
 /// </summary>
-public enum RequestBodyFormat
+public enum RestRequestBodyFormat
 {
     /// <summary>
     /// Form data

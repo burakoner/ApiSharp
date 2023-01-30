@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Socket;
 
-public class ConnectedClient
+public class SocketServerClient
 {
     /* Public Properties */
     public TcpClient Client { get; internal set; }
@@ -11,14 +11,14 @@ public class ConnectedClient
     public long BytesSent { get; private set; }
 
     /* Reference Fields */
-    private readonly TcpSharpSocketServer _server;
+    private readonly SocketServer _server;
 
     /* Private Fields */
     private readonly Thread _thread;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly CancellationToken _cancellationToken;
 
-    internal ConnectedClient(TcpSharpSocketServer server, TcpClient client, long connectionId)
+    internal SocketServerClient(SocketServer server, TcpClient client, long connectionId)
     {
         this.Client = client;
         this.ConnectionId = connectionId;
@@ -81,7 +81,7 @@ public class ConnectedClient
             });
 
             // Disconnect
-            this._server.Disconnect(this.ConnectionId, DisconnectReason.Exception);
+            this._server.Disconnect(this.ConnectionId, SocketDisconnectReason.Exception);
         }
 #endif
     }

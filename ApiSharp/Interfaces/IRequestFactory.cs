@@ -17,8 +17,8 @@ public interface IRequestFactory
     /// <summary>
     /// Configure the requests created by this factory
     /// </summary>
-    /// <param name="requestTimeout">Request timeout to use</param>
+    /// <param name="options">HttpClient Options</param>
     /// <param name="proxy">Proxy settings to use</param>       
-    /// <param name="httpClient">Optional shared http client instance</param>
-    void Configure(TimeSpan requestTimeout, ProxyCredentials proxy, HttpClient httpClient = null);
+    /// <param name="client">Optional shared http client instance</param>
+    void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient client = null);
 }

@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Socket;
 
-public class TcpSharpSocketServer
+public class SocketServer
 {
     #region Public Properties
     public bool IsListening
@@ -135,7 +135,7 @@ public class TcpSharpSocketServer
     #region Readonly Properties
     private TcpListener _listener;
     private readonly SnowflakeGenerator _idGenerator;
-    private readonly ConcurrentDictionary<long, ConnectedClient> _clients;
+    private readonly ConcurrentDictionary<long, SocketServerClient> _clients;
     #endregion
 
     #region Listener Thread
@@ -145,16 +145,16 @@ public class TcpSharpSocketServer
     #endregion
 
     #region Constructors
-    public TcpSharpSocketServer() : this(1024)
+    public SocketServer() : this(1024)
     {
     }
 
-    public TcpSharpSocketServer(int port)
+    public SocketServer(int port)
     {
         this.Port = port;
 
         this._idGenerator = new SnowflakeGenerator();
-        this._clients = new ConcurrentDictionary<long, ConnectedClient>();
+        this._clients = new ConcurrentDictionary<long, SocketServerClient>();
     }
     #endregion
 
@@ -175,7 +175,7 @@ public class TcpSharpSocketServer
         var connectionIds = _clients.Keys.ToList();
         foreach (var connectionId in connectionIds)
         {
-            Disconnect(connectionId, DisconnectReason.ServerStopped);
+            Disconnect(connectionId, SocketDisconnectReason.ServerStopped);
         }
 
         // Stop Listener
@@ -192,7 +192,7 @@ public class TcpSharpSocketServer
         });
     }
 
-    public ConnectedClient GetClient(long connectionId)
+    public SocketServerClient GetClient(long connectionId)
     {
         // Check Point
         if (!_clients.ContainsKey(connectionId)) return null;
@@ -251,7 +251,7 @@ public class TcpSharpSocketServer
         return client.SendFile(fileName, preBuffer, postBuffer, flags);
     }
 
-    public void Disconnect(long connectionId, DisconnectReason reason = DisconnectReason.None)
+    public void Disconnect(long connectionId, SocketDisconnectReason reason = SocketDisconnectReason.None)
     {
         // Check Point
         if (!_clients.ContainsKey(connectionId)) return;
@@ -387,7 +387,7 @@ public class TcpSharpSocketServer
             tcpClient.ReceiveTimeout = this.ReceiveTimeout;
             tcpClient.SendBufferSize = this.SendBufferSize;
             tcpClient.SendTimeout = this.SendTimeout;
-            var nanoClient = new ConnectedClient(this, tcpClient, this._idGenerator.GenerateId());
+            var nanoClient = new SocketServerClient(this, tcpClient, this._idGenerator.GenerateId());
             this._clients[nanoClient.ConnectionId] = nanoClient;
 
             // Start Receiving

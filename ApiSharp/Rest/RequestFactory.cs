@@ -1,10 +1,10 @@
-﻿namespace ApiSharp.Models;
+﻿namespace ApiSharp.Rest;
 
 public class RequestFactory : IRequestFactory
 {
     private HttpClient httpClient;
 
-    public void Configure(TimeSpan requestTimeout, ProxyCredentials proxy, HttpClient client = null)
+    public void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient client = null)
     {
         if (client == null)
         {
@@ -17,7 +17,9 @@ public class RequestFactory : IRequestFactory
                 }
             };
 
-            httpClient = new HttpClient(handler) { Timeout = requestTimeout };
+            httpClient = new HttpClient(handler);
+            httpClient.Timeout = options.RequestTimeout;
+            httpClient.DefaultRequestHeaders.Add("User-Agent", options.UserAgent);
         }
         else
         {

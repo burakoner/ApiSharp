@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Enums;
 
-public enum BodyFormat
+public enum RestBodyFormat
 {
     Json,
     Text,

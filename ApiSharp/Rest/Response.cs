@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Models;
+﻿namespace ApiSharp.Rest;
 
 /// <summary>
 /// Response object, wrapper for HttpResponseMessage

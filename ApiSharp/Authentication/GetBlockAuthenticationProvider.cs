@@ -11,7 +11,7 @@ public class GetBlockAuthenticationProvider : AuthenticationProvider
     {
     }
 
-    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, Dictionary<string, object> providedParameters, bool auth, ArraySerialization arraySerialization, HttpMethodParameterPosition parameterPosition, out SortedDictionary<string, object> uriParameters, out SortedDictionary<string, object> bodyParameters, out Dictionary<string, string> headers)
+    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, Dictionary<string, object> providedParameters, bool auth, ArraySerialization arraySerialization, RestParameterPosition parameterPosition, out SortedDictionary<string, object> uriParameters, out SortedDictionary<string, object> bodyParameters, out Dictionary<string, string> headers)
     {
         throw new NotImplementedException();
 
