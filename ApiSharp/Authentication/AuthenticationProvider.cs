@@ -20,10 +20,11 @@ public abstract class AuthenticationProvider
     /// <param name="apiClient">The Api client sending the request</param>
     /// <param name="uri">The uri for the request</param>
     /// <param name="method">The method of the request</param>
-    /// <param name="providedParameters">The request parameters</param>
-    /// <param name="auth">If the requests should be authenticated</param>
+    /// <param name="bodyContent">The body content of the request</param>
+    /// <param name="authentication">If the requests should be authenticated</param>
     /// <param name="arraySerialization">Array serialization type</param>
     /// <param name="parameterPosition">The position where the providedParameters should go</param>
+    /// <param name="providedParameters">The request parameters</param>
     /// <param name="uriParameters">Parameters that need to be in the Uri of the request. Should include the provided parameters if they should go in the uri</param>
     /// <param name="bodyParameters">Parameters that need to be in the body of the request. Should include the provided parameters if they should go in the body</param>
     /// <param name="headers">The headers that should be send with the request</param>
@@ -31,10 +32,11 @@ public abstract class AuthenticationProvider
         RestApiClient apiClient,
         Uri uri,
         HttpMethod method,
-        Dictionary<string, object> providedParameters,
-        bool auth,
+        string bodyContent,
+        bool authentication,
         ArraySerialization arraySerialization,
         RestParameterPosition parameterPosition,
+        Dictionary<string, object> providedParameters,
         out SortedDictionary<string, object> uriParameters,
         out SortedDictionary<string, object> bodyParameters,
         out Dictionary<string, string> headers

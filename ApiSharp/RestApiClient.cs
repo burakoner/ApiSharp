@@ -25,7 +25,10 @@ public abstract class RestApiClient : BaseClient
         { HttpMethod.Get, RestParameterPosition.InUri },
         { HttpMethod.Post, RestParameterPosition.InBody },
         { HttpMethod.Delete, RestParameterPosition.InBody },
-        { HttpMethod.Put, RestParameterPosition.InBody }
+        { HttpMethod.Put, RestParameterPosition.InBody },
+        #if NETSTANDARD2_1
+        { HttpMethod.Patch, RestParameterPosition.InBody }
+        #endif
     };
 
     /// <summary>
@@ -47,6 +50,8 @@ public abstract class RestApiClient : BaseClient
     /// What request body should be set when no data is send (only used in combination with postParametersPosition.InBody)
     /// </summary>
     protected string RequestBodyEmptyContent = "{}";
+
+    protected string RequestBodyParameterKey = "";
 
     public new RestApiClientOptions Options { get { return (RestApiClientOptions)base.Options; } }
 
@@ -210,16 +215,16 @@ public abstract class RestApiClient : BaseClient
                         // Validate if it is valid json. Sometimes other data will be returned, 502 error html pages for example
                         var parseResult = ValidateJson(data);
                         if (!parseResult.Success)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
+                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
 
                         // Let the library implementation see if it is an error response, and if so parse the error
                         var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
                         if (error != null)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
+                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
 
                         // Not an error, so continue deserializing
                         var deserializeResult = Deserialize<T>(parseResult.Data, deserializer, request.RequestId);
-                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), deserializeResult.Data, deserializeResult.Error);
+                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), deserializeResult.Data, deserializeResult.Error);
                     }
                     else
                     {
@@ -228,16 +233,16 @@ public abstract class RestApiClient : BaseClient
                             var parseResult = ValidateJson(data);
                             if (!parseResult.Success)
                                 // Not empty, and not json
-                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
+                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
 
                             var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
                             if (error != null)
                                 // Error response
-                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
+                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
                         }
 
                         // Empty success response; okay
-                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.OutputOriginalData ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, default);
+                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, Options.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, default);
                     }
                 }
                 else
@@ -256,7 +261,7 @@ public abstract class RestApiClient : BaseClient
                     responseStream.Close();
                     response.Close();
 
-                    return new RestCallResult<T>(statusCode, headers, sw.Elapsed, Options.OutputOriginalData ? desResult.OriginalData : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), desResult.Data, desResult.Error);
+                    return new RestCallResult<T>(statusCode, headers, sw.Elapsed, Options.RawResponse ? desResult.Raw : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), desResult.Data, desResult.Error);
                 }
             }
             else
@@ -350,7 +355,8 @@ public abstract class RestApiClient : BaseClient
         var headers = new Dictionary<string, string>();
         var uriParameters = parameterPosition == RestParameterPosition.InUri ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
         var bodyParameters = parameterPosition == RestParameterPosition.InBody ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
-        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, parameters, signed, arraySerialization, parameterPosition, out uriParameters, out bodyParameters, out headers);
+        var bodyContent = PrepareBodyContent(bodyParameters, RequestBodyFormat, RequestBodyParameterKey);
+        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, bodyContent, signed, arraySerialization, parameterPosition, parameters, out uriParameters, out bodyParameters, out headers);
 
         // Sanity check
         foreach (var param in parameters)
@@ -389,9 +395,11 @@ public abstract class RestApiClient : BaseClient
 
         if (parameterPosition == RestParameterPosition.InBody)
         {
-            var contentType = RequestBodyFormat == RestRequestBodyFormat.Json ? RestApiConstants.JSON_CONTENT_HEADER : RestApiConstants.FORM_CONTENT_HEADER;
+            var contentType = RequestBodyFormat == RestRequestBodyFormat.Json 
+                ? RestApiConstants.JSON_CONTENT_HEADER 
+                : RestApiConstants.FORM_CONTENT_HEADER;
             if (bodyParameters.Any())
-                WriteParamBody(request, bodyParameters, contentType);
+                request.SetContent(bodyContent, contentType);
             else
                 request.SetContent(RequestBodyEmptyContent, contentType);
         }
@@ -399,6 +407,7 @@ public abstract class RestApiClient : BaseClient
         return request;
     }
 
+    /*
     /// <summary>
     /// Writes the parameters of the request to the request object body
     /// </summary>
@@ -407,18 +416,54 @@ public abstract class RestApiClient : BaseClient
     /// <param name="contentType">The content type of the data</param>
     protected virtual void WriteParamBody(IRequest request, SortedDictionary<string, object> parameters, string contentType)
     {
-        if (RequestBodyFormat == RestRequestBodyFormat.Json)
+        var stringData = PrepareBodyContent(parameters, RequestBodyFormat, RequestBodyParameterKey);
+        request.SetContent(stringData, contentType);
+    }
+    */
+
+    /// <summary>
+    /// Prepares the parameters of the request to the request object body
+    /// </summary>
+    /// <param name="parameters">The parameters to set</param>
+    /// <param name="format">Rest Request Body Format</param>
+    /// <param name="bodyKey">Request Body Parameter Key</param>
+    /// <returns></returns>
+    protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters,RestRequestBodyFormat format, string bodyKey)
+    {
+        var stringData = RequestBodyEmptyContent;
+        if (parameters == null || !parameters.Any()) return stringData;
+
+        if (format == RestRequestBodyFormat.Json)
         {
             // Write the parameters as json in the body
-            var stringData = JsonConvert.SerializeObject(parameters);
-            request.SetContent(stringData, contentType);
+            stringData = JsonConvert.SerializeObject(parameters);
         }
-        else if (RequestBodyFormat == RestRequestBodyFormat.FormData)
+        else if (format == RestRequestBodyFormat.FormData)
         {
             // Write the parameters as form data in the body
-            var stringData = parameters.ToFormData();
-            request.SetContent(stringData, contentType);
+            stringData = parameters.ToFormData();
         }
+
+        if (format == RestRequestBodyFormat.Json)
+        {
+            if (!string.IsNullOrWhiteSpace(bodyKey) && parameters.Count == 1 && parameters.Keys.First() == bodyKey)
+            {
+                // Write the parameters as json in the body
+                stringData = JsonConvert.SerializeObject(parameters[bodyKey]);
+            }
+            else
+            {
+                // Write the parameters as json in the body
+                stringData = JsonConvert.SerializeObject(parameters);
+            }
+        }
+        else if (format == RestRequestBodyFormat.FormData)
+        {
+            // Write the parameters as form data in the body
+            stringData = parameters.ToFormData();
+        }
+
+        return stringData;
     }
 
     /// <summary>
@@ -469,7 +514,7 @@ public abstract class RestApiClient : BaseClient
             }
 
             // Calculate time offset between local and server
-            var offset = result.Data - (localTime.AddMilliseconds(result.ResponseTime!.Value.TotalMilliseconds / 2));
+            var offset = result.Data - (localTime.AddMilliseconds(result.Response.Time!.Value.TotalMilliseconds / 2));
             timeSyncParams.UpdateTimeOffset(offset);
             timeSyncParams.TimeSyncState.Semaphore.Release();
         }

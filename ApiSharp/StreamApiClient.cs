@@ -461,7 +461,7 @@ public abstract class StreamApiClient : BaseClient
             if (typeof(T) == typeof(string))
             {
                 var stringData = (T)Convert.ChangeType(messageEvent.JsonData.ToString(), typeof(T));
-                dataHandler(new StreamDataEvent<T>(stringData, null, Options.OutputOriginalData ? messageEvent.OriginalData : null, messageEvent.ReceivedTimestamp));
+                dataHandler(new StreamDataEvent<T>(stringData, null, Options.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
                 return;
             }
 
@@ -472,7 +472,7 @@ public abstract class StreamApiClient : BaseClient
                 return;
             }
 
-            dataHandler(new StreamDataEvent<T>(desResult.Data, null, Options.OutputOriginalData ? messageEvent.OriginalData : null, messageEvent.ReceivedTimestamp));
+            dataHandler(new StreamDataEvent<T>(desResult.Data, null, Options.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
         }
 
         var subscription = request == null

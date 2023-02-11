@@ -15,7 +15,7 @@ public class StreamMessageEvent
     /// <summary>
     /// The originally received string data
     /// </summary>
-    public string OriginalData { get; set; }
+    public string Raw { get; set; }
 
     /// <summary>
     /// The timestamp of when the data was received
@@ -27,13 +27,13 @@ public class StreamMessageEvent
     /// </summary>
     /// <param name="connection"></param>
     /// <param name="jsonData"></param>
-    /// <param name="originalData"></param>
+    /// <param name="raw"></param>
     /// <param name="timestamp"></param>
-    public StreamMessageEvent(StreamConnection connection, JToken jsonData, string originalData, DateTime timestamp)
+    public StreamMessageEvent(StreamConnection connection, JToken jsonData, string raw, DateTime timestamp)
     {
         Connection = connection;
         JsonData = jsonData;
-        OriginalData = originalData;
+        Raw = raw;
         ReceivedTimestamp = timestamp;
     }
 }

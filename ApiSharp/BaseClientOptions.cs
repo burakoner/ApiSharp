@@ -12,7 +12,7 @@ public abstract class BaseClientOptions
     public JsonOptions JsonOptions { get; set; }
 
     // Output
-    public bool OutputOriginalData { get; set; }
+    public bool RawResponse { get; set; }
 
     // Proxy
     public ProxyCredentials Proxy { get; set; }
@@ -56,7 +56,7 @@ public abstract class BaseClientOptions
         };
 
         // Output
-        OutputOriginalData = false;
+        RawResponse = false;
 
         // Authentication
         ApiCredentials = null;
@@ -83,7 +83,7 @@ public abstract class BaseClientOptions
         };
 
         // Output
-        OutputOriginalData = clientOptions.OutputOriginalData;
+        RawResponse = clientOptions.RawResponse;
 
         // Proxy
         Proxy = clientOptions.Proxy;

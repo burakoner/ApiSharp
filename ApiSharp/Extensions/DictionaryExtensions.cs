@@ -57,7 +57,12 @@ public static class DictionaryExtensions
     public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object value)
     {
         if (value != null)
-            parameters.Add(key, value);
+        {
+            if (value is string str && !string.IsNullOrWhiteSpace(str))
+                parameters.Add(key, value);
+            else
+                parameters.Add(key, value);
+        }
     }
 
     /// <summary>

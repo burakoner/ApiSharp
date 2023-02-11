@@ -8,18 +8,18 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>1.0.6</Version>
-		<FileVersion>1.0.6</FileVersion>
-		<PackageVersion>1.0.6</PackageVersion>
-		<AssemblyVersion>1.0.6</AssemblyVersion>
+		<Version>1.1.0</Version>
+		<FileVersion>1.1.0</FileVersion>
+		<PackageVersion>1.1.0</PackageVersion>
+		<AssemblyVersion>1.1.0</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<PackageTags>ApiSharp;Api;Sharp;Client;Tool;Tools;Rest;Web;Websocket;Tcp;Socket;Binance;Huobi;OKX;Okex;FTX</PackageTags>
+		<PackageTags>ApiSharp;Api;Sharp;Client;Tool;Tools;Rest;Web;Websocket;Tcp;Socket;Binance;Huobi;OKX;Okex;FTX;Gate</PackageTags>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
-			Version 1.0.6 - 30 Jan 2023
+			Version 1.1.0 - 10 Feb 2023
 		</PackageReleaseNotes>
 		<PackageIcon>ApiSharp.png</PackageIcon>
 		<PackageIconUrl />

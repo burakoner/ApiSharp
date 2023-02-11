@@ -23,11 +23,11 @@ public class CallResult
 public class CallResult<T> : CallResult
 {
     public T Data { get; internal set; }
-    public string OriginalData { get; internal set; }
+    public string Raw { get; internal set; }
 
-    protected CallResult(T data, string originalData, CallError error) : base(error)
+    protected CallResult(T data, string raw, CallError error) : base(error)
     {
-        OriginalData = originalData;
+        Raw = raw;
         Data = data;
     }
 
@@ -70,7 +70,7 @@ public class CallResult<T> : CallResult
     /// <returns></returns>
     public CallResult<K> As<K>(K data)
     {
-        return new CallResult<K>(data, OriginalData, Error);
+        return new CallResult<K>(data, Raw, Error);
     }
 
     /// <summary>
@@ -81,6 +81,6 @@ public class CallResult<T> : CallResult
     /// <returns></returns>
     public CallResult<K> AsError<K>(CallError error)
     {
-        return new CallResult<K>(default, OriginalData, error);
+        return new CallResult<K>(default, Raw, error);
     }
 }

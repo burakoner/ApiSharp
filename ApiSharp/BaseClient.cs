@@ -151,13 +151,13 @@ public abstract class BaseClient : IDisposable
 
             // If we have to output the original json data or output the data into the logging we'll have to read to full response
             // in order to log/return the json data
-            if (Options.OutputOriginalData == true || log.Level == LogLevel.Trace)
+            if (Options.RawResponse == true || log.Level == LogLevel.Trace)
             {
                 data = await reader.ReadToEndAsync().ConfigureAwait(false);
                     log.Write(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms{(log.Level == LogLevel.Trace ? (": " + data) : "")}");
                 var result = Deserialize<T>(data, serializer, requestId);
-                if (Options.OutputOriginalData == true)
-                    result.OriginalData = data;
+                if (Options.RawResponse == true)
+                    result.Raw = data;
                 return result;
             }
 

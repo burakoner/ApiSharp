@@ -14,10 +14,11 @@ public class StreamDataEvent<T>
     /// The topic of the update, what symbol/asset etc..
     /// </summary>
     public string Topic { get; set; }
+
     /// <summary>
-    /// The original data that was received, only available when OutputOriginalData is set to true in the client options
+    /// The original data that was received, only available when OutputRaw is set to true in the client options
     /// </summary>
-    public string OriginalData { get; set; }
+    public string Raw { get; set; }
     /// <summary>
     /// The received data deserialized into an object
     /// </summary>
@@ -41,27 +42,27 @@ public class StreamDataEvent<T>
         Timestamp = timestamp;
     }
 
-    internal StreamDataEvent(T data, string topic, string originalData, DateTime timestamp)
+    internal StreamDataEvent(T data, string topic, string raw, DateTime timestamp)
     {
+        Raw = raw;
         Data = data;
         Topic = topic;
-        OriginalData = originalData;
         Timestamp = timestamp;
     }
 
     /// <summary>
-    /// Create a new DataEvent with data in the from of type K based on the current DataEvent. Topic, OriginalData and Timestamp will be copied over
+    /// Create a new DataEvent with data in the from of type K based on the current DataEvent. Topic, RawResponse and Timestamp will be copied over
     /// </summary>
     /// <typeparam name="K">The type of the new data</typeparam>
     /// <param name="data">The new data</param>
     /// <returns></returns>
     public StreamDataEvent<K> As<K>(K data)
     {
-        return new StreamDataEvent<K>(data, Topic, OriginalData, Timestamp);
+        return new StreamDataEvent<K>(data, Topic, Raw, Timestamp);
     }
 
     /// <summary>
-    /// Create a new DataEvent with data in the from of type K based on the current DataEvent. OriginalData and Timestamp will be copied over
+    /// Create a new DataEvent with data in the from of type K based on the current DataEvent. RawResponse and Timestamp will be copied over
     /// </summary>
     /// <typeparam name="K">The type of the new data</typeparam>
     /// <param name="data">The new data</param>
@@ -69,6 +70,6 @@ public class StreamDataEvent<T>
     /// <returns></returns>
     public StreamDataEvent<K> As<K>(K data, string topic)
     {
-        return new StreamDataEvent<K>(data, topic, OriginalData, Timestamp);
+        return new StreamDataEvent<K>(data, topic, Raw, Timestamp);
     }
 }

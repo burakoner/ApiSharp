@@ -21,7 +21,6 @@ public abstract class BaseConverter<T> : JsonConverter where T : struct
         quotes = useQuotes;
     }
 
-    /// <inheritdoc />
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
         var stringValue = value == null ? null : GetValue((T)value);
@@ -31,7 +30,6 @@ public abstract class BaseConverter<T> : JsonConverter where T : struct
             writer.WriteRawValue(stringValue);
     }
 
-    /// <inheritdoc />
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
         if (reader.Value == null)
@@ -60,7 +58,6 @@ public abstract class BaseConverter<T> : JsonConverter where T : struct
         return Mapping.FirstOrDefault(v => v.Value == data).Key;
     }
 
-    /// <inheritdoc />
     public override bool CanConvert(Type objectType)
     {
         // Check if it is type, or nullable of type

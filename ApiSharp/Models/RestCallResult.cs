@@ -1,78 +1,97 @@
 ﻿namespace ApiSharp.Models;
 
+
+public class RestCallRequest
+{
+    public string Url { get; set; }
+    public HttpMethod Method { get; set; }
+    public string Body { get; set; }
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; }
+
+    public RestCallRequest(string url, HttpMethod method, string body, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+    {
+        Url = url;
+        Method = method;
+        Body = body;
+        Headers = headers;
+    }
+}
+
+public class RestCallResponse
+{
+    public TimeSpan? Time { get; set; }
+    public HttpStatusCode? StatusCode { get; set; }
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; }
+
+    public RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+    {
+        Time = time;
+        StatusCode = statusCode;
+        Headers = headers;
+    }
+}
+
 public class RestCallResult : CallResult
 {
-    public string RequestUrl { get; set; }
-    public HttpMethod RequestMethod { get; set; }
-    public string RequestBody { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
-
-    public TimeSpan? ResponseTime { get; set; }
-    public HttpStatusCode? ResponseStatusCode { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> ResponseHeaders { get; set; }
+    public RestCallRequest Request { get; set; }
+    public RestCallResponse Response { get; set; }
 
     public RestCallResult(
-        HttpStatusCode? code,
+        HttpStatusCode? responseCode,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders,
         TimeSpan? responseTime,
         string requestUrl,
         string requestBody,
         HttpMethod requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
-        CallError error) : base(error)
+        CallError error) : this(
+            new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders), 
+            new RestCallResponse(responseTime, responseCode, responseHeaders), 
+            error) { }
+
+    public RestCallResult(CallError error) : this(null, null, error) { }
+
+    public RestCallResult(RestCallRequest request, RestCallResponse response, CallError error) : base(error)
     {
-        ResponseStatusCode = code;
-        ResponseHeaders = responseHeaders;
-        ResponseTime = responseTime;
-
-        RequestUrl = requestUrl;
-        RequestBody = requestBody;
-        RequestHeaders = requestHeaders;
-        RequestMethod = requestMethod;
+        Request = request;
+        Response = response;
     }
-
-    public RestCallResult(CallError error) : base(error) { }
 
     public RestCallResult AsError(CallError error)
     {
-        return new RestCallResult(ResponseStatusCode, ResponseHeaders, ResponseTime, RequestUrl, RequestBody, RequestMethod, RequestHeaders, error);
+        return new RestCallResult(Request, Response, error);
     }
 }
 
 public class RestCallResult<T> : CallResult<T>
 {
-    public string RequestUrl { get; set; }
-    public HttpMethod RequestMethod { get; set; }
-    public string RequestBody { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> RequestHeaders { get; set; }
-
-    public TimeSpan? ResponseTime { get; set; }
-    public HttpStatusCode? ResponseStatusCode { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> ResponseHeaders { get; set; }
+    public RestCallRequest Request { get; set; }
+    public RestCallResponse Response { get; set; }
 
     public RestCallResult(
-        HttpStatusCode? code,
+        HttpStatusCode? responseCode,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders,
         TimeSpan? responseTime,
-        string originalData,
+        string responseRaw,
         string requestUrl,
         string requestBody,
         HttpMethod requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
         T data,
-        CallError error) : base(data, originalData, error)
+        CallError error) : this(
+            new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders),
+            new RestCallResponse(responseTime, responseCode, responseHeaders), 
+            data, responseRaw, error) { }
+
+    public RestCallResult(CallError error) : this(null, null, default, null, error) { }
+
+    public RestCallResult(RestCallRequest request, RestCallResponse response, CallError error) : this(request, response, default, null, error) { }
+
+    public RestCallResult(RestCallRequest request, RestCallResponse response, T data, string raw, CallError error) : base(data, raw, error)
     {
-        ResponseStatusCode = code;
-        ResponseHeaders = responseHeaders;
-        ResponseTime = responseTime;
-
-        RequestUrl = requestUrl;
-        RequestBody = requestBody;
-        RequestHeaders = requestHeaders;
-        RequestMethod = requestMethod;
+        Request = request;
+        Response = response;
     }
-
-    public RestCallResult(CallError error) : this(null, null, null, null, null, null, null, null, default, error) { }
 
     /// <summary>
     /// Copy the RestCallResult to a new data type
@@ -82,7 +101,7 @@ public class RestCallResult<T> : CallResult<T>
     /// <returns></returns>
     public new RestCallResult<K> As<K>([AllowNull] K data)
     {
-        return new RestCallResult<K>(ResponseStatusCode, ResponseHeaders, ResponseTime, OriginalData, RequestUrl, RequestBody, RequestMethod, RequestHeaders, data, Error);
+        return new RestCallResult<K>(Request, Response, data, Raw, Error);
     }
 
     /// <summary>
@@ -91,7 +110,7 @@ public class RestCallResult<T> : CallResult<T>
     /// <returns></returns>
     public RestCallResult AsDataless()
     {
-        return new RestCallResult(ResponseStatusCode, ResponseHeaders, ResponseTime, RequestUrl, RequestBody, RequestMethod, RequestHeaders, Error);
+        return new RestCallResult(Request, Response, Error);
     }
 
     /// <summary>
@@ -100,7 +119,7 @@ public class RestCallResult<T> : CallResult<T>
     /// <returns></returns>
     public RestCallResult AsDatalessError(CallError error)
     {
-        return new RestCallResult(ResponseStatusCode, ResponseHeaders, ResponseTime, RequestUrl, RequestBody, RequestMethod, RequestHeaders, error);
+        return new RestCallResult(Request, Response, error);
     }
 
     /// <summary>
@@ -111,6 +130,6 @@ public class RestCallResult<T> : CallResult<T>
     /// <returns></returns>
     public new RestCallResult<K> AsError<K>(CallError error)
     {
-        return new RestCallResult<K>(ResponseStatusCode, ResponseHeaders, ResponseTime, OriginalData, RequestUrl, RequestBody, RequestMethod, RequestHeaders, default, error);
+        return new RestCallResult<K>(Request, Response, default, Raw, error);
     }
 }

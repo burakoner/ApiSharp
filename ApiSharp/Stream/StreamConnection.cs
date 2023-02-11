@@ -312,7 +312,7 @@ public class StreamConnection
         }
 
         // Message was not a request response, check data handlers
-        var messageEvent = new StreamMessageEvent(this, tokenData, ApiClient.Options.OutputOriginalData ? data : null, timestamp);
+        var messageEvent = new StreamMessageEvent(this, tokenData, ApiClient.Options.RawResponse ? data : null, timestamp);
         var (handled, userProcessTime, subscription) = HandleData(messageEvent);
         if (!handled && !handledResponse)
         {

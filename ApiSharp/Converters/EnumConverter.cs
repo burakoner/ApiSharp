@@ -7,13 +7,11 @@
     {
         private static readonly ConcurrentDictionary<Type, List<KeyValuePair<object, string>>> _mapping = new();
 
-        /// <inheritdoc />
         public override bool CanConvert(Type objectType)
         {
             return objectType.IsEnum;
         }
 
-        /// <inheritdoc />
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var enumType = Nullable.GetUnderlyingType(objectType) ?? objectType;
@@ -119,7 +117,6 @@
             return enumValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(enumValue)).Value ?? enumValue.ToString());            
         }
 
-        /// <inheritdoc />
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             var stringValue = GetString(value);

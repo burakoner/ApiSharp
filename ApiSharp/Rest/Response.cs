@@ -7,13 +7,10 @@ internal class Response : IResponse
 {
     private readonly HttpResponseMessage response;
 
-    /// <inheritdoc />
     public HttpStatusCode StatusCode => response.StatusCode;
 
-    /// <inheritdoc />
     public bool IsSuccessStatusCode => response.IsSuccessStatusCode;
 
-    /// <inheritdoc />
     public IEnumerable<KeyValuePair<string, IEnumerable<string>>> ResponseHeaders => response.Headers;
 
     /// <summary>
@@ -25,13 +22,11 @@ internal class Response : IResponse
         this.response = response;
     }
 
-    /// <inheritdoc />
     public async Task<System.IO.Stream> GetResponseStreamAsync()
     {
         return await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
     }
 
-    /// <inheritdoc />
     public void Close()
     {
         response.Dispose();
