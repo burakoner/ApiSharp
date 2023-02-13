@@ -58,10 +58,17 @@ public static class DictionaryExtensions
     {
         if (value != null)
         {
-            if (value is string str && !string.IsNullOrWhiteSpace(str))
-                parameters.Add(key, value);
+            if (value is string str)
+            {
+                if (!string.IsNullOrWhiteSpace(str))
+                {
+                    parameters.Add(key, value);
+                }
+            }
             else
+            {
                 parameters.Add(key, value);
+            }
         }
     }
 

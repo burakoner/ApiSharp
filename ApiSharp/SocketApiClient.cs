@@ -192,11 +192,11 @@ public abstract class SocketApiClient : BaseClient
                         catch { }
 
                         // Consume edilen veriyi buffer'dan at
-                        var bufferLenght = _socketBuffer.Count;
+                        var bufferLength = _socketBuffer.Count;
                         _socketBuffer.RemoveRange(0, packetLength);
 
                         // Arta kalanları veri için bu methodu yeniden çalıştır
-                        if (bufferLenght > packetLength)
+                        if (bufferLength > packetLength)
                             OnDataIn(Array.Empty<byte>(), connectionId);
                     }
                 }
