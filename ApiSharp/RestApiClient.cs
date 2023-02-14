@@ -1,4 +1,6 @@
-﻿namespace ApiSharp;
+﻿using System.Security.Cryptography;
+
+namespace ApiSharp;
 
 public abstract class RestApiClient : BaseClient
 {
@@ -18,20 +20,6 @@ public abstract class RestApiClient : BaseClient
     protected int TotalRequestsMade { get; set; }
 
     /// <summary>
-    /// Where to put the parameters for requests with different Http methods
-    /// </summary>
-    protected Dictionary<HttpMethod, RestParameterPosition> ParameterPositions { get; set; } = new()
-    {
-        { HttpMethod.Get, RestParameterPosition.InUri },
-        { HttpMethod.Post, RestParameterPosition.InBody },
-        { HttpMethod.Delete, RestParameterPosition.InBody },
-        { HttpMethod.Put, RestParameterPosition.InBody },
-        #if NETSTANDARD2_1
-        { HttpMethod.Patch, RestParameterPosition.InBody }
-        #endif
-    };
-
-    /// <summary>
     /// Request body content type
     /// </summary>
     protected RestRequestBodyFormat RequestBodyFormat = RestRequestBodyFormat.Json;
@@ -45,13 +33,6 @@ public abstract class RestApiClient : BaseClient
     /// How to serialize array parameters when making requests
     /// </summary>
     protected ArraySerialization ArraySerialization = ArraySerialization.Array;
-
-    /// <summary>
-    /// What request body should be set when no data is send (only used in combination with postParametersPosition.InBody)
-    /// </summary>
-    protected string RequestBodyEmptyContent = "{}";
-
-    protected string RequestBodyParameterKey = "";
 
     public new RestApiClientOptions Options { get { return (RestApiClientOptions)base.Options; } }
 
@@ -80,19 +61,18 @@ public abstract class RestApiClient : BaseClient
     Uri uri,
     HttpMethod method,
     CancellationToken cancellationToken,
-    Dictionary<string, object> parameters = null,
     bool signed = false,
-    RestParameterPosition? parameterPosition = null,
+    Dictionary<string, object> queryParameters = null,
+    Dictionary<string, object> bodyParameters = null,
+    Dictionary<string, string> headerParameters = null,
     ArraySerialization? arraySerialization = null,
-    int requestWeight = 1,
     JsonSerializer deserializer = null,
-    Dictionary<string, string> additionalHeaders = null,
-    bool ignoreRatelimit = false
+    bool ignoreRatelimit = false,
+    int requestWeight = 1
     ) where T : class
     {
-        var request = await PrepareRequestAsync(uri, method, cancellationToken, parameters, signed, parameterPosition, arraySerialization, requestWeight, deserializer, additionalHeaders, ignoreRatelimit).ConfigureAwait(false);
-        if (!request)
-            return new RestCallResult<T>(request.Error!);
+        var request = await PrepareRequestAsync(uri, method, cancellationToken, signed, queryParameters, bodyParameters, headerParameters, arraySerialization, deserializer, ignoreRatelimit, requestWeight).ConfigureAwait(false);
+        if (!request) return new RestCallResult<T>(request.Error!);
 
         return await GetResponseAsync<T>(request.Data, deserializer, cancellationToken, false).ConfigureAwait(false);
     }
@@ -109,21 +89,22 @@ public abstract class RestApiClient : BaseClient
     /// <param name="arraySerialization">How array parameters should be serialized, overwrites the value set in the client</param>
     /// <param name="requestWeight">Credits used for the request</param>
     /// <param name="deserializer">The JsonSerializer to use for deserialization</param>
-    /// <param name="additionalHeaders">Additional headers to send with the request</param>
+    /// <param name="headerParameters">Additional headers to send with the request</param>
     /// <param name="ignoreRatelimit">Ignore rate limits for this request</param>
     /// <returns></returns>
     protected virtual async Task<CallResult<IRequest>> PrepareRequestAsync(
         Uri uri,
         HttpMethod method,
         CancellationToken cancellationToken,
-        Dictionary<string, object> parameters = null,
         bool signed = false,
-        RestParameterPosition? parameterPosition = null,
+        Dictionary<string, object> queryParameters = null,
+        Dictionary<string, object> bodyParameters = null,
+        Dictionary<string, string> headerParameters = null,
         ArraySerialization? arraySerialization = null,
-        int requestWeight = 1,
         JsonSerializer deserializer = null,
-        Dictionary<string, string> additionalHeaders = null,
-        bool ignoreRatelimit = false)
+        bool ignoreRatelimit = false,
+        int requestWeight = 1
+        )
     {
         var requestId = NextId();
 
@@ -160,11 +141,18 @@ public abstract class RestApiClient : BaseClient
         }
 
         log.Write(LogLevel.Information, $"[{requestId}] Creating request for " + uri);
-        var paramsPosition = parameterPosition ?? ParameterPositions[method];
-        var request = ConstructRequest(uri, method, parameters?.OrderBy(p => p.Key).ToDictionary(p => p.Key, p => p.Value), signed, paramsPosition, arraySerialization ?? this.ArraySerialization, requestId, additionalHeaders);
+        var request = ConstructRequest(
+            uri,
+            method,
+            signed,
+            queryParameters,
+            bodyParameters,
+            headerParameters,
+            arraySerialization ?? this.ArraySerialization, 
+            requestId);
 
-        string paramString = "";
-        if (paramsPosition == RestParameterPosition.InBody)
+        var paramString = "";
+        if (!string.IsNullOrWhiteSpace(request.Content))
             paramString = $" with request body '{request.Content}'";
 
         var headers = request.GetHeaders();
@@ -320,66 +308,85 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     /// <param name="uri">The uri to send the request to</param>
     /// <param name="method">The method of the request</param>
-    /// <param name="parameters">The parameters of the request</param>
     /// <param name="signed">Whether or not the request should be authenticated</param>
-    /// <param name="parameterPosition">Where the parameters should be placed</param>
+    /// <param name="queryParameters">The query string parameters of the request</param>
+    /// <param name="bodyParameters">The body content parameters of the request</param>
+    /// <param name="headerParameters">Additional headers to send with the request</param>
     /// <param name="arraySerialization">How array parameters should be serialized</param>
     /// <param name="requestId">Unique id of a request</param>
-    /// <param name="additionalHeaders">Additional headers to send with the request</param>
     /// <returns></returns>
     protected virtual IRequest ConstructRequest(
         Uri uri,
         HttpMethod method,
-        Dictionary<string, object> parameters,
         bool signed,
-        RestParameterPosition parameterPosition,
+        Dictionary<string, object> queryParameters,
+        Dictionary<string, object> bodyParameters,
+        Dictionary<string, string> headerParameters,
         ArraySerialization arraySerialization,
-        int requestId,
-        Dictionary<string, string> additionalHeaders)
+        int requestId
+        )
     {
-        parameters ??= new Dictionary<string, object>();
+        queryParameters ??= new Dictionary<string, object>();
+        bodyParameters ??= new Dictionary<string, object>();
+        headerParameters ??= new Dictionary<string, string>();
 
-        for (var i = 0; i < parameters.Count; i++)
+        for (var i = 0; i < queryParameters.Count; i++)
         {
-            var kvp = parameters.ElementAt(i);
+            var kvp = queryParameters.ElementAt(i);
             if (kvp.Value is Func<object> delegateValue)
-                parameters[kvp.Key] = delegateValue();
+                queryParameters[kvp.Key] = delegateValue();
         }
 
-        if (parameterPosition == RestParameterPosition.InUri)
+        for (var i = 0; i < bodyParameters.Count; i++)
         {
-            foreach (var parameter in parameters)
-                uri = uri.AddQueryParmeter(parameter.Key, parameter.Value.ToString());
+            var kvp = bodyParameters.ElementAt(i);
+            if (kvp.Value is Func<object> delegateValue)
+                bodyParameters[kvp.Key] = delegateValue();
         }
 
-        var headers = new Dictionary<string, string>();
-        var uriParameters = parameterPosition == RestParameterPosition.InUri ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
-        var bodyParameters = parameterPosition == RestParameterPosition.InBody ? new SortedDictionary<string, object>(parameters) : new SortedDictionary<string, object>();
-        var bodyContent = PrepareBodyContent(bodyParameters, RequestBodyFormat, RequestBodyParameterKey);
-        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, bodyContent, signed, arraySerialization, parameterPosition, parameters, out uriParameters, out bodyParameters, out headers);
+        foreach (var parameter in queryParameters)
+        {
+            uri = uri.AddQueryParmeter(parameter.Key, parameter.Value.ToString());
+        }
+
+        var parameters = new List<string>();
+        headerParameters.ToList().ForEach(x => parameters.Add(x.Key));
+        queryParameters.ToList().ForEach(x => parameters.Add(x.Key));
+        bodyParameters.ToList().ForEach(x => parameters.Add(x.Key));
+
+        var sortedHeaderParameters = new SortedDictionary<string, string>(headerParameters);
+        var sortedQueryParameters = new SortedDictionary<string, object>(queryParameters);
+        var sortedBodyParameters = new SortedDictionary<string, object>(bodyParameters);
+        var sortedBodyContent = PrepareBodyContent(sortedBodyParameters, RequestBodyFormat);
+        var authenticationHeaders = new Dictionary<string, string>();
+        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, signed, arraySerialization,
+            sortedQueryParameters, sortedBodyParameters, sortedBodyContent, sortedHeaderParameters, authenticationHeaders);
+        sortedBodyContent = PrepareBodyContent(sortedBodyParameters, RequestBodyFormat);
 
         // Sanity check
         foreach (var param in parameters)
         {
-            if (!uriParameters.ContainsKey(param.Key) && !bodyParameters.ContainsKey(param.Key))
+            if (!sortedQueryParameters.ContainsKey(param) && !sortedBodyParameters.ContainsKey(param) && !sortedHeaderParameters.ContainsKey(param))
             {
-                throw new Exception($"Missing parameter {param.Key} after authentication processing. AuthenticationProvider implementation " +
-                    $"should return provided parameters in either the uri or body parameters output");
+                throw new Exception($"Missing parameter {param} after authentication processing. " +
+                    $"AuthenticationProvider implementation should return provided parameters in either the uri or body or header parameters output");
             }
         }
 
         // Add the auth parameters to the uri, start with a new URI to be able to sort the parameters including the auth parameters            
-        uri = uri.SetParameters(uriParameters, arraySerialization);
+        uri = uri.SetParameters(sortedQueryParameters, arraySerialization);
 
         var request = RequestFactory.Create(method, uri, requestId);
         request.Accept = RestApiConstants.JSON_CONTENT_HEADER;
 
-        foreach (var header in headers)
-            request.AddHeader(header.Key, header.Value);
-
-        if (additionalHeaders != null)
+        foreach (var header in authenticationHeaders)
         {
-            foreach (var header in additionalHeaders)
+            request.AddHeader(header.Key, header.Value);
+        }
+
+        if (headerParameters != null)
+        {
+            foreach (var header in headerParameters)
                 request.AddHeader(header.Key, header.Value);
         }
 
@@ -388,38 +395,28 @@ public abstract class RestApiClient : BaseClient
             foreach (var header in StandardRequestHeaders)
             {
                 // Only add it if it isn't overwritten
-                if (additionalHeaders?.ContainsKey(header.Key) != true)
+                if (headerParameters?.ContainsKey(header.Key) != true)
                     request.AddHeader(header.Key, header.Value);
             }
         }
 
-        if (parameterPosition == RestParameterPosition.InBody)
+        var contentType = RequestBodyFormat == RestRequestBodyFormat.Json
+            ? RestApiConstants.JSON_CONTENT_HEADER
+            : RestApiConstants.FORM_CONTENT_HEADER;
+        if (sortedBodyParameters.Any())
         {
-            var contentType = RequestBodyFormat == RestRequestBodyFormat.Json 
-                ? RestApiConstants.JSON_CONTENT_HEADER 
-                : RestApiConstants.FORM_CONTENT_HEADER;
-            if (bodyParameters.Any())
-                request.SetContent(bodyContent, contentType);
-            else
-                request.SetContent(RequestBodyEmptyContent, contentType);
+            request.SetContent(sortedBodyContent, contentType);
+        }
+        else
+        {
+            if (Options.SetRequestBodyEmptyContentMethods.Contains(method))
+            {
+                request.SetContent(Options.RequestBodyEmptyContent, contentType);
+            }
         }
 
         return request;
     }
-
-    /*
-    /// <summary>
-    /// Writes the parameters of the request to the request object body
-    /// </summary>
-    /// <param name="request">The request to set the parameters on</param>
-    /// <param name="parameters">The parameters to set</param>
-    /// <param name="contentType">The content type of the data</param>
-    protected virtual void WriteParamBody(IRequest request, SortedDictionary<string, object> parameters, string contentType)
-    {
-        var stringData = PrepareBodyContent(parameters, RequestBodyFormat, RequestBodyParameterKey);
-        request.SetContent(stringData, contentType);
-    }
-    */
 
     /// <summary>
     /// Prepares the parameters of the request to the request object body
@@ -428,9 +425,9 @@ public abstract class RestApiClient : BaseClient
     /// <param name="format">Rest Request Body Format</param>
     /// <param name="bodyKey">Request Body Parameter Key</param>
     /// <returns></returns>
-    protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters,RestRequestBodyFormat format, string bodyKey)
+    protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters,RestRequestBodyFormat format)
     {
-        var stringData = RequestBodyEmptyContent;
+        var stringData = Options.RequestBodyEmptyContent;
         if (parameters == null || !parameters.Any()) return stringData;
 
         if (format == RestRequestBodyFormat.Json)
@@ -446,10 +443,10 @@ public abstract class RestApiClient : BaseClient
 
         if (format == RestRequestBodyFormat.Json)
         {
-            if (!string.IsNullOrWhiteSpace(bodyKey) && parameters.Count == 1 && parameters.Keys.First() == bodyKey)
+            if (!string.IsNullOrWhiteSpace(Options.RequestBodyParameterKey) && parameters.Count == 1 && parameters.Keys.First() == Options.RequestBodyParameterKey)
             {
                 // Write the parameters as json in the body
-                stringData = JsonConvert.SerializeObject(parameters[bodyKey]);
+                stringData = JsonConvert.SerializeObject(parameters[Options.RequestBodyParameterKey]);
             }
             else
             {

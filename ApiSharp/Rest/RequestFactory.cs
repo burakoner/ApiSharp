@@ -20,6 +20,7 @@ public class RequestFactory : IRequestFactory
             httpClient = new HttpClient(handler);
             httpClient.Timeout = options.RequestTimeout;
             httpClient.DefaultRequestHeaders.Add("User-Agent", options.UserAgent);
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         }
         else
         {

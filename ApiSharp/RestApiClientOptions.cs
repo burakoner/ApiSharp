@@ -13,6 +13,11 @@ public class RestApiClientOptions : BaseClientOptions
     public List<IRateLimiter> RateLimiters { get; set; }
     public RateLimitingBehavior RateLimitingBehavior { get; set; }
 
+    // Request Body
+    public string RequestBodyParameterKey { get; set; } = "";
+    public string RequestBodyEmptyContent { get; set; } = "{}";
+    public IEnumerable<HttpMethod> SetRequestBodyEmptyContentMethods { get; set; } = new List<HttpMethod>();
+
     public RestApiClientOptions() : this(string.Empty) { }
     public RestApiClientOptions(string baseAddress)
     {

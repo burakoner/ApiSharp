@@ -61,4 +61,32 @@ public static class Validations
             throw new ArgumentException(
                 $"{value} not allowed for parameter {argumentName}, min: {minValue}, max: {maxValue}", argumentName);
     }
+
+    /// <summary>
+    /// Validates an double is between two values
+    /// </summary>
+    /// <param name="value">The value of the double</param>
+    /// <param name="argumentName">Name of the parameter</param>
+    /// <param name="minValue">Min value</param>
+    /// <param name="maxValue">Max value</param>
+    public static void ValidateDoubleBetween(this double value, string argumentName, double minValue, double maxValue)
+    {
+        if (value < minValue || value > maxValue)
+            throw new ArgumentException(
+                $"{value} not allowed for parameter {argumentName}, min: {minValue}, max: {maxValue}", argumentName);
+    }
+
+    /// <summary>
+    /// Validates an decimal is between two values
+    /// </summary>
+    /// <param name="value">The value of the decimal</param>
+    /// <param name="argumentName">Name of the parameter</param>
+    /// <param name="minValue">Min value</param>
+    /// <param name="maxValue">Max value</param>
+    public static void ValidateDecimalBetween(this decimal value, string argumentName, decimal minValue, decimal maxValue)
+    {
+        if (value < minValue || value > maxValue)
+            throw new ArgumentException(
+                $"{value} not allowed for parameter {argumentName}, min: {minValue}, max: {maxValue}", argumentName);
+    }
 }
