@@ -10,18 +10,14 @@ public class BitcoinAuthenticationProvider : AuthenticationProvider
     {
     }
 
-    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, bool signed, ArraySerialization arraySerialization, SortedDictionary<string, object> queryParameters, SortedDictionary<string, object> bodyParameters, string bodyContent, SortedDictionary<string, string> headerParameters, Dictionary<string, string> authenticationHeaders)
+    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, bool signed, ArraySerialization serialization, SortedDictionary<string, object> query, SortedDictionary<string, object> body, string bodyContent, SortedDictionary<string, string> headers)
     {
-        throw new NotImplementedException();
+       // Check Point
+       if (!signed) return;
 
-        /*
-        // Check Point
-        if (!auth) return;
-
-        // Action
-        var authInfo = Convert.ToBase64String(Encoding.Default.GetBytes(Credentials.Key.GetString() + ":" + Credentials.Secret.GetString()));
-        headers.Add("Authorization", "Basic " + authInfo);
-        */
+       // Action
+       var authInfo = Convert.ToBase64String(Encoding.Default.GetBytes(Credentials.Key.GetString() + ":" + Credentials.Secret.GetString()));
+       headers.Add("Authorization", "Basic " + authInfo);
     }
 
     public override void AuthenticateStreamApi()

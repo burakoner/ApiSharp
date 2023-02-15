@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-
-namespace ApiSharp;
+﻿namespace ApiSharp;
 
 public abstract class RestApiClient : BaseClient
 {
@@ -48,13 +46,11 @@ public abstract class RestApiClient : BaseClient
     /// <summary>
     /// Get time sync info for an API client
     /// </summary>
-    /// <returns></returns>
     protected abstract TimeSyncInfo GetTimeSyncInfo();
 
     /// <summary>
     /// Get time offset for an API client
     /// </summary>
-    /// <returns></returns>
     public abstract TimeSpan GetTimeOffset();
 
     protected virtual async Task<RestCallResult<T>> SendRequestAsync<T>(
@@ -65,13 +61,13 @@ public abstract class RestApiClient : BaseClient
     Dictionary<string, object> queryParameters = null,
     Dictionary<string, object> bodyParameters = null,
     Dictionary<string, string> headerParameters = null,
-    ArraySerialization? arraySerialization = null,
+    ArraySerialization? serialization = null,
     JsonSerializer deserializer = null,
     bool ignoreRatelimit = false,
     int requestWeight = 1
     ) where T : class
     {
-        var request = await PrepareRequestAsync(uri, method, cancellationToken, signed, queryParameters, bodyParameters, headerParameters, arraySerialization, deserializer, ignoreRatelimit, requestWeight).ConfigureAwait(false);
+        var request = await PrepareRequestAsync(uri, method, cancellationToken, signed, queryParameters, bodyParameters, headerParameters, serialization, deserializer, ignoreRatelimit, requestWeight).ConfigureAwait(false);
         if (!request) return new RestCallResult<T>(request.Error!);
 
         return await GetResponseAsync<T>(request.Data, deserializer, cancellationToken, false).ConfigureAwait(false);
@@ -83,15 +79,14 @@ public abstract class RestApiClient : BaseClient
     /// <param name="uri">The uri to send the request to</param>
     /// <param name="method">The method of the request</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <param name="parameters">The parameters of the request</param>
     /// <param name="signed">Whether or not the request should be authenticated</param>
-    /// <param name="parameterPosition">Where the parameters should be placed, overwrites the value set in the client</param>
-    /// <param name="arraySerialization">How array parameters should be serialized, overwrites the value set in the client</param>
-    /// <param name="requestWeight">Credits used for the request</param>
-    /// <param name="deserializer">The JsonSerializer to use for deserialization</param>
+    /// <param name="queryParameters">The query string parameters of the request</param>
+    /// <param name="bodyParameters">The body content parameters of the request</param>
     /// <param name="headerParameters">Additional headers to send with the request</param>
+    /// <param name="serialization">How array parameters should be serialized, overwrites the value set in the client</param>
+    /// <param name="deserializer">The JsonSerializer to use for deserialization</param>
     /// <param name="ignoreRatelimit">Ignore rate limits for this request</param>
-    /// <returns></returns>
+    /// <param name="requestWeight">Credits used for the request</param>
     protected virtual async Task<CallResult<IRequest>> PrepareRequestAsync(
         Uri uri,
         HttpMethod method,
@@ -100,7 +95,7 @@ public abstract class RestApiClient : BaseClient
         Dictionary<string, object> queryParameters = null,
         Dictionary<string, object> bodyParameters = null,
         Dictionary<string, string> headerParameters = null,
-        ArraySerialization? arraySerialization = null,
+        ArraySerialization? serialization = null,
         JsonSerializer deserializer = null,
         bool ignoreRatelimit = false,
         int requestWeight = 1
@@ -148,7 +143,7 @@ public abstract class RestApiClient : BaseClient
             queryParameters,
             bodyParameters,
             headerParameters,
-            arraySerialization ?? this.ArraySerialization, 
+            serialization ?? this.ArraySerialization, 
             requestId);
 
         var paramString = "";
@@ -171,7 +166,6 @@ public abstract class RestApiClient : BaseClient
     /// <param name="deserializer">The JsonSerializer to use for deserialization</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <param name="expectedEmptyResponse">If an empty response is expected</param>
-    /// <returns></returns>
     protected virtual async Task<RestCallResult<T>> GetResponseAsync<T>(
         IRequest request,
         JsonSerializer deserializer,
@@ -312,9 +306,8 @@ public abstract class RestApiClient : BaseClient
     /// <param name="queryParameters">The query string parameters of the request</param>
     /// <param name="bodyParameters">The body content parameters of the request</param>
     /// <param name="headerParameters">Additional headers to send with the request</param>
-    /// <param name="arraySerialization">How array parameters should be serialized</param>
+    /// <param name="serialization">How array parameters should be serialized</param>
     /// <param name="requestId">Unique id of a request</param>
-    /// <returns></returns>
     protected virtual IRequest ConstructRequest(
         Uri uri,
         HttpMethod method,
@@ -322,7 +315,7 @@ public abstract class RestApiClient : BaseClient
         Dictionary<string, object> queryParameters,
         Dictionary<string, object> bodyParameters,
         Dictionary<string, string> headerParameters,
-        ArraySerialization arraySerialization,
+        ArraySerialization serialization,
         int requestId
         )
     {
@@ -358,9 +351,7 @@ public abstract class RestApiClient : BaseClient
         var sortedQueryParameters = new SortedDictionary<string, object>(queryParameters);
         var sortedBodyParameters = new SortedDictionary<string, object>(bodyParameters);
         var sortedBodyContent = PrepareBodyContent(sortedBodyParameters, RequestBodyFormat);
-        var authenticationHeaders = new Dictionary<string, string>();
-        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, signed, arraySerialization,
-            sortedQueryParameters, sortedBodyParameters, sortedBodyContent, sortedHeaderParameters, authenticationHeaders);
+        AuthenticationProvider?.AuthenticateRestApi(this, uri, method, signed, serialization, sortedQueryParameters, sortedBodyParameters, sortedBodyContent, sortedHeaderParameters);
         sortedBodyContent = PrepareBodyContent(sortedBodyParameters, RequestBodyFormat);
 
         // Sanity check
@@ -374,20 +365,14 @@ public abstract class RestApiClient : BaseClient
         }
 
         // Add the auth parameters to the uri, start with a new URI to be able to sort the parameters including the auth parameters            
-        uri = uri.SetParameters(sortedQueryParameters, arraySerialization);
+        uri = uri.SetParameters(sortedQueryParameters, serialization);
 
         var request = RequestFactory.Create(method, uri, requestId);
         request.Accept = RestApiConstants.JSON_CONTENT_HEADER;
 
-        foreach (var header in authenticationHeaders)
+        foreach (var header in sortedHeaderParameters)
         {
             request.AddHeader(header.Key, header.Value);
-        }
-
-        if (headerParameters != null)
-        {
-            foreach (var header in headerParameters)
-                request.AddHeader(header.Key, header.Value);
         }
 
         if (StandardRequestHeaders != null)
@@ -423,9 +408,7 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     /// <param name="parameters">The parameters to set</param>
     /// <param name="format">Rest Request Body Format</param>
-    /// <param name="bodyKey">Request Body Parameter Key</param>
-    /// <returns></returns>
-    protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters,RestRequestBodyFormat format)
+    protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters, RestRequestBodyFormat format)
     {
         var stringData = Options.RequestBodyEmptyContent;
         if (parameters == null || !parameters.Any()) return stringData;
@@ -467,7 +450,6 @@ public abstract class RestApiClient : BaseClient
     /// Parse an error response from the server. Only used when server returns a status other than Success(200)
     /// </summary>
     /// <param name="error">The string the request returned</param>
-    /// <returns></returns>
     protected virtual CallError ParseErrorResponse(JToken error)
     {
         return new ServerError(error.ToString());

@@ -11,17 +11,13 @@ public class GetBlockAuthenticationProvider : AuthenticationProvider
     {
     }
 
-    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, bool signed, ArraySerialization arraySerialization, SortedDictionary<string, object> queryParameters, SortedDictionary<string, object> bodyParameters, string bodyContent, SortedDictionary<string, string> headerParameters, Dictionary<string, string> authenticationHeaders)
+    public override void AuthenticateRestApi(RestApiClient apiClient, Uri uri, HttpMethod method, bool signed, ArraySerialization serialization, SortedDictionary<string, object> query, SortedDictionary<string, object> body, string bodyContent, SortedDictionary<string, string> headers)
     {
-        throw new NotImplementedException();
-
-        /*
         // Check Point
-        if (!auth) return;
+        if (!signed) return;
 
         // Action
         headers.Add("x-api-key", Credentials.Key.GetString());
-        */
     }
 
     public override void AuthenticateSocketApi()

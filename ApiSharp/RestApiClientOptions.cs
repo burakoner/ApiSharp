@@ -15,7 +15,7 @@ public class RestApiClientOptions : BaseClientOptions
 
     // Request Body
     public string RequestBodyParameterKey { get; set; } = "";
-    public string RequestBodyEmptyContent { get; set; } = "{}";
+    public string RequestBodyEmptyContent { get; set; } = "";
     public IEnumerable<HttpMethod> SetRequestBodyEmptyContentMethods { get; set; } = new List<HttpMethod>();
 
     public RestApiClientOptions() : this(string.Empty) { }

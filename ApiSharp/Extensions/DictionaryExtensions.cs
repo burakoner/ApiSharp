@@ -60,7 +60,7 @@ public static class DictionaryExtensions
         {
             if (value is string str)
             {
-                if (!string.IsNullOrWhiteSpace(str))
+                if (!string.IsNullOrWhiteSpace(str) && str != "null")
                 {
                     parameters.Add(key, value);
                 }

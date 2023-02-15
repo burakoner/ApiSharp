@@ -21,23 +21,22 @@ public abstract class AuthenticationProvider
     /// <param name="uri">The uri for the request</param>
     /// <param name="method">The method of the request</param>
     /// <param name="signed">If the requests should be authenticated</param>
-    /// <param name="arraySerialization">Array serialization type</param>
-    /// <param name="queryParameters">Parameters that need to be in the Uri of the request. Should include the provided parameters if they should go in the uri</param>
-    /// <param name="bodyParameters">Parameters that need to be in the body of the request. Should include the provided parameters if they should go in the body</param>
+    /// <param name="serialization">Array serialization type</param>
+    /// <param name="query">Parameters that need to be in the Uri of the request. Should include the provided parameters if they should go in the uri</param>
+    /// <param name="body">Parameters that need to be in the body of the request. Should include the provided parameters if they should go in the body</param>
     /// <param name="bodyContent">The body content of the request</param>
-    /// <param name="headerParameters">Additional headers to send with the request</param>
+    /// <param name="headers">Additional headers to send with the request</param>
     /// <param name="authenticationHeaders">The headers that should be send with the request</param>
     public abstract void AuthenticateRestApi(
         RestApiClient apiClient,
         Uri uri,
         HttpMethod method,
         bool signed,
-        ArraySerialization arraySerialization,
-        SortedDictionary<string, object> queryParameters,
-        SortedDictionary<string, object> bodyParameters,
+        ArraySerialization serialization,
+        SortedDictionary<string, object> query,
+        SortedDictionary<string, object> body,
         string bodyContent,
-        SortedDictionary<string, string> headerParameters,
-        Dictionary<string, string> authenticationHeaders);
+        SortedDictionary<string, string> headers);
 
     public abstract void AuthenticateStreamApi();
 
