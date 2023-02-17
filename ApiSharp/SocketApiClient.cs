@@ -2,7 +2,7 @@
 
 public abstract class SocketApiClient : BaseClient
 {
-    public new SocketApiClientOptions Options { get { return (SocketApiClientOptions)base.Options; } }
+    public new SocketApiClientOptions Options { get { return (SocketApiClientOptions)base.ClientOptions; } }
 
     // Public Properties
     public long BytesSent { get; private set; }

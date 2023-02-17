@@ -32,7 +32,7 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     protected ArraySerialization ArraySerialization = ArraySerialization.Array;
 
-    public new RestApiClientOptions Options { get { return (RestApiClientOptions)base.Options; } }
+    public new RestApiClientOptions Options { get { return (RestApiClientOptions)base.ClientOptions; } }
 
     protected RestApiClient() : this("", new())
     {

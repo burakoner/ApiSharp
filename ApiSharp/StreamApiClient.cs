@@ -2,7 +2,7 @@
 
 public abstract class StreamApiClient : BaseClient
 {
-    public new StreamApiClientOptions Options { get { return (StreamApiClientOptions)base.Options; } }
+    public new StreamApiClientOptions Options { get { return (StreamApiClientOptions)base.ClientOptions; } }
 
     protected StreamApiClient() : this("", new())
     {

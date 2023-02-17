@@ -3,7 +3,7 @@
 public abstract class BaseClient : IDisposable
 {
     protected string Name { get; }
-    protected BaseClientOptions Options { get; }
+    protected BaseClientOptions ClientOptions { get; }
     protected AuthenticationProvider _authenticationProvider;
     protected ApiCredentials _apiCredentials;
     protected bool _disposing;
@@ -34,8 +34,8 @@ public abstract class BaseClient : IDisposable
     protected BaseClient(string name, BaseClientOptions options)
     {
         Name = name;
-        Options = options;
-        Options.OnLoggingChanged += HandleLogConfigChange;
+        ClientOptions = options;
+        ClientOptions.OnLoggingChanged += HandleLogConfigChange;
         _apiCredentials = options.ApiCredentials?.Copy();
 
         log = new Log(name);
@@ -51,8 +51,8 @@ public abstract class BaseClient : IDisposable
     /// </summary>
     private void HandleLogConfigChange()
     {
-        log.UpdateWriters(Options.LogWriters);
-        log.Level = Options.LogLevel;
+        log.UpdateWriters(ClientOptions.LogWriters);
+        log.Level = ClientOptions.LogLevel;
     }
 
     public void SetApiCredentials(ApiCredentials credentials)
@@ -151,12 +151,12 @@ public abstract class BaseClient : IDisposable
 
             // If we have to output the original json data or output the data into the logging we'll have to read to full response
             // in order to log/return the json data
-            if (Options.RawResponse == true || log.Level == LogLevel.Trace)
+            if (ClientOptions.RawResponse == true || log.Level == LogLevel.Trace)
             {
                 data = await reader.ReadToEndAsync().ConfigureAwait(false);
                     log.Write(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms{(log.Level == LogLevel.Trace ? (": " + data) : "")}");
                 var result = Deserialize<T>(data, serializer, requestId);
-                if (Options.RawResponse == true)
+                if (ClientOptions.RawResponse == true)
                     result.Raw = data;
                 return result;
             }
