@@ -2,10 +2,10 @@
 
 public class CallResult
 {
-    public CallError Error { get; internal set; }
+    public Error Error { get; internal set; }
     public bool Success => Error == null;
 
-    public CallResult(CallError error)
+    public CallResult(Error error)
     {
         Error = error;
     }
@@ -25,7 +25,7 @@ public class CallResult<T> : CallResult
     public T Data { get; internal set; }
     public string Raw { get; internal set; }
 
-    protected CallResult(T data, string raw, CallError error) : base(error)
+    protected CallResult(T data, string raw, Error error) : base(error)
     {
         Raw = raw;
         Data = data;
@@ -33,7 +33,7 @@ public class CallResult<T> : CallResult
 
     public CallResult(T data) : this(data, null, null) { }
 
-    public CallResult(CallError error) : this(default, null, error) { }
+    public CallResult(Error error) : this(default, null, error) { }
 
     /// <summary>
     /// Overwrite bool check so we can use if(callResult) instead of if(callResult.Success)
@@ -44,7 +44,7 @@ public class CallResult<T> : CallResult
         return obj?.Success == true;
     }
 
-    public bool GetResultOrError(out T data, out CallError error)
+    public bool GetResultOrError(out T data, out Error error)
     {
         if (Success)
         {
@@ -79,7 +79,7 @@ public class CallResult<T> : CallResult
     /// <typeparam name="K">The new type</typeparam>
     /// <param name="error">The error to return</param>
     /// <returns></returns>
-    public CallResult<K> AsError<K>(CallError error)
+    public CallResult<K> AsError<K>(Error error)
     {
         return new CallResult<K>(default, Raw, error);
     }

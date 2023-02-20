@@ -312,7 +312,7 @@ public class StreamConnection
         }
 
         // Message was not a request response, check data handlers
-        var messageEvent = new StreamMessageEvent(this, tokenData, ApiClient.Options.RawResponse ? data : null, timestamp);
+        var messageEvent = new StreamMessageEvent(this, tokenData, ApiClient.ClientOptions.RawResponse ? data : null, timestamp);
         var (handled, userProcessTime, subscription) = HandleData(messageEvent);
         if (!handled && !handledResponse)
         {
@@ -636,13 +636,13 @@ public class StreamConnection
         }
 
         // Foreach subscription which is subscribed by a subscription request we will need to resend that request to resubscribe
-        for (var i = 0; i < subscriptionList.Count; i += ApiClient.Options.MaxConcurrentResubscriptionsPerConnection)
+        for (var i = 0; i < subscriptionList.Count; i += ApiClient.ClientOptions.MaxConcurrentResubscriptionsPerConnection)
         {
             if (!_wsc.IsOpen)
                 return new CallResult<bool>(new WebError("Stream is not connected"));
 
             var taskList = new List<Task<CallResult<bool>>>();
-            foreach (var subscription in subscriptionList.Skip(i).Take(ApiClient.Options.MaxConcurrentResubscriptionsPerConnection))
+            foreach (var subscription in subscriptionList.Skip(i).Take(ApiClient.ClientOptions.MaxConcurrentResubscriptionsPerConnection))
                 taskList.Add(ApiClient.SubscribeAndWaitAsync(this, subscription.Request!, subscription));
 
             await Task.WhenAll(taskList).ConfigureAwait(false);

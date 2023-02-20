@@ -44,20 +44,20 @@ public class RestCallResult : CallResult
         string requestBody,
         HttpMethod requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
-        CallError error) : this(
+        Error error) : this(
             new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders), 
             new RestCallResponse(responseTime, responseCode, responseHeaders), 
             error) { }
 
-    public RestCallResult(CallError error) : this(null, null, error) { }
+    public RestCallResult(Error error) : this(null, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, CallError error) : base(error)
+    public RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : base(error)
     {
         Request = request;
         Response = response;
     }
 
-    public RestCallResult AsError(CallError error)
+    public RestCallResult AsError(Error error)
     {
         return new RestCallResult(Request, Response, error);
     }
@@ -78,16 +78,16 @@ public class RestCallResult<T> : CallResult<T>
         HttpMethod requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
         T data,
-        CallError error) : this(
+        Error error) : this(
             new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders),
             new RestCallResponse(responseTime, responseCode, responseHeaders), 
             data, responseRaw, error) { }
 
-    public RestCallResult(CallError error) : this(null, null, default, null, error) { }
+    public RestCallResult(Error error) : this(null, null, default, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, CallError error) : this(request, response, default, null, error) { }
+    public RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : this(request, response, default, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, T data, string raw, CallError error) : base(data, raw, error)
+    public RestCallResult(RestCallRequest request, RestCallResponse response, T data, string raw, Error error) : base(data, raw, error)
     {
         Request = request;
         Response = response;
@@ -117,7 +117,7 @@ public class RestCallResult<T> : CallResult<T>
     /// Copy as a dataless result
     /// </summary>
     /// <returns></returns>
-    public RestCallResult AsDatalessError(CallError error)
+    public RestCallResult AsDatalessError(Error error)
     {
         return new RestCallResult(Request, Response, error);
     }
@@ -128,7 +128,7 @@ public class RestCallResult<T> : CallResult<T>
     /// <typeparam name="K">The new type</typeparam>
     /// <param name="error">The error returned</param>
     /// <returns></returns>
-    public new RestCallResult<K> AsError<K>(CallError error)
+    public new RestCallResult<K> AsError<K>(Error error)
     {
         return new RestCallResult<K>(Request, Response, default, Raw, error);
     }

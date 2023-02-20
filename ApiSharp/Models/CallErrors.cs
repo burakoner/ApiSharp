@@ -1,12 +1,12 @@
 ﻿namespace ApiSharp.Models;
 
-public abstract class CallError
+public abstract class Error
 {
     public int? Code { get; set; }
     public string Message { get; set; }
     public object Data { get; set; }
 
-    protected CallError(int? code, string message, object data)
+    protected Error(int? code, string message, object data)
     {
         Code = code;
         Message = message;
@@ -19,54 +19,54 @@ public abstract class CallError
     }
 }
 
-public class CantConnectError : CallError
+public class CantConnectError : Error
 {
     public CantConnectError() : base(null, "Can't connect to the server", null) { }
 }
 
-public class NoApiCredentialsError : CallError
+public class NoApiCredentialsError : Error
 {
     public NoApiCredentialsError() : base(null, "No credentials provided for private endpoint", null) { }
 }
 
-public class ServerError : CallError
+public class ServerError : Error
 {
     public ServerError(string message, object data = null) : base(null, message, data) { }
     public ServerError(int code, string message, object data = null) : base(code, message, data) { }
 }
 
-public class WebError : CallError
+public class WebError : Error
 {
     public WebError(string message, object data = null) : base(null, message, data) { }
     public WebError(int code, string message, object data = null) : base(code, message, data) { }
 }
 
-public class DeserializeError : CallError
+public class DeserializeError : Error
 {
     public DeserializeError(string message, object data) : base(null, message, data) { }
 }
 
-public class UnknownError : CallError
+public class UnknownError : Error
 {
     public UnknownError(string message, object data = null) : base(null, message, data) { }
 }
 
-public class ArgumentError : CallError
+public class ArgumentError : Error
 {
     public ArgumentError(string message) : base(null, "Invalid parameter: " + message, null) { }
 }
 
-public class RateLimitError : CallError
+public class RateLimitError : Error
 {
     public RateLimitError(string message) : base(null, "Rate limit exceeded: " + message, null) { }
 }
 
-public class CancellationRequestedError : CallError
+public class CancellationRequestedError : Error
 {
     public CancellationRequestedError() : base(null, "Cancellation requested", null) { }
 }
 
-public class InvalidOperationError : CallError
+public class InvalidOperationError : Error
 {
     public InvalidOperationError(string message) : base(null, message, null) { }
 }

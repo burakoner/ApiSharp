@@ -2,7 +2,7 @@
 
 public abstract class StreamApiClient : BaseClient
 {
-    public new StreamApiClientOptions Options { get { return (StreamApiClientOptions)base.ClientOptions; } }
+    public new StreamApiClientOptions ClientOptions { get { return (StreamApiClientOptions)base.ClientOptions; } }
 
     protected StreamApiClient() : this("", new())
     {
@@ -118,7 +118,7 @@ public abstract class StreamApiClient : BaseClient
     /// <returns></returns>
     protected virtual Task<CallResult<UpdateSubscription>> SubscribeAsync<T>(object request, string identifier, bool authenticated, Action<StreamDataEvent<T>> dataHandler, CancellationToken ct)
     {
-        return SubscribeAsync(Options.BaseAddress, request, identifier, authenticated, dataHandler, ct);
+        return SubscribeAsync(ClientOptions.BaseAddress, request, identifier, authenticated, dataHandler, ct);
     }
 
     /// <summary>
@@ -168,7 +168,7 @@ public abstract class StreamApiClient : BaseClient
                     continue;
                 }
 
-                if (Options.SubscriptionsCombineTarget == 1)
+                if (ClientOptions.SubscriptionsCombineTarget == 1)
                 {
                     // Only 1 subscription per connection, so no need to wait for connection since a new subscription will create a new connection anyway
                     Semaphore.Release();
@@ -235,7 +235,7 @@ public abstract class StreamApiClient : BaseClient
     public virtual async Task<CallResult<bool>> SubscribeAndWaitAsync(StreamConnection connection, object request, StreamSubscription subscription)
     {
         CallResult<object> callResult = null;
-        await connection.SendAndWaitAsync(request, Options.ResponseTimeout, data => HandleSubscriptionResponse(connection, subscription, request, data, out callResult)).ConfigureAwait(false);
+        await connection.SendAndWaitAsync(request, ClientOptions.ResponseTimeout, data => HandleSubscriptionResponse(connection, subscription, request, data, out callResult)).ConfigureAwait(false);
 
         if (callResult?.Success == true)
         {
@@ -258,7 +258,7 @@ public abstract class StreamApiClient : BaseClient
     /// <returns></returns>
     protected virtual Task<CallResult<T>> QueryAsync<T>(object request, bool authenticated)
     {
-        return QueryAsync<T>(Options.BaseAddress, request, authenticated);
+        return QueryAsync<T>(ClientOptions.BaseAddress, request, authenticated);
     }
 
     /// <summary>
@@ -285,7 +285,7 @@ public abstract class StreamApiClient : BaseClient
 
             connection = streamResult.Data;
 
-            if (Options.SubscriptionsCombineTarget == 1)
+            if (ClientOptions.SubscriptionsCombineTarget == 1)
             {
                 // Can release early when only a single sub per connection
                 Semaphore.Release();
@@ -321,7 +321,7 @@ public abstract class StreamApiClient : BaseClient
     protected virtual async Task<CallResult<T>> QueryAndWaitAsync<T>(StreamConnection connection, object request)
     {
         var dataResult = new CallResult<T>(new ServerError("No response on query received"));
-        await connection.SendAndWaitAsync(request, Options.ResponseTimeout, data =>
+        await connection.SendAndWaitAsync(request, ClientOptions.ResponseTimeout, data =>
         {
             if (!HandleQueryResponse<T>(connection, request, data, out var callResult))
                 return false;
@@ -348,8 +348,8 @@ public abstract class StreamApiClient : BaseClient
         if (!connectResult)
             return new CallResult<bool>(connectResult.Error!);
 
-        if (Options.DelayAfterConnect != TimeSpan.Zero)
-            await Task.Delay(Options.DelayAfterConnect).ConfigureAwait(false);
+        if (ClientOptions.DelayAfterConnect != TimeSpan.Zero)
+            await Task.Delay(ClientOptions.DelayAfterConnect).ConfigureAwait(false);
 
         if (!authenticated || connection.Authenticated)
             return new CallResult<bool>(true);
@@ -461,7 +461,7 @@ public abstract class StreamApiClient : BaseClient
             if (typeof(T) == typeof(string))
             {
                 var stringData = (T)Convert.ChangeType(messageEvent.JsonData.ToString(), typeof(T));
-                dataHandler(new StreamDataEvent<T>(stringData, null, Options.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
+                dataHandler(new StreamDataEvent<T>(stringData, null, ClientOptions.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
                 return;
             }
 
@@ -472,7 +472,7 @@ public abstract class StreamApiClient : BaseClient
                 return;
             }
 
-            dataHandler(new StreamDataEvent<T>(desResult.Data, null, Options.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
+            dataHandler(new StreamDataEvent<T>(desResult.Data, null, ClientOptions.RawResponse ? messageEvent.Raw : null, messageEvent.ReceivedTimestamp));
         }
 
         var subscription = request == null
@@ -546,7 +546,7 @@ public abstract class StreamApiClient : BaseClient
         var result = streamResult.Equals(default(KeyValuePair<int, StreamConnection>)) ? null : streamResult.Value;
         if (result != null)
         {
-            if (result.SubscriptionCount < Options.SubscriptionsCombineTarget || (StreamConnections.Count >= Options.MaxConnections && StreamConnections.All(s => s.Value.SubscriptionCount >= Options.SubscriptionsCombineTarget)))
+            if (result.SubscriptionCount < ClientOptions.SubscriptionsCombineTarget || (StreamConnections.Count >= ClientOptions.MaxConnections && StreamConnections.All(s => s.Value.SubscriptionCount >= ClientOptions.SubscriptionsCombineTarget)))
             {
                 // Use existing socket if it has less than target connections OR it has the least connections and we can't make new
                 return new CallResult<StreamConnection>(result);
@@ -607,15 +607,15 @@ public abstract class StreamApiClient : BaseClient
     /// <param name="address">The address to connect to</param>
     /// <returns></returns>
     protected virtual StreamParameters GetStreamParameters(string address)
-        => new(new Uri(address), Options.AutoReconnect)
+        => new(new Uri(address), ClientOptions.AutoReconnect)
         {
             DataInterpreterBytes = DataInterpreterBytes,
             DataInterpreterString = DataInterpreterString,
             KeepAliveInterval = KeepAliveInterval,
-            ReconnectInterval = Options.ReconnectInterval,
+            ReconnectInterval = ClientOptions.ReconnectInterval,
             RateLimitPerSecond = RateLimitPerConnectionPerSecond,
-            Proxy = Options.Proxy,
-            Timeout = Options.NoDataTimeout
+            Proxy = ClientOptions.Proxy,
+            Timeout = ClientOptions.NoDataTimeout
         };
 
     /// <summary>

@@ -2,7 +2,7 @@
 
 public abstract class SocketApiClient : BaseClient
 {
-    public new SocketApiClientOptions Options { get { return (SocketApiClientOptions)base.ClientOptions; } }
+    public new SocketApiClientOptions ClientOptions { get { return (SocketApiClientOptions)base.ClientOptions; } }
 
     // Public Properties
     public long BytesSent { get; private set; }
@@ -34,7 +34,7 @@ public abstract class SocketApiClient : BaseClient
     protected SocketApiClient(string name, SocketApiClientOptions options) : base(name, options ?? new())
     {
         // Tcp Client
-        _socketClient = new SocketClient(Options.ServerHost, Options.ServerPort);
+        _socketClient = new SocketClient(ClientOptions.ServerHost, ClientOptions.ServerPort);
         _socketClient.OnConnected += Client_OnConnected;
         _socketClient.OnDisconnected += Client_OnDisconnected;
         _socketClient.OnDataReceived += Client_OnDataReceived;
@@ -42,7 +42,7 @@ public abstract class SocketApiClient : BaseClient
         _socketClient.KeepAlive = true;
 
         // Heart Beat
-        this._hbTimer = new System.Timers.Timer(Options.HeartBeatInterval);
+        this._hbTimer = new System.Timers.Timer(ClientOptions.HeartBeatInterval);
         this._hbTimer.Elapsed += PingTimer;
     }
 
@@ -81,7 +81,7 @@ public abstract class SocketApiClient : BaseClient
         Task.Factory.StartNew(PacketConsumer, TaskCreationOptions.LongRunning);
 
         // Heart Beat
-        if (Options.HeartBeatEnabled)
+        if (ClientOptions.HeartBeatEnabled)
             this._hbTimer.Start();
 
         // Execute OnConnected Logic
@@ -95,7 +95,7 @@ public abstract class SocketApiClient : BaseClient
             this.CancellationTokenSource.Cancel();
 
         // Disable Heart Beat
-        if (Options.HeartBeatEnabled)
+        if (ClientOptions.HeartBeatEnabled)
             this._hbTimer.Stop();
 
         // Execute OnDisconnected Logic
@@ -131,17 +131,17 @@ public abstract class SocketApiClient : BaseClient
             // * CRC32    : 4 Bytes
 
             var crcLength = 0;
-            var syncLength = Options.HeaderBytes.Length;
+            var syncLength = ClientOptions.HeaderBytes.Length;
             var lengthLength = 2;
             var dataTypeLength = 1;
             var minimumDataLength = 1;
             var minimumPacketLength = syncLength + lengthLength + dataTypeLength + crcLength + minimumDataLength;
-            if (Options.SocketSecurity == SocketSecurity.CRC16) crcLength = 2;
-            else if (Options.SocketSecurity == SocketSecurity.CRC32) crcLength = 4;
+            if (ClientOptions.SocketSecurity == SocketSecurity.CRC16) crcLength = 2;
+            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC32) crcLength = 4;
 
             if (buff.Length >= minimumPacketLength)
             {
-                var indexOf = buff.IndexOf(Options.HeaderBytes);
+                var indexOf = buff.IndexOf(ClientOptions.HeaderBytes);
                 if (indexOf == -1) _socketBuffer.Clear();
                 else if (indexOf == 0) // SYNC Bytes
                 {
@@ -164,18 +164,18 @@ public abstract class SocketApiClient : BaseClient
                         {
                             // Check Point
                             var consume = false;
-                            if (Options.SocketSecurity == SocketSecurity.None)
+                            if (ClientOptions.SocketSecurity == SocketSecurity.None)
                             {
                                 consume = true;
                             }
-                            else if (Options.SocketSecurity == SocketSecurity.CRC16)
+                            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC16)
                             {
                                 var crcBytes = new byte[crcLength];
                                 Array.Copy(buff, lenghtValue + preBytesLength, crcBytes, 0, crcLength);
                                 var crcValue = BitConverter.ToUInt16(crcBytes, 0);
                                 consume = CRC16.CheckChecksum(crcBody, crcValue);
                             }
-                            else if (Options.SocketSecurity == SocketSecurity.CRC32)
+                            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC32)
                             {
                                 var crcBytes = new byte[crcLength];
                                 Array.Copy(buff, lenghtValue + preBytesLength, crcBytes, 0, crcLength);
