@@ -10,6 +10,7 @@ public class StreamDataEvent<T>
     /// The timestamp the data was received
     /// </summary>
     public DateTime Timestamp { get; set; }
+
     /// <summary>
     /// The topic of the update, what symbol/asset etc..
     /// </summary>
@@ -19,6 +20,7 @@ public class StreamDataEvent<T>
     /// The original data that was received, only available when OutputRaw is set to true in the client options
     /// </summary>
     public string Raw { get; set; }
+
     /// <summary>
     /// The received data deserialized into an object
     /// </summary>
