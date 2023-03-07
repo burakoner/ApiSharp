@@ -14,6 +14,9 @@ public abstract class BaseClientOptions
     // Output
     public bool RawResponse { get; set; }
 
+    // Broker Id
+    public string BrokerId { get; set; }
+
     // Proxy
     public ProxyCredentials Proxy { get; set; }
 
