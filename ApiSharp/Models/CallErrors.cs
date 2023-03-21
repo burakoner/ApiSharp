@@ -29,6 +29,12 @@ public class NoApiCredentialsError : Error
     public NoApiCredentialsError() : base(null, "No credentials provided for private endpoint", null) { }
 }
 
+public class CallError : Error
+{
+    public CallError(string message, object data = null) : base(null, message, data) { }
+    public CallError(int code, string message, object data = null) : base(code, message, data) { }
+}
+
 public class ServerError : Error
 {
     public ServerError(string message, object data = null) : base(null, message, data) { }

@@ -19,15 +19,15 @@ public class RestCallRequest
 
 public class RestCallResponse
 {
-    public TimeSpan? Time { get; set; }
+    public TimeSpan? ResponseTime { get; set; }
     public HttpStatusCode? StatusCode { get; set; }
     public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; }
 
     public RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
     {
-        Time = time;
-        StatusCode = statusCode;
         Headers = headers;
+        ResponseTime = time;
+        StatusCode = statusCode;
     }
 }
 

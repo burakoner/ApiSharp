@@ -19,7 +19,6 @@ global using ApiSharp.Throttling.Structs;
 global using Microsoft.Extensions.Logging;
 global using Newtonsoft.Json;
 global using Newtonsoft.Json.Linq;
-global using Newtonsoft.Json.Serialization;
 global using System;
 global using System.Collections;
 global using System.Collections.Concurrent;
