@@ -46,26 +46,27 @@ public abstract class RestApiClient : BaseClient
     /// <summary>
     /// Get time sync info for an API client
     /// </summary>
-    protected abstract TimeSyncInfo GetTimeSyncInfo();
+    protected internal virtual TimeSyncInfo GetTimeSyncInfo()
+        => new(log, false, TimeSpan.MaxValue, new TimeSyncState(""));
 
     /// <summary>
     /// Get time offset for an API client
     /// </summary>
-    public abstract TimeSpan GetTimeOffset();
+    protected internal virtual TimeSpan GetTimeOffset()
+        => TimeSpan.Zero;
 
     protected virtual async Task<RestCallResult<T>> SendRequestAsync<T>(
-    Uri uri,
-    HttpMethod method,
-    CancellationToken cancellationToken,
-    bool signed = false,
-    Dictionary<string, object> queryParameters = null,
-    Dictionary<string, object> bodyParameters = null,
-    Dictionary<string, string> headerParameters = null,
-    ArraySerialization? serialization = null,
-    JsonSerializer deserializer = null,
-    bool ignoreRatelimit = false,
-    int requestWeight = 1
-    ) where T : class
+        Uri uri,
+        HttpMethod method,
+        CancellationToken cancellationToken,
+        bool signed = false,
+        Dictionary<string, object> queryParameters = null,
+        Dictionary<string, object> bodyParameters = null,
+        Dictionary<string, string> headerParameters = null,
+        ArraySerialization? serialization = null,
+        JsonSerializer deserializer = null,
+        bool ignoreRatelimit = false,
+        int requestWeight = 1) where T : class
     {
         var request = await PrepareRequestAsync(uri, method, cancellationToken, signed, queryParameters, bodyParameters, headerParameters, serialization, deserializer, ignoreRatelimit, requestWeight).ConfigureAwait(false);
         if (!request) return new RestCallResult<T>(request.Error!);
@@ -98,8 +99,7 @@ public abstract class RestApiClient : BaseClient
         ArraySerialization? serialization = null,
         JsonSerializer deserializer = null,
         bool ignoreRatelimit = false,
-        int requestWeight = 1
-        )
+        int requestWeight = 1)
     {
         var requestId = NextId();
 
@@ -451,17 +451,16 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     /// <param name="error">The string the request returned</param>
     protected virtual Error ParseErrorResponse(JToken error)
-    {
-        return new ServerError(error.ToString());
-    }
+        => new ServerError(error.ToString());
 
     /// <summary>
     /// Retrieve the server time for the purpose of syncing time between client and server to prevent authentication issues
     /// </summary>
     /// <returns>Server time</returns>
-    protected abstract Task<RestCallResult<DateTime>> GetServerTimestampAsync();
+    protected virtual Task<RestCallResult<DateTime>> GetServerTimestampAsync()
+        => Task.FromResult(new RestCallResult<DateTime>(null, null, DateTime.UtcNow, null, null));
 
-    internal async Task<RestCallResult<bool>> SyncTimeAsync()
+    protected internal virtual async Task<RestCallResult<bool>> SyncTimeAsync()
     {
         var timeSyncParams = GetTimeSyncInfo();
         if (await timeSyncParams.TimeSyncState.Semaphore.WaitAsync(0).ConfigureAwait(false))
