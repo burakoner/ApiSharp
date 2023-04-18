@@ -12,6 +12,8 @@ public abstract class StreamApiClient : BaseClient
     {
     }
 
+    protected internal List<string> IgnoreHandlingList = new List<string>();
+
     /// <summary>
     /// The factory for creating sockets. Used for unit testing
     /// </summary>

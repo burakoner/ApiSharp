@@ -8,10 +8,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>1.2.6</Version>
-		<FileVersion>1.2.6</FileVersion>
-		<PackageVersion>1.2.6</PackageVersion>
-		<AssemblyVersion>1.2.6</AssemblyVersion>
+		<Version>1.2.8</Version>
+		<FileVersion>1.2.8</FileVersion>
+		<PackageVersion>1.2.8</PackageVersion>
+		<AssemblyVersion>1.2.8</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
@@ -19,7 +19,7 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
-			Version 1.2.6 - 24 Mar 2023
+			Version 1.2.8 - 18 Apr 2023
 		</PackageReleaseNotes>
 		<PackageIcon>ApiSharp.png</PackageIcon>
 		<PackageIconUrl />

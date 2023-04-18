@@ -1,15 +1,15 @@
 ﻿namespace ApiSharp.Attributes;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class EnumLabelAttribute : Attribute
+public class LabelAttribute : Attribute
 {
-    public static readonly EnumLabelAttribute Default = new EnumLabelAttribute();
+    public static readonly LabelAttribute Default = new LabelAttribute();
 
-    public EnumLabelAttribute() : this(string.Empty)
+    public LabelAttribute() : this(string.Empty)
     {
     }
 
-    public EnumLabelAttribute(string label)
+    public LabelAttribute(string label)
     {
         this.Label = label;
     }
@@ -21,7 +21,7 @@ public class EnumLabelAttribute : Attribute
         if (obj == this)
             return true;
 
-        EnumLabelAttribute other = obj as EnumLabelAttribute;
+        LabelAttribute other = obj as LabelAttribute;
         return (other != null) && other.Label == this.Label;
     }
 
@@ -47,7 +47,7 @@ public static class EnumLabelExtensions
             var field = type.GetField(name);
             if (field != null)
             {
-                var attr = Attribute.GetCustomAttribute(field, typeof(EnumLabelAttribute)) as EnumLabelAttribute;
+                var attr = Attribute.GetCustomAttribute(field, typeof(LabelAttribute)) as LabelAttribute;
                 if (attr != null)
                 {
                     return attr.Label;

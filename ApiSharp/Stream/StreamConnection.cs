@@ -1,4 +1,6 @@
-﻿namespace ApiSharp.Stream;
+﻿using System.Linq;
+
+namespace ApiSharp.Stream;
 
 /// <summary>
 /// A single stream connection to the server
@@ -273,9 +275,14 @@ public class StreamConnection
     protected virtual void HandleMessage(string data)
     {
         var timestamp = DateTime.UtcNow;
-            _log.Write(LogLevel.Trace, $"Stream {Id} received data: " + data);
+        _log.Write(LogLevel.Trace, $"Stream {Id} received data: " + data);
         if (string.IsNullOrEmpty(data)) return;
 
+        // Check Point
+        if (ApiClient.IgnoreHandlingList != null && ApiClient.IgnoreHandlingList.Contains(data))
+            return;
+
+        // To JToken
         var tokenData = data.ToJToken(_log);
         if (tokenData == null)
         {
@@ -285,6 +292,7 @@ public class StreamConnection
                 return;
         }
 
+        // Flag
         var handledResponse = false;
 
         // Remove any timed out requests
@@ -316,8 +324,7 @@ public class StreamConnection
         var (handled, userProcessTime, subscription) = HandleData(messageEvent);
         if (!handled && !handledResponse)
         {
-            if (!ApiClient.UnhandledMessageExpected)
-                _log.Write(LogLevel.Warning, $"Stream {Id} Message not handled: " + tokenData);
+            if (!ApiClient.UnhandledMessageExpected) _log.Write(LogLevel.Warning, $"Stream {Id} Message not handled: " + tokenData);
             UnhandledMessage?.Invoke(tokenData);
         }
 
@@ -325,7 +332,7 @@ public class StreamConnection
         if (userProcessTime.TotalMilliseconds > 500)
         {
             _log.Write(LogLevel.Debug, $"Stream {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processing slow ({(int)total.TotalMilliseconds}ms, {(int)userProcessTime.TotalMilliseconds}ms user code), consider offloading data handling to another thread. " +
-                                            "Data from this socket may arrive late or not at all if message processing is continuously slow.");
+                "Data from this socket may arrive late or not at all if message processing is continuously slow.");
         }
 
         _log.Write(LogLevel.Trace, $"Stream {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processed in {(int)total.TotalMilliseconds}ms, ({(int)userProcessTime.TotalMilliseconds}ms user code)");
