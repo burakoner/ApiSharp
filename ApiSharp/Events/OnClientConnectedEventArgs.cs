@@ -1,14 +1,13 @@
-﻿namespace ApiSharp.Events
+﻿namespace ApiSharp.Events;
+
+public class OnClientConnectedEventArgs : EventArgs
 {
-    public class OnClientConnectedEventArgs : EventArgs
+    public IPAddress ServerIPAddress
     {
-        public IPAddress ServerIPAddress
-        {
-            get { return IPAddress.Parse(ServerHost); }
-        }
-
-        public string ServerHost { get; internal set; }
-
-        public int ServerPort { get; internal set; }
+        get { return IPAddress.Parse(ServerHost); }
     }
+
+    public string ServerHost { get; internal set; }
+
+    public int ServerPort { get; internal set; }
 }

@@ -5,7 +5,7 @@ public class RestApiConstants
     /// <summary>
     /// Http Client User Agent
     /// </summary>
-    public const string USER_AGENT = "ApiSharp/1.2.7";
+    public const string USER_AGENT = "ApiSharp/1.3.0";
 
     /// <summary>
     /// Json content type header

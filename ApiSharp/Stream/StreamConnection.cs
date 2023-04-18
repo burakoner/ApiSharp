@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace ApiSharp.Stream;
+﻿namespace ApiSharp.Stream;
 
 /// <summary>
 /// A single stream connection to the server

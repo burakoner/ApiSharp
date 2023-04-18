@@ -1,7 +1,6 @@
-﻿namespace ApiSharp.Events
+﻿namespace ApiSharp.Events;
+
+public class OnClientDisconnectedEventArgs : EventArgs
 {
-    public class OnClientDisconnectedEventArgs : EventArgs
-    {
-        public SocketDisconnectReason Reason { get; internal set; }
-    }
+    public SocketDisconnectReason Reason { get; internal set; }
 }

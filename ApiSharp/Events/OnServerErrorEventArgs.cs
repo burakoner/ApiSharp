@@ -1,9 +1,8 @@
-﻿namespace ApiSharp.Events
+﻿namespace ApiSharp.Events;
+
+public class OnServerErrorEventArgs : EventArgs
 {
-    public class OnServerErrorEventArgs : EventArgs
-    {
-        public TcpClient Client { get; internal set; }
-        public long ConnectionId { get; internal set; }
-        public Exception Exception { get; internal set; }
-    }
+    public TcpClient Client { get; internal set; }
+    public long ConnectionId { get; internal set; }
+    public Exception Exception { get; internal set; }
 }

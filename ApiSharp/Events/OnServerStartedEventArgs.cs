@@ -1,7 +1,6 @@
-﻿namespace ApiSharp.Events
+﻿namespace ApiSharp.Events;
+
+public class OnServerStartedEventArgs : EventArgs
 {
-    public class OnServerStartedEventArgs : EventArgs
-    {
-        public bool IsStarted { get; internal set; }
-    }
+    public bool IsStarted { get; internal set; }
 }

@@ -1,9 +1,8 @@
-﻿namespace ApiSharp.Enums
+﻿namespace ApiSharp.Enums;
+
+public enum SocketSecurity
 {
-    public enum SocketSecurity
-    {
-        None = 0,
-        CRC16 = 1,
-        CRC32 = 2,
-    }
+    None = 0,
+    CRC16 = 1,
+    CRC32 = 2,
 }

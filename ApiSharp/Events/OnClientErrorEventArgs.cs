@@ -1,7 +1,6 @@
-﻿namespace ApiSharp.Events
+﻿namespace ApiSharp.Events;
+
+public class OnClientErrorEventArgs : EventArgs
 {
-    public class OnClientErrorEventArgs : EventArgs
-    {
-        public Exception Exception { get; internal set; }
-    }
+    public Exception Exception { get; internal set; }
 }
