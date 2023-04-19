@@ -11,6 +11,9 @@ public abstract class BaseClientOptions
     // Json Options
     public JsonOptions JsonOptions { get; set; }
 
+    // Debug Mode
+    public bool DebugMode { get; set; }
+
     // Output
     public bool RawResponse { get; set; }
 
