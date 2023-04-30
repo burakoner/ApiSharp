@@ -66,7 +66,7 @@ public abstract class RestApiClient : BaseClient
         ArraySerialization? serialization = null,
         JsonSerializer deserializer = null,
         bool ignoreRatelimit = false,
-        int requestWeight = 1) where T : class
+        int requestWeight = 1) // where T : class
     {
         var request = await PrepareRequestAsync(uri, method, cancellationToken, signed, queryParameters, bodyParameters, headerParameters, serialization, deserializer, ignoreRatelimit, requestWeight).ConfigureAwait(false);
         if (!request) return new RestCallResult<T>(request.Error!);
