@@ -36,7 +36,7 @@ public class LabelAttribute : Attribute
     }
 }
 
-public static class EnumLabelExtensions
+public static class LabelExtensions
 {
     public static string GetLabel(this Enum value)
     {
@@ -47,10 +47,21 @@ public static class EnumLabelExtensions
             var field = type.GetField(name);
             if (field != null)
             {
-                var attr = Attribute.GetCustomAttribute(field, typeof(LabelAttribute)) as LabelAttribute;
-                if (attr != null)
+                // var attr = Attribute.GetCustomAttribute(field, typeof(LabelAttribute)) as LabelAttribute;
+                // if (attr != null)  return attr.Label;
+                var attributes = Attribute.GetCustomAttributes(field);
+                if (attributes != null)
                 {
-                    return attr.Label;
+                    foreach (var attribute in attributes)
+                    {
+                        if (attribute.GetType().Name == typeof(LabelAttribute).Name)
+                        {
+                            // Serialize
+                            var json = JsonConvert.SerializeObject(attribute);
+                            var label = JsonConvert.DeserializeObject<LabelAttribute>(json);
+                            return label.Label;
+                        }
+                    }
                 }
             }
         }
@@ -113,4 +124,5 @@ public static class EnumLabelExtensions
     {
         return @this.GetEnumByValue<T>().GetLabel();
     }
+
 }

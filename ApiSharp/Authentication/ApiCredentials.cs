@@ -1,35 +1,26 @@
 ﻿namespace ApiSharp.Authentication;
 
-public class ApiCredentials: IDisposable
+public class ApiCredentials : IDisposable
 {
     public SensitiveString Key { get; }
     public SensitiveString Secret { get; }
 
     public ApiCredentials(SensitiveString key, SensitiveString secret)
     {
-        if (key == null || secret == null)
-            throw new ArgumentException("Key and secret can't be null/empty");
-
-        Key = key;
-        Secret = secret;
+        Key = key != null ? key : string.Empty.ToSensitiveString();
+        Secret = secret != null ? secret : string.Empty.ToSensitiveString();
     }
 
     public ApiCredentials(string key)
     {
-        if (string.IsNullOrEmpty(key))
-            throw new ArgumentException("Key can't be null/empty");
-
-        Key = key.ToSensitiveString();
+        Key = !string.IsNullOrEmpty(key) ? key.ToSensitiveString() : string.Empty.ToSensitiveString();
         Secret = string.Empty.ToSensitiveString();
     }
 
     public ApiCredentials(string key, string secret)
     {
-        if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(secret))
-            throw new ArgumentException("Key and secret can't be null/empty");
-
-        Key = key.ToSensitiveString();
-        Secret = secret.ToSensitiveString();
+        Key = !string.IsNullOrEmpty(key) ? key.ToSensitiveString() : string.Empty.ToSensitiveString();
+        Secret = !string.IsNullOrEmpty(secret) ? secret.ToSensitiveString() : string.Empty.ToSensitiveString();
     }
 
     public virtual ApiCredentials Copy()
