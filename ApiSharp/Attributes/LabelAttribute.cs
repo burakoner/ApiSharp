@@ -83,7 +83,7 @@ public static class LabelExtensions
         // Action
         foreach (T item in Enum.GetValues(typeof(T)))
         {
-            if (@this.Trim().Equals(item.GetLabel(), StringComparison.InvariantCultureIgnoreCase))
+            if (@this.Trim().Equals(item.GetLabel(), StringComparison.OrdinalIgnoreCase))
                 return item;
         }
 
