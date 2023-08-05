@@ -38,9 +38,9 @@ public abstract class AuthenticationProvider
         string bodyContent,
         SortedDictionary<string, string> headers);
 
-    public abstract void AuthenticateStreamApi();
+    public abstract void AuthenticateTcpSocketApi();
 
-    public abstract void AuthenticateSocketApi();
+    public abstract void AuthenticateWebSocketApi();
 
 
     /// <summary>

@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp;
 
-public class StreamApiClientOptions : BaseClientOptions
+public class WebSocketApiClientOptions : BaseClientOptions
 {
     /// <summary>
     /// Whether or not the socket should automatically reconnect when losing connection
@@ -45,8 +45,8 @@ public class StreamApiClientOptions : BaseClientOptions
     /// </summary>
     public TimeSpan DelayAfterConnect { get; set; } = TimeSpan.Zero;
 
-    public StreamApiClientOptions() : this(string.Empty) { }
-    public StreamApiClientOptions(string baseAddress)
+    public WebSocketApiClientOptions() : this(string.Empty) { }
+    public WebSocketApiClientOptions(string baseAddress)
     {
         // Base Address
         this.BaseAddress = baseAddress;

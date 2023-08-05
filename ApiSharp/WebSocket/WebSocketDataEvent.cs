@@ -1,10 +1,10 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// An update received from a stream update subscription
 /// </summary>
 /// <typeparam name="T">The type of the data</typeparam>
-public class StreamDataEvent<T>
+public class WebSocketDataEvent<T>
 {
     /// <summary>
     /// The timestamp the data was received
@@ -31,20 +31,20 @@ public class StreamDataEvent<T>
     /// </summary>
     /// <param name="data"></param>
     /// <param name="timestamp"></param>
-    public StreamDataEvent(T data, DateTime timestamp)
+    public WebSocketDataEvent(T data, DateTime timestamp)
     {
         Data = data;
         Timestamp = timestamp;
     }
 
-    internal StreamDataEvent(T data, string topic, DateTime timestamp)
+    internal WebSocketDataEvent(T data, string topic, DateTime timestamp)
     {
         Data = data;
         Topic = topic;
         Timestamp = timestamp;
     }
 
-    internal StreamDataEvent(T data, string topic, string raw, DateTime timestamp)
+    internal WebSocketDataEvent(T data, string topic, string raw, DateTime timestamp)
     {
         Raw = raw;
         Data = data;
@@ -58,9 +58,9 @@ public class StreamDataEvent<T>
     /// <typeparam name="K">The type of the new data</typeparam>
     /// <param name="data">The new data</param>
     /// <returns></returns>
-    public StreamDataEvent<K> As<K>(K data)
+    public WebSocketDataEvent<K> As<K>(K data)
     {
-        return new StreamDataEvent<K>(data, Topic, Raw, Timestamp);
+        return new WebSocketDataEvent<K>(data, Topic, Raw, Timestamp);
     }
 
     /// <summary>
@@ -70,8 +70,8 @@ public class StreamDataEvent<T>
     /// <param name="data">The new data</param>
     /// <param name="topic">The new topic</param>
     /// <returns></returns>
-    public StreamDataEvent<K> As<K>(K data, string topic)
+    public WebSocketDataEvent<K> As<K>(K data, string topic)
     {
-        return new StreamDataEvent<K>(data, topic, Raw, Timestamp);
+        return new WebSocketDataEvent<K>(data, topic, Raw, Timestamp);
     }
 }

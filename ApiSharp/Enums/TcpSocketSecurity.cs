@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Enums;
 
-public enum SocketSecurity
+public enum TcpSocketSecurity
 {
     None = 0,
     CRC16 = 1,

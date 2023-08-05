@@ -1,8 +1,8 @@
 ﻿namespace ApiSharp;
 
-public abstract class SocketApiClient : BaseClient
+public abstract class TcpSocketApiClient : BaseClient
 {
-    public new SocketApiClientOptions ClientOptions { get { return (SocketApiClientOptions)base.ClientOptions; } }
+    public new TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base.ClientOptions; } }
 
     // Public Properties
     public long BytesSent { get; private set; }
@@ -21,20 +21,20 @@ public abstract class SocketApiClient : BaseClient
     private readonly System.Timers.Timer _hbTimer;
     private readonly List<byte> _socketBuffer = new();
     private readonly BlockingCollection<byte[]> _packetBuffer = new();
-    private readonly SocketClient _socketClient;
+    private readonly TcpSocketClient _socketClient;
 
     // Cancellation Token
     protected CancellationTokenSource CancellationTokenSource { get; set; }
     protected CancellationToken CancellationToken { get; set; }
 
-    protected SocketApiClient() : this("", new())
+    protected TcpSocketApiClient() : this("", new())
     {
     }
 
-    protected SocketApiClient(string name, SocketApiClientOptions options) : base(name, options ?? new())
+    protected TcpSocketApiClient(string name, TcpSocketApiClientOptions options) : base(name, options ?? new())
     {
         // Tcp Client
-        _socketClient = new SocketClient(ClientOptions.ServerHost, ClientOptions.ServerPort);
+        _socketClient = new TcpSocketClient(ClientOptions.ServerHost, ClientOptions.ServerPort);
         _socketClient.OnConnected += Client_OnConnected;
         _socketClient.OnDisconnected += Client_OnDisconnected;
         _socketClient.OnDataReceived += Client_OnDataReceived;
@@ -136,8 +136,8 @@ public abstract class SocketApiClient : BaseClient
             var dataTypeLength = 1;
             var minimumDataLength = 1;
             var minimumPacketLength = syncLength + lengthLength + dataTypeLength + crcLength + minimumDataLength;
-            if (ClientOptions.SocketSecurity == SocketSecurity.CRC16) crcLength = 2;
-            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC32) crcLength = 4;
+            if (ClientOptions.SocketSecurity == TcpSocketSecurity.CRC16) crcLength = 2;
+            else if (ClientOptions.SocketSecurity == TcpSocketSecurity.CRC32) crcLength = 4;
 
             if (buff.Length >= minimumPacketLength)
             {
@@ -164,18 +164,18 @@ public abstract class SocketApiClient : BaseClient
                         {
                             // Check Point
                             var consume = false;
-                            if (ClientOptions.SocketSecurity == SocketSecurity.None)
+                            if (ClientOptions.SocketSecurity == TcpSocketSecurity.None)
                             {
                                 consume = true;
                             }
-                            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC16)
+                            else if (ClientOptions.SocketSecurity == TcpSocketSecurity.CRC16)
                             {
                                 var crcBytes = new byte[crcLength];
                                 Array.Copy(buff, lenghtValue + preBytesLength, crcBytes, 0, crcLength);
                                 var crcValue = BitConverter.ToUInt16(crcBytes, 0);
                                 consume = CRC16.CheckChecksum(crcBody, crcValue);
                             }
-                            else if (ClientOptions.SocketSecurity == SocketSecurity.CRC32)
+                            else if (ClientOptions.SocketSecurity == TcpSocketSecurity.CRC32)
                             {
                                 var crcBytes = new byte[crcLength];
                                 Array.Copy(buff, lenghtValue + preBytesLength, crcBytes, 0, crcLength);

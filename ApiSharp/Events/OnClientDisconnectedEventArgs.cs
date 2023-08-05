@@ -2,5 +2,5 @@
 
 public class OnClientDisconnectedEventArgs : EventArgs
 {
-    public SocketDisconnectReason Reason { get; internal set; }
+    public TcpSocketDisconnectReason Reason { get; internal set; }
 }

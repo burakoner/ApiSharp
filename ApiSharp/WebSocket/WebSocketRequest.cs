@@ -1,6 +1,6 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
-internal class StreamRequest
+internal class WebSocketRequest
 {
     public Func<JToken, bool> Handler { get; }
     public JToken Result { get; private set; }
@@ -10,7 +10,7 @@ internal class StreamRequest
 
     private CancellationTokenSource cts;
 
-    public StreamRequest(Func<JToken, bool> handler, TimeSpan timeout)
+    public WebSocketRequest(Func<JToken, bool> handler, TimeSpan timeout)
     {
         Handler = handler;
         Event = new AsyncEvent(false, false);

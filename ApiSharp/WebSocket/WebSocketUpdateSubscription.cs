@@ -1,12 +1,12 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// Subscription to a data stream
 /// </summary>
-public class UpdateSubscription
+public class WebSocketUpdateSubscription
 {
-    private readonly StreamConnection connection;
-    private readonly StreamSubscription subscription;
+    private readonly WebSocketConnection connection;
+    private readonly WebSocketSubscription subscription;
 
     /// <summary>
     /// Event when the connection is lost. The socket will automatically reconnect when possible.
@@ -79,7 +79,7 @@ public class UpdateSubscription
     /// </summary>
     /// <param name="connection">The socket connection the subscription is on</param>
     /// <param name="subscription">The subscription</param>
-    public UpdateSubscription(StreamConnection connection, StreamSubscription subscription)
+    public WebSocketUpdateSubscription(WebSocketConnection connection, WebSocketSubscription subscription)
     {
         this.connection = connection;
         this.subscription = subscription;

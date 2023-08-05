@@ -1,9 +1,9 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// Parameters for a websocket
 /// </summary>
-public class StreamParameters
+public class WebSocketParameters
 {
     /// <summary>
     /// The uri to connect to
@@ -75,7 +75,7 @@ public class StreamParameters
     /// </summary>
     /// <param name="uri">Uri</param>
     /// <param name="autoReconnect">Auto reconnect</param>
-    public StreamParameters(Uri uri, bool autoReconnect)
+    public WebSocketParameters(Uri uri, bool autoReconnect)
     {
         Uri = uri;
         AutoReconnect = autoReconnect;

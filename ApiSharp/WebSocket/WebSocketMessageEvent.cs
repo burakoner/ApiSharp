@@ -1,11 +1,11 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
-public class StreamMessageEvent
+public class WebSocketMessageEvent
 {
     /// <summary>
     /// The connection the message was received on
     /// </summary>
-    public StreamConnection Connection { get; set; }
+    public WebSocketConnection Connection { get; set; }
 
     /// <summary>
     /// The json object of the data
@@ -29,7 +29,7 @@ public class StreamMessageEvent
     /// <param name="jsonData"></param>
     /// <param name="raw"></param>
     /// <param name="timestamp"></param>
-    public StreamMessageEvent(StreamConnection connection, JToken jsonData, string raw, DateTime timestamp)
+    public WebSocketMessageEvent(WebSocketConnection connection, JToken jsonData, string raw, DateTime timestamp)
     {
         Connection = connection;
         JsonData = jsonData;

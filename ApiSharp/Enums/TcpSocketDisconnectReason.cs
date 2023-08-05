@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.Enums;
 
-public enum SocketDisconnectReason
+public enum TcpSocketDisconnectReason
 {
     None = 0,
     Exception = 1,

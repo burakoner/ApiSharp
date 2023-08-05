@@ -1,6 +1,6 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
-public enum StreamStatus
+public enum WebSocketStatus
 {
     /// <summary>
     /// None/Initial

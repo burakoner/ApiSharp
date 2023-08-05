@@ -1,9 +1,9 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// A single stream connection to the server
 /// </summary>
-public class StreamConnection
+public class WebSocketConnection
 {
     /// <summary>
     /// Connection lost event
@@ -47,7 +47,7 @@ public class StreamConnection
     /// <summary>
     /// Get a copy of the current subscriptions
     /// </summary>
-    public StreamSubscription[] Subscriptions
+    public WebSocketSubscription[] Subscriptions
     {
         get
         {
@@ -84,7 +84,7 @@ public class StreamConnection
     /// <summary>
     /// The API client the connection is for
     /// </summary>
-    public StreamApiClient ApiClient { get; set; }
+    public WebSocketApiClient ApiClient { get; set; }
 
     /// <summary>
     /// Time of disconnecting
@@ -107,7 +107,7 @@ public class StreamConnection
             if (_pausedActivity != value)
             {
                 _pausedActivity = value;
-                    _log.Write(LogLevel.Information, $"Stream {Id} Paused activity: " + value);
+                    _log.Write(LogLevel.Information, $"WebSocket {Id} Paused activity: " + value);
                 if(_pausedActivity) _ = Task.Run(() => ActivityPaused?.Invoke());
                 else _ = Task.Run(() => ActivityUnpaused?.Invoke());
             }
@@ -117,7 +117,7 @@ public class StreamConnection
     /// <summary>
     /// Status of the socket connection
     /// </summary>
-    public StreamStatus Status
+    public WebSocketStatus Status
     {
         get => _status;
         private set
@@ -127,40 +127,40 @@ public class StreamConnection
 
             var oldStatus = _status;
             _status = value;
-                _log.Write(LogLevel.Debug, $"Stream {Id} status changed from {oldStatus} to {_status}");
+                _log.Write(LogLevel.Debug, $"WebSocket {Id} status changed from {oldStatus} to {_status}");
         }
     }
 
     private bool _pausedActivity;
-    private readonly List<StreamSubscription> _subscriptions;
+    private readonly List<WebSocketSubscription> _subscriptions;
     private readonly object _subscriptionLock = new();
 
     private readonly Log _log;
 
-    private readonly List<StreamRequest> _pendingRequests;
+    private readonly List<WebSocketRequest> _pendingRequests;
 
-    private StreamStatus _status;
+    private WebSocketStatus _status;
 
     /// <summary>
     /// The underlying websocket
     /// </summary>
-    private readonly StreamClient _wsc;
+    private readonly WebSocketClient _wsc;
 
     /// <summary>
     /// New socket connection
     /// </summary>
     /// <param name="apiClient">The api client</param>
-    /// <param name="streamClient">The socket</param>
+    /// <param name="WebSocketClient">The socket</param>
     /// <param name="tag"></param>
-    public StreamConnection(Log log, StreamApiClient apiClient, StreamClient streamClient, string tag)
+    public WebSocketConnection(Log log, WebSocketApiClient apiClient, WebSocketClient streamClient, string tag)
     {
         _log = log;
         
         ApiClient = apiClient;
         Tag = tag;
 
-        _pendingRequests = new List<StreamRequest>();
-        _subscriptions = new List<StreamSubscription>();
+        _pendingRequests = new List<WebSocketRequest>();
+        _subscriptions = new List<WebSocketSubscription>();
 
         _wsc = streamClient;
         _wsc.OnMessage += HandleMessage;
@@ -177,7 +177,7 @@ public class StreamConnection
     /// </summary>
     protected virtual void HandleOpen()
     {
-        Status = StreamStatus.Connected;
+        Status = WebSocketStatus.Connected;
         PausedActivity = false;
     }
 
@@ -186,7 +186,7 @@ public class StreamConnection
     /// </summary>
     protected virtual void HandleClose()
     {
-        Status = StreamStatus.Closed;
+        Status = WebSocketStatus.Closed;
         Authenticated = false;
         lock(_subscriptionLock)
         {
@@ -201,7 +201,7 @@ public class StreamConnection
     /// </summary>
     protected virtual void HandleReconnecting()
     {
-        Status = StreamStatus.Reconnecting;
+        Status = WebSocketStatus.Reconnecting;
         DisconnectTime = DateTime.UtcNow;
         Authenticated = false;
         lock (_subscriptionLock)
@@ -227,7 +227,7 @@ public class StreamConnection
     /// </summary>
     protected virtual async void HandleReconnected()
     {
-        Status = StreamStatus.Resubscribing;
+        Status = WebSocketStatus.Resubscribing;
         lock (_pendingRequests)
         {
             foreach (var pendingRequest in _pendingRequests.ToList())
@@ -245,7 +245,7 @@ public class StreamConnection
         }
         else
         {
-            Status = StreamStatus.Connected;
+            Status = WebSocketStatus.Connected;
             _ = Task.Run(() =>
             {
                 ConnectionRestored?.Invoke(DateTime.UtcNow - DisconnectTime!.Value);
@@ -261,9 +261,9 @@ public class StreamConnection
     protected virtual void HandleError(Exception e)
     {
         if (e is WebSocketException wse)
-            _log.Write(LogLevel.Warning, $"Stream {Id} error: Websocket error code {wse.WebSocketErrorCode}, details: " + e.ToLogString());
+            _log.Write(LogLevel.Warning, $"WebSocket {Id} error: Websocket error code {wse.WebSocketErrorCode}, details: " + e.ToLogString());
         else
-            _log.Write(LogLevel.Warning, $"Stream {Id} error: " + e.ToLogString());
+            _log.Write(LogLevel.Warning, $"WebSocket {Id} error: " + e.ToLogString());
     }
 
     /// <summary>
@@ -273,7 +273,7 @@ public class StreamConnection
     protected virtual void HandleMessage(string data)
     {
         var timestamp = DateTime.UtcNow;
-        _log.Write(LogLevel.Trace, $"Stream {Id} received data: " + data);
+        _log.Write(LogLevel.Trace, $"WebSocket {Id} received data: " + data);
         if (string.IsNullOrEmpty(data)) return;
 
         // Check Point
@@ -294,7 +294,7 @@ public class StreamConnection
         var handledResponse = false;
 
         // Remove any timed out requests
-        StreamRequest[] requests;
+        WebSocketRequest[] requests;
         lock (_pendingRequests)
         {
             _pendingRequests.RemoveAll(r => r.Completed);
@@ -318,22 +318,22 @@ public class StreamConnection
         }
 
         // Message was not a request response, check data handlers
-        var messageEvent = new StreamMessageEvent(this, tokenData, ApiClient.ClientOptions.RawResponse ? data : null, timestamp);
+        var messageEvent = new WebSocketMessageEvent(this, tokenData, ApiClient.ClientOptions.RawResponse ? data : null, timestamp);
         var (handled, userProcessTime, subscription) = HandleData(messageEvent);
         if (!handled && !handledResponse)
         {
-            if (!ApiClient.UnhandledMessageExpected) _log.Write(LogLevel.Warning, $"Stream {Id} Message not handled: " + tokenData);
+            if (!ApiClient.UnhandledMessageExpected) _log.Write(LogLevel.Warning, $"WebSocket {Id} Message not handled: " + tokenData);
             UnhandledMessage?.Invoke(tokenData);
         }
 
         var total = DateTime.UtcNow - timestamp;
         if (userProcessTime.TotalMilliseconds > 500)
         {
-            _log.Write(LogLevel.Debug, $"Stream {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processing slow ({(int)total.TotalMilliseconds}ms, {(int)userProcessTime.TotalMilliseconds}ms user code), consider offloading data handling to another thread. " +
+            _log.Write(LogLevel.Debug, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processing slow ({(int)total.TotalMilliseconds}ms, {(int)userProcessTime.TotalMilliseconds}ms user code), consider offloading data handling to another thread. " +
                 "Data from this socket may arrive late or not at all if message processing is continuously slow.");
         }
 
-        _log.Write(LogLevel.Trace, $"Stream {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processed in {(int)total.TotalMilliseconds}ms, ({(int)userProcessTime.TotalMilliseconds}ms user code)");
+        _log.Write(LogLevel.Trace, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processed in {(int)total.TotalMilliseconds}ms, ({(int)userProcessTime.TotalMilliseconds}ms user code)");
     }
 
     /// <summary>
@@ -346,7 +346,7 @@ public class StreamConnection
     /// Retrieve the underlying socket
     /// </summary>
     /// <returns></returns>
-    public StreamClient GetStreamClient() => _wsc;
+    public WebSocketClient GetStreamClient() => _wsc;
 
     /// <summary>
     /// Trigger a reconnect of the socket connection
@@ -360,11 +360,11 @@ public class StreamConnection
     /// <returns></returns>
     public async Task CloseAsync()
     {
-        if (Status == StreamStatus.Closed || Status == StreamStatus.Disposed)
+        if (Status == WebSocketStatus.Closed || Status == WebSocketStatus.Disposed)
             return;
 
-        if (ApiClient.StreamConnections.ContainsKey(Id))
-            ApiClient.StreamConnections.TryRemove(Id, out _);
+        if (ApiClient.WebSocketConnections.ContainsKey(Id))
+            ApiClient.WebSocketConnections.TryRemove(Id, out _);
 
         lock (_subscriptionLock)
         {
@@ -384,7 +384,7 @@ public class StreamConnection
     /// </summary>
     /// <param name="subscription">Subscription to close</param>
     /// <returns></returns>
-    public async Task CloseAsync(StreamSubscription subscription)
+    public async Task CloseAsync(WebSocketSubscription subscription)
     {
         lock (_subscriptionLock)
         {
@@ -394,10 +394,10 @@ public class StreamConnection
             subscription.Closed = true;
         }
 
-        if (Status == StreamStatus.Closing || Status == StreamStatus.Closed || Status == StreamStatus.Disposed)
+        if (Status == WebSocketStatus.Closing || Status == WebSocketStatus.Closed || Status == WebSocketStatus.Disposed)
             return;
 
-            _log.Write(LogLevel.Debug, $"Stream {Id} closing subscription {subscription.Id}");
+            _log.Write(LogLevel.Debug, $"WebSocket {Id} closing subscription {subscription.Id}");
         if (subscription.CancellationTokenRegistration.HasValue)
             subscription.CancellationTokenRegistration.Value.Dispose();
 
@@ -407,20 +407,20 @@ public class StreamConnection
         bool shouldCloseConnection;
         lock (_subscriptionLock)
         {
-            if (Status == StreamStatus.Closing)
+            if (Status == WebSocketStatus.Closing)
             {
-                    _log.Write(LogLevel.Debug, $"Stream {Id} already closing");
+                    _log.Write(LogLevel.Debug, $"WebSocket {Id} already closing");
                 return;
             }
 
             shouldCloseConnection = _subscriptions.All(r => !r.UserSubscription || r.Closed);
             if (shouldCloseConnection)
-                Status = StreamStatus.Closing;
+                Status = WebSocketStatus.Closing;
         }
 
         if (shouldCloseConnection)
         {
-                _log.Write(LogLevel.Debug, $"Stream {Id} closing as there are no more subscriptions");
+                _log.Write(LogLevel.Debug, $"WebSocket {Id} closing as there are no more subscriptions");
             await CloseAsync().ConfigureAwait(false);
         }
 
@@ -433,7 +433,7 @@ public class StreamConnection
     /// </summary>
     public void Dispose()
     {
-        Status = StreamStatus.Disposed;
+        Status = WebSocketStatus.Disposed;
         _wsc.Dispose();
     }
 
@@ -441,16 +441,16 @@ public class StreamConnection
     /// Add a subscription to this connection
     /// </summary>
     /// <param name="subscription"></param>
-    public bool AddSubscription(StreamSubscription subscription)
+    public bool AddSubscription(WebSocketSubscription subscription)
     {
         lock (_subscriptionLock)
         {
-            if (Status != StreamStatus.None && Status != StreamStatus.Connected)
+            if (Status != WebSocketStatus.None && Status != WebSocketStatus.Connected)
                 return false;
 
             _subscriptions.Add(subscription);
             if (subscription.UserSubscription)
-                _log.Write(LogLevel.Debug, $"Stream {Id} adding new subscription with id {subscription.Id}, total subscriptions on connection: {_subscriptions.Count(s => s.UserSubscription)}");
+                _log.Write(LogLevel.Debug, $"WebSocket {Id} adding new subscription with id {subscription.Id}, total subscriptions on connection: {_subscriptions.Count(s => s.UserSubscription)}");
             return true;
         }
     }
@@ -459,7 +459,7 @@ public class StreamConnection
     /// Get a subscription on this connection by id
     /// </summary>
     /// <param name="id"></param>
-    public StreamSubscription GetSubscription(int id)
+    public WebSocketSubscription GetSubscription(int id)
     {
         lock (_subscriptionLock)
             return _subscriptions.SingleOrDefault(s => s.Id == id);
@@ -470,7 +470,7 @@ public class StreamConnection
     /// </summary>
     /// <param name="predicate">Filter for a request</param>
     /// <returns></returns>
-    public StreamSubscription GetSubscriptionByRequest(Func<object, bool> predicate)
+    public WebSocketSubscription GetSubscriptionByRequest(Func<object, bool> predicate)
     {
         lock(_subscriptionLock)
             return _subscriptions.SingleOrDefault(s => predicate(s.Request));
@@ -481,16 +481,16 @@ public class StreamConnection
     /// </summary>
     /// <param name="messageEvent"></param>
     /// <returns>True if the data was successfully handled</returns>
-    private (bool, TimeSpan, StreamSubscription) HandleData(StreamMessageEvent messageEvent)
+    private (bool, TimeSpan, WebSocketSubscription) HandleData(WebSocketMessageEvent messageEvent)
     {
-        StreamSubscription currentSubscription = null;
+        WebSocketSubscription currentSubscription = null;
         try
         { 
             var handled = false;
             TimeSpan userCodeDuration = TimeSpan.Zero;
 
             // Loop the subscriptions to check if any of them signal us that the message is for them
-            List<StreamSubscription> subscriptionsCopy;
+            List<WebSocketSubscription> subscriptionsCopy;
             lock (_subscriptionLock)
                 subscriptionsCopy = _subscriptions.ToList();
 
@@ -526,7 +526,7 @@ public class StreamConnection
         }
         catch (Exception ex)
         {
-                _log.Write(LogLevel.Error, $"Stream {Id} Exception during message processing\r\nException: {ex.ToLogString()}\r\nData: {messageEvent.JsonData}");
+                _log.Write(LogLevel.Error, $"WebSocket {Id} Exception during message processing\r\nException: {ex.ToLogString()}\r\nData: {messageEvent.JsonData}");
             currentSubscription?.InvokeExceptionHandler(ex);
             return (false, TimeSpan.Zero, null);
         }
@@ -542,7 +542,7 @@ public class StreamConnection
     /// <returns></returns>
     public virtual Task SendAndWaitAsync<T>(T obj, TimeSpan timeout, Func<JToken, bool> handler)
     {
-        var pending = new StreamRequest(handler, timeout);
+        var pending = new WebSocketRequest(handler, timeout);
         lock (_pendingRequests)
         {
             _pendingRequests.Add(pending);
@@ -574,7 +574,7 @@ public class StreamConnection
     /// <param name="data">The data to send</param>
     public virtual bool Send(string data)
     {
-            _log.Write(LogLevel.Trace, $"Stream {Id} sending data: {data}");
+            _log.Write(LogLevel.Trace, $"WebSocket {Id} sending data: {data}");
         try
         {
             _wsc.Send(data);
@@ -589,7 +589,7 @@ public class StreamConnection
     private async Task<CallResult<bool>> ProcessReconnectAsync()
     {
         if (!_wsc.IsOpen)
-            return new CallResult<bool>(new WebError("Stream is not connected"));
+            return new CallResult<bool>(new WebError("WebSocket is not connected"));
 
         bool anySubscriptions = false;
         lock (_subscriptionLock)
@@ -598,7 +598,7 @@ public class StreamConnection
         if (!anySubscriptions)
         {
             // No need to resubscribe anything
-                _log.Write(LogLevel.Debug, $"Stream {Id} Nothing to resubscribe, closing connection");
+                _log.Write(LogLevel.Debug, $"WebSocket {Id} Nothing to resubscribe, closing connection");
             _ = _wsc.CloseAsync();
             return new CallResult<bool>(true);
         }
@@ -609,16 +609,16 @@ public class StreamConnection
             var authResult = await ApiClient.AuthenticateAsync(this).ConfigureAwait(false);
             if (!authResult)
             {
-                    _log.Write(LogLevel.Warning, $"Stream {Id} authentication failed on reconnected socket. Disconnecting and reconnecting.");
+                    _log.Write(LogLevel.Warning, $"WebSocket {Id} authentication failed on reconnected socket. Disconnecting and reconnecting.");
                 return authResult;
             }
 
             Authenticated = true;
-                _log.Write(LogLevel.Debug, $"Stream {Id} authentication succeeded on reconnected socket.");
+                _log.Write(LogLevel.Debug, $"WebSocket {Id} authentication succeeded on reconnected socket.");
         }
 
         // Get a list of all subscriptions on the socket
-        var subscriptionList = new List<StreamSubscription>();
+        var subscriptionList = new List<WebSocketSubscription>();
         lock (_subscriptionLock)
         {
             foreach (var subscription in _subscriptions)
@@ -644,7 +644,7 @@ public class StreamConnection
         for (var i = 0; i < subscriptionList.Count; i += ApiClient.ClientOptions.MaxConcurrentResubscriptionsPerConnection)
         {
             if (!_wsc.IsOpen)
-                return new CallResult<bool>(new WebError("Stream is not connected"));
+                return new CallResult<bool>(new WebError("WebSocket is not connected"));
 
             var taskList = new List<Task<CallResult<bool>>>();
             foreach (var subscription in subscriptionList.Skip(i).Take(ApiClient.ClientOptions.MaxConcurrentResubscriptionsPerConnection))
@@ -659,21 +659,21 @@ public class StreamConnection
             subscription.Confirmed = true;
 
         if (!_wsc.IsOpen)
-            return new CallResult<bool>(new WebError("Stream is not connected"));
+            return new CallResult<bool>(new WebError("WebSocket is not connected"));
 
-            _log.Write(LogLevel.Debug, $"Stream {Id} all subscription successfully resubscribed on reconnected socket.");
+            _log.Write(LogLevel.Debug, $"WebSocket {Id} all subscription successfully resubscribed on reconnected socket.");
         return new CallResult<bool>(true);
     }
 
-    internal async Task UnsubscribeAsync(StreamSubscription subscription)
+    internal async Task UnsubscribeAsync(WebSocketSubscription subscription)
     {
         await ApiClient.UnsubscribeAsync(this, subscription).ConfigureAwait(false);
     }
 
-    internal async Task<CallResult<bool>> ResubscribeAsync(StreamSubscription subscription)
+    internal async Task<CallResult<bool>> ResubscribeAsync(WebSocketSubscription subscription)
     {
         if (!_wsc.IsOpen)
-            return new CallResult<bool>(new UnknownError("Stream is not connected"));
+            return new CallResult<bool>(new UnknownError("WebSocket is not connected"));
 
         return await ApiClient.SubscribeAndWaitAsync(this, subscription.Request!, subscription).ConfigureAwait(false);
     }

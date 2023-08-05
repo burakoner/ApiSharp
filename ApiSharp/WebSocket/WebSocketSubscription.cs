@@ -1,9 +1,9 @@
-﻿namespace ApiSharp.Stream;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// Socket subscription
 /// </summary>
-public class StreamSubscription
+public class WebSocketSubscription
 {
     /// <summary>
     /// Unique subscription id
@@ -18,7 +18,7 @@ public class StreamSubscription
     /// <summary>
     /// Message handlers for this subscription. Should return true if the message is handled and should not be distributed to the other handlers
     /// </summary>
-    public Action<StreamMessageEvent> MessageHandler { get; set; }
+    public Action<WebSocketMessageEvent> MessageHandler { get; set; }
 
     /// <summary>
     /// The request object send when subscribing on the server. Either this or the `Identifier` property should be set
@@ -56,7 +56,7 @@ public class StreamSubscription
     /// </summary>
     public CancellationTokenRegistration? CancellationTokenRegistration { get; set; }
 
-    private StreamSubscription(int id, object request, string identifier, bool userSubscription, bool authenticated, Action<StreamMessageEvent> dataHandler)
+    private WebSocketSubscription(int id, object request, string identifier, bool userSubscription, bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
         Id = id;
         UserSubscription = userSubscription;
@@ -75,10 +75,10 @@ public class StreamSubscription
     /// <param name="authenticated"></param>
     /// <param name="dataHandler"></param>
     /// <returns></returns>
-    public static StreamSubscription CreateForRequest(int id, object request, bool userSubscription,
-        bool authenticated, Action<StreamMessageEvent> dataHandler)
+    public static WebSocketSubscription CreateForRequest(int id, object request, bool userSubscription,
+        bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
-        return new StreamSubscription(id, request, null, userSubscription, authenticated, dataHandler);
+        return new WebSocketSubscription(id, request, null, userSubscription, authenticated, dataHandler);
     }
 
     /// <summary>
@@ -90,10 +90,10 @@ public class StreamSubscription
     /// <param name="authenticated"></param>
     /// <param name="dataHandler"></param>
     /// <returns></returns>
-    public static StreamSubscription CreateForIdentifier(int id, string identifier, bool userSubscription,
-        bool authenticated, Action<StreamMessageEvent> dataHandler)
+    public static WebSocketSubscription CreateForIdentifier(int id, string identifier, bool userSubscription,
+        bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
-        return new StreamSubscription(id, null, identifier, userSubscription, authenticated, dataHandler);
+        return new WebSocketSubscription(id, null, identifier, userSubscription, authenticated, dataHandler);
     }
 
     /// <summary>
