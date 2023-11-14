@@ -24,29 +24,6 @@ public abstract class BaseClientOptions
     public ApiCredentials ApiCredentials { get; set; }
     public AuthenticationProvider AuthenticationProvider { get; set; }
 
-    // Logging
-    internal event Action OnLoggingChanged;
-    private LogLevel _logLevel = LogLevel.Information;
-    public LogLevel LogLevel
-    {
-        get => _logLevel;
-        set
-        {
-            _logLevel = value;
-            OnLoggingChanged?.Invoke();
-        }
-    }
-    private List<ILogger> _logWriters = new List<ILogger> { new DebugLogger() };
-    public List<ILogger> LogWriters
-    {
-        get => _logWriters;
-        set
-        {
-            _logWriters = value;
-            OnLoggingChanged?.Invoke();
-        }
-    }
-
     public BaseClientOptions()
     {
         // Encoding
@@ -64,10 +41,6 @@ public abstract class BaseClientOptions
         // Authentication
         ApiCredentials = null;
         AuthenticationProvider = null;
-
-        // Logging
-        LogLevel = LogLevel.Information;
-        LogWriters = new List<ILogger> { new DebugLogger() };
     }
 
     public BaseClientOptions(BaseClientOptions clientOptions)
@@ -91,10 +64,6 @@ public abstract class BaseClientOptions
         // Proxy
         Proxy = clientOptions.Proxy;
 
-        // Logging
-        LogLevel = clientOptions.LogLevel;
-        LogWriters = clientOptions.LogWriters.ToList();
-
         // Authentication
         ApiCredentials = clientOptions.ApiCredentials?.Copy();
         // AuthenticationProvider = new AuthenticationProvider(ApiCredentials);
@@ -102,6 +71,6 @@ public abstract class BaseClientOptions
 
     public override string ToString()
     {
-        return $"LogLevel: {LogLevel}, Writers: {LogWriters.Count}, Proxy: {(Proxy == null ? "-" : Proxy.Host)}";
+        return $"BaseAddress: {BaseAddress}, Encoding: {Encoding}, RawResponse: {RawResponse}, Proxy: {(Proxy == null ? "-" : Proxy.Host)}";
     }
 }

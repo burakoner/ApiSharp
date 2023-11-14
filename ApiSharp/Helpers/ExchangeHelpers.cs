@@ -27,7 +27,7 @@ public static class ExchangeHelpers
     /// <returns></returns>
     public static decimal AdjustValueStep(decimal min, decimal max, decimal? step, RoundingType roundingType, decimal value)
     {
-        if(step == 0)
+        if (step == 0)
             throw new ArgumentException($"0 not allowed for parameter {nameof(step)}, pass in null to ignore the step size", nameof(step));
 
         value = Math.Min(max, value);
@@ -36,7 +36,7 @@ public static class ExchangeHelpers
             return value;
 
         var offset = value % step.Value;
-        if(roundingType == RoundingType.Down)
+        if (roundingType == RoundingType.Down)
             value -= offset;
         else
         {
@@ -46,7 +46,7 @@ public static class ExchangeHelpers
         }
 
         value = RoundDown(value, 8);
-            
+
         return value.Normalize();
     }
 
@@ -83,7 +83,7 @@ public static class ExchangeHelpers
             return 0;
 
         var scale = Math.Pow(10, Math.Floor(Math.Log10(Math.Abs(val))) + 1);
-        if(roundingType == RoundingType.Closest)
+        if (roundingType == RoundingType.Closest)
             return (decimal)(scale * Math.Round(val / scale, digits));
         else
             return (decimal)(scale * (double)RoundDown((decimal)(val / scale), digits));
@@ -109,6 +109,68 @@ public static class ExchangeHelpers
     public static decimal Normalize(this decimal value)
     {
         return value / 1.000000000000000000000000000000000m;
+    }
+
+    /// <summary>
+    /// The last used id, use NextId() to get the next id and up this
+    /// </summary>
+    private static int _lastId;
+
+    /// <summary>
+    /// Lock for id generating
+    /// </summary>
+    private static object _idLock = new();
+
+    /// <summary>
+    /// Generate a new unique id. The id is staticly stored so it is guarenteed to be unique
+    /// </summary>
+    /// <returns></returns>
+    public static int NextId()
+    {
+        lock (_idLock)
+        {
+            _lastId += 1;
+            return _lastId;
+        }
+    }
+
+    /// <summary>
+    /// Generate a random string of specified length
+    /// </summary>
+    /// <param name="length">Length of the random string</param>
+    /// <returns></returns>
+    private const string _allowedRandomChars = "ABCDEFGHIJKLMONOPQRSTUVWXYZabcdefghijklmonopqrstuvwxyz0123456789";
+    public static string RandomString(int length)
+    {
+        var randomChars = new char[length];
+
+#if NETSTANDARD2_1_OR_GREATER
+        for (int i = 0; i < length; i++)
+            randomChars[i] = _allowedRandomChars[RandomNumberGenerator.GetInt32(0, _allowedRandomChars.Length)];
+#else
+            var random = new Random();
+            for (int i = 0; i < length; i++)
+                randomChars[i] = _allowedRandomChars[random.Next(0, _allowedRandomChars.Length)];
+#endif
+
+        return new string(randomChars);
+    }
+
+    /// <summary>
+    /// Generate a random string of specified length
+    /// </summary>
+    /// <param name="source">The initial string</param>
+    /// <param name="totalLength">Total length of the resulting string</param>
+    /// <returns></returns>
+    public static string AppendRandomString(string source, int totalLength)
+    {
+        if (totalLength < source.Length)
+            throw new ArgumentException("Total length smaller than source string length", nameof(totalLength));
+
+        if (totalLength == source.Length)
+            return source;
+
+        return source + RandomString(totalLength - source.Length);
     }
 }
 

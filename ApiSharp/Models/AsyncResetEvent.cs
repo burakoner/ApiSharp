@@ -4,38 +4,51 @@
 /// Async auto reset based on Stephen Toub`s implementation
 /// https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-2-asyncautoresetevent/
 /// </summary>
-public class AsyncEvent : IDisposable
+public class AsyncResetEvent : IDisposable
 {
     private static readonly Task<bool> _completed = Task.FromResult(true);
-    private readonly Queue<TaskCompletionSource<bool>> _waits = new ();
+    private Queue<TaskCompletionSource<bool>> _waits = new();
     private bool _signaled;
     private readonly bool _reset;
 
-    public AsyncEvent(bool initialState = false, bool reset = true)
+    /// <summary>
+    /// New AsyncResetEvent
+    /// </summary>
+    /// <param name="initialState"></param>
+    /// <param name="reset"></param>
+    public AsyncResetEvent(bool initialState = false, bool reset = true)
     {
         _signaled = initialState;
         _reset = reset;
     }
 
+    /// <summary>
+    /// Wait for the AsyncResetEvent to be set
+    /// </summary>
+    /// <param name="timeout"></param>
+    /// <returns></returns>
     public Task<bool> WaitAsync(TimeSpan? timeout = null)
     {
         lock (_waits)
         {
             if (_signaled)
             {
-                if(_reset)
+                if (_reset)
                     _signaled = false;
                 return _completed;
             }
             else
             {
                 var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                if(timeout != null)
+                if (timeout != null)
                 {
                     var cancellationSource = new CancellationTokenSource(timeout.Value);
                     var registration = cancellationSource.Token.Register(() =>
                     {
                         tcs.TrySetResult(false);
+
+                        // Not the cleanest but it works
+                        _waits = new Queue<TaskCompletionSource<bool>>(_waits.Where(i => i != tcs));
                     }, useSynchronizationContext: false);
                 }
 
@@ -45,6 +58,9 @@ public class AsyncEvent : IDisposable
         }
     }
 
+    /// <summary>
+    /// Signal a waiter
+    /// </summary>
     public void Set()
     {
         lock (_waits)
@@ -73,6 +89,9 @@ public class AsyncEvent : IDisposable
         }
     }
 
+    /// <summary>
+    /// Dispose
+    /// </summary>
     public void Dispose()
     {
         _waits.Clear();

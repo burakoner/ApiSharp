@@ -2,22 +2,21 @@
 
 public abstract class BaseClient : IDisposable
 {
-    protected string Name { get; }
-    protected BaseClientOptions ClientOptions { get; }
+    protected ILogger _logger;
+    protected BaseClientOptions _options { get; }
+    protected ApiCredentials _credentials;
     protected AuthenticationProvider _authenticationProvider;
-    protected ApiCredentials _apiCredentials;
     protected bool _disposing;
     protected bool _created;
     protected int _id;
-    protected Log log;
 
     protected AuthenticationProvider AuthenticationProvider
     {
         get
         {
-            if (!_created && !_disposing && _apiCredentials != null)
+            if (!_created && !_disposing && _credentials != null)
             {
-                _authenticationProvider = CreateAuthenticationProvider(_apiCredentials);
+                _authenticationProvider = CreateAuthenticationProvider(_credentials);
                 _created = true;
             }
 
@@ -31,33 +30,34 @@ public abstract class BaseClient : IDisposable
         Culture = CultureInfo.InvariantCulture
     });
 
-    protected BaseClient(string name, BaseClientOptions options)
+    protected BaseClient(ILogger logger, BaseClientOptions options)
     {
-        Name = name;
-        ClientOptions = options;
-        ClientOptions.OnLoggingChanged += HandleLogConfigChange;
-        _apiCredentials = options.ApiCredentials?.Copy();
-
-        log = new Log(name);
-        log.UpdateWriters(options.LogWriters);
-        log.Level = options.LogLevel;
-        log.Write(LogLevel.Trace, $"Client configuration: {options}, ApiSharp: v{typeof(BaseClient).Assembly.GetName().Version}, {name}: v{GetType().Assembly.GetName().Version}");
+        _logger = logger ?? CreateLogger();
+        _options = options;
+        _credentials = options.ApiCredentials?.Copy();
     }
+
+    private static ILoggerFactory _Factory = null;
+
+    public static ILoggerFactory LoggerFactory
+    {
+        get
+        {
+            if (_Factory == null)
+            {
+                _Factory = new LoggerFactory();
+            }
+            return _Factory;
+        }
+        set { _Factory = value; }
+    }
+    public static ILogger CreateLogger() => LoggerFactory.CreateLogger("ApiSharp");
 
     protected abstract AuthenticationProvider CreateAuthenticationProvider(ApiCredentials credentials);
 
-    /// <summary>
-    /// Handle a change in the client options log config
-    /// </summary>
-    private void HandleLogConfigChange()
-    {
-        log.UpdateWriters(ClientOptions.LogWriters);
-        log.Level = ClientOptions.LogLevel;
-    }
-
     public void SetApiCredentials(ApiCredentials credentials)
     {
-        _apiCredentials = credentials?.Copy();
+        _credentials = credentials?.Copy();
         _created = false;
         _authenticationProvider = null;
     }
@@ -72,7 +72,7 @@ public abstract class BaseClient : IDisposable
         if (string.IsNullOrEmpty(data))
         {
             var info = "Empty data object received";
-            log.Write(LogLevel.Error, info);
+            _logger.Log(LogLevel.Error, info);
             return new CallResult<JToken>(new DeserializeError(info, data));
         }
 
@@ -103,7 +103,7 @@ public abstract class BaseClient : IDisposable
         var tokenResult = ValidateJson(data);
         if (!tokenResult)
         {
-                log.Write(LogLevel.Error, tokenResult.Error!.Message);
+            _logger.Log(LogLevel.Error, tokenResult.Error!.Message);
             return new CallResult<T>(tokenResult.Error);
         }
 
@@ -121,20 +121,20 @@ public abstract class BaseClient : IDisposable
         catch (JsonReaderException jre)
         {
             var info = $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonReaderException: {jre.Message} Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}, data: {obj}";
-                log.Write(LogLevel.Error, info);
+            _logger.Log(LogLevel.Error, info);
             return new CallResult<T>(new DeserializeError(info, obj));
         }
         catch (JsonSerializationException jse)
         {
             var info = $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonSerializationException: {jse.Message} data: {obj}";
-                log.Write(LogLevel.Error, info);
+            _logger.Log(LogLevel.Error, info);
             return new CallResult<T>(new DeserializeError(info, obj));
         }
         catch (Exception ex)
         {
             var exceptionInfo = ex.ToLogString();
             var info = $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize Unknown Exception: {exceptionInfo}, data: {obj}";
-                log.Write(LogLevel.Error, info);
+            _logger.Log(LogLevel.Error, info);
             return new CallResult<T>(new DeserializeError(info, obj));
         }
     }
@@ -151,20 +151,19 @@ public abstract class BaseClient : IDisposable
 
             // If we have to output the original json data or output the data into the logging we'll have to read to full response
             // in order to log/return the json data
-            if (ClientOptions.RawResponse == true || log.Level == LogLevel.Trace)
+            if (_options.RawResponse == true)
             {
                 data = await reader.ReadToEndAsync().ConfigureAwait(false);
-                    log.Write(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms{(log.Level == LogLevel.Trace ? (": " + data) : "")}");
+                _logger.Log(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms: " + data);
                 var result = Deserialize<T>(data, serializer, requestId);
-                if (ClientOptions.RawResponse == true)
-                    result.Raw = data;
+                result.Raw = data;
                 return result;
             }
 
             // If we don't have to keep track of the original json data we can use the JsonTextReader to deserialize the stream directly
             // into the desired object, which has increased performance over first reading the string value into memory and deserializing from that
             using var jsonReader = new JsonTextReader(reader);
-                log.Write(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms");
+            _logger.Log(LogLevel.Debug, $"{(requestId != null ? $"[{requestId}] " : "")}Response received{(elapsedMilliseconds != null ? $" in {elapsedMilliseconds}" : " ")}ms");
             return new CallResult<T>(serializer.Deserialize<T>(jsonReader)!);
         }
         catch (JsonReaderException jre)
@@ -183,7 +182,7 @@ public abstract class BaseClient : IDisposable
                 }
             }
 
-                log.Write(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}, data: {data}");
+            _logger.Log(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}, data: {data}");
             return new CallResult<T>(new DeserializeError($"Deserialize JsonReaderException: {jre.Message}, Path: {jre.Path}, LineNumber: {jre.LineNumber}, LinePosition: {jre.LinePosition}", data));
         }
         catch (JsonSerializationException jse)
@@ -201,7 +200,7 @@ public abstract class BaseClient : IDisposable
                 }
             }
 
-                log.Write(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonSerializationException: {jse.Message}, data: {data}");
+            _logger.Log(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize JsonSerializationException: {jse.Message}, data: {data}");
             return new CallResult<T>(new DeserializeError($"Deserialize JsonSerializationException: {jse.Message}", data));
         }
         catch (Exception ex)
@@ -220,12 +219,12 @@ public abstract class BaseClient : IDisposable
             }
 
             var exceptionInfo = ex.ToLogString();
-                log.Write(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize Unknown Exception: {exceptionInfo}, data: {data}");
+            _logger.Log(LogLevel.Error, $"{(requestId != null ? $"[{requestId}] " : "")}Deserialize Unknown Exception: {exceptionInfo}, data: {data}");
             return new CallResult<T>(new DeserializeError($"Deserialize Unknown Exception: {exceptionInfo}", data));
         }
     }
 
-    private static async Task<string> ReadStreamAsync(System.IO.Stream stream)
+    private static async Task<string> ReadStreamAsync(Stream stream)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8, false, 512, true);
         return await reader.ReadToEndAsync().ConfigureAwait(false);
@@ -233,9 +232,9 @@ public abstract class BaseClient : IDisposable
 
     public virtual void Dispose()
     {
-        log.Write(LogLevel.Debug, "Disposing client");
+        _logger.Log(LogLevel.Debug, "Disposing client");
         _disposing = true;
-        _apiCredentials?.Dispose();
+        _credentials?.Dispose();
         AuthenticationProvider?.Credentials?.Dispose();
     }
 }

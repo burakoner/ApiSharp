@@ -1,4 +1,6 @@
-﻿namespace ApiSharp.WebSocket;
+﻿using System.Net.Sockets;
+
+namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// A single stream connection to the server
@@ -40,8 +42,11 @@ public class WebSocketConnection
     /// </summary>
     public int SubscriptionCount
     {
-        get { lock (_subscriptionLock)
-            return _subscriptions.Count(h => h.UserSubscription); }
+        get
+        {
+            lock (_subscriptionLock)
+                return _subscriptions.Count(h => h.UserSubscription);
+        }
     }
 
     /// <summary>
@@ -107,8 +112,8 @@ public class WebSocketConnection
             if (_pausedActivity != value)
             {
                 _pausedActivity = value;
-                    _log.Write(LogLevel.Information, $"WebSocket {Id} Paused activity: " + value);
-                if(_pausedActivity) _ = Task.Run(() => ActivityPaused?.Invoke());
+                _logger.Log(LogLevel.Information, $"WebSocket {Id} Paused activity: " + value);
+                if (_pausedActivity) _ = Task.Run(() => ActivityPaused?.Invoke());
                 else _ = Task.Run(() => ActivityUnpaused?.Invoke());
             }
         }
@@ -127,18 +132,15 @@ public class WebSocketConnection
 
             var oldStatus = _status;
             _status = value;
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} status changed from {oldStatus} to {_status}");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} status changed from {oldStatus} to {_status}");
         }
     }
 
     private bool _pausedActivity;
     private readonly List<WebSocketSubscription> _subscriptions;
     private readonly object _subscriptionLock = new();
-
-    private readonly Log _log;
-
     private readonly List<WebSocketRequest> _pendingRequests;
-
+    private readonly ILogger _logger;
     private WebSocketStatus _status;
 
     /// <summary>
@@ -150,19 +152,19 @@ public class WebSocketConnection
     /// New socket connection
     /// </summary>
     /// <param name="apiClient">The api client</param>
-    /// <param name="WebSocketClient">The socket</param>
+    /// <param name="webSocketClient">The socket</param>
     /// <param name="tag"></param>
-    public WebSocketConnection(Log log, WebSocketApiClient apiClient, WebSocketClient streamClient, string tag)
+    public WebSocketConnection(ILogger logger, WebSocketApiClient apiClient, WebSocketClient webSocketClient, string tag)
     {
-        _log = log;
-        
+        _logger = logger;
+
         ApiClient = apiClient;
         Tag = tag;
 
         _pendingRequests = new List<WebSocketRequest>();
         _subscriptions = new List<WebSocketSubscription>();
 
-        _wsc = streamClient;
+        _wsc = webSocketClient;
         _wsc.OnMessage += HandleMessage;
         _wsc.OnOpen += HandleOpen;
         _wsc.OnClose += HandleClose;
@@ -188,11 +190,11 @@ public class WebSocketConnection
     {
         Status = WebSocketStatus.Closed;
         Authenticated = false;
-        lock(_subscriptionLock)
+        lock (_subscriptionLock)
         {
             foreach (var sub in _subscriptions)
                 sub.Confirmed = false;
-        }    
+        }
         Task.Run(() => ConnectionClosed?.Invoke());
     }
 
@@ -237,13 +239,7 @@ public class WebSocketConnection
             }
         }
 
-        var reconnectSuccessful = await ProcessReconnectAsync().ConfigureAwait(false);
-        if (!reconnectSuccessful)
-        {
-                _log.Write(LogLevel.Warning, "Failed reconnect processing, reconnecting again");
-            await _wsc.ReconnectAsync().ConfigureAwait(false);
-        }
-        else
+        if (await ProcessReconnectAsync().ConfigureAwait(false))
         {
             Status = WebSocketStatus.Connected;
             _ = Task.Run(() =>
@@ -251,6 +247,11 @@ public class WebSocketConnection
                 ConnectionRestored?.Invoke(DateTime.UtcNow - DisconnectTime!.Value);
                 DisconnectTime = null;
             });
+        }
+        else
+        {
+            _logger.Log(LogLevel.Warning, "Failed reconnect processing, reconnecting again");
+            await _wsc.ReconnectAsync().ConfigureAwait(false);
         }
     }
 
@@ -261,9 +262,9 @@ public class WebSocketConnection
     protected virtual void HandleError(Exception e)
     {
         if (e is WebSocketException wse)
-            _log.Write(LogLevel.Warning, $"WebSocket {Id} error: Websocket error code {wse.WebSocketErrorCode}, details: " + e.ToLogString());
+            _logger.Log(LogLevel.Warning, $"WebSocket {Id} error: Websocket error code {wse.WebSocketErrorCode}, details: " + e.ToLogString());
         else
-            _log.Write(LogLevel.Warning, $"WebSocket {Id} error: " + e.ToLogString());
+            _logger.Log(LogLevel.Warning, $"WebSocket {Id} error: " + e.ToLogString());
     }
 
     /// <summary>
@@ -273,7 +274,7 @@ public class WebSocketConnection
     protected virtual void HandleMessage(string data)
     {
         var timestamp = DateTime.UtcNow;
-        _log.Write(LogLevel.Trace, $"WebSocket {Id} received data: " + data);
+        _logger.Log(LogLevel.Trace, $"WebSocket {Id} received data: " + data);
         if (string.IsNullOrEmpty(data)) return;
 
         // Check Point
@@ -281,7 +282,7 @@ public class WebSocketConnection
             return;
 
         // To JToken
-        var tokenData = data.ToJToken(_log);
+        var tokenData = data.ToJToken(_logger);
         if (tokenData == null)
         {
             data = $"\"{data}\"";
@@ -297,7 +298,7 @@ public class WebSocketConnection
         WebSocketRequest[] requests;
         lock (_pendingRequests)
         {
-            _pendingRequests.RemoveAll(r => r.Completed);
+            _pendingRequests.RemoveAll(r => r.Completed && DateTime.UtcNow - r.RequestTimestamp > TimeSpan.FromMinutes(5));
             requests = _pendingRequests.ToArray();
         }
 
@@ -322,18 +323,18 @@ public class WebSocketConnection
         var (handled, userProcessTime, subscription) = HandleData(messageEvent);
         if (!handled && !handledResponse)
         {
-            if (!ApiClient.UnhandledMessageExpected) _log.Write(LogLevel.Warning, $"WebSocket {Id} Message not handled: " + tokenData);
+            if (!ApiClient.UnhandledMessageExpected) _logger.Log(LogLevel.Warning, $"WebSocket {Id} Message not handled: " + tokenData);
             UnhandledMessage?.Invoke(tokenData);
         }
 
         var total = DateTime.UtcNow - timestamp;
         if (userProcessTime.TotalMilliseconds > 500)
         {
-            _log.Write(LogLevel.Debug, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processing slow ({(int)total.TotalMilliseconds}ms, {(int)userProcessTime.TotalMilliseconds}ms user code), consider offloading data handling to another thread. " +
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processing slow ({(int)total.TotalMilliseconds}ms, {(int)userProcessTime.TotalMilliseconds}ms user code), consider offloading data handling to another thread. " +
                 "Data from this socket may arrive late or not at all if message processing is continuously slow.");
         }
 
-        _log.Write(LogLevel.Trace, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processed in {(int)total.TotalMilliseconds}ms, ({(int)userProcessTime.TotalMilliseconds}ms user code)");
+        _logger.Log(LogLevel.Trace, $"WebSocket {Id}{(subscription == null ? "" : " subscription " + subscription!.Id)} message processed in {(int)total.TotalMilliseconds}ms, ({(int)userProcessTime.TotalMilliseconds}ms user code)");
     }
 
     /// <summary>
@@ -346,7 +347,7 @@ public class WebSocketConnection
     /// Retrieve the underlying socket
     /// </summary>
     /// <returns></returns>
-    public WebSocketClient GetStreamClient() => _wsc;
+    public WebSocketClient GetWebSocketClient() => _wsc;
 
     /// <summary>
     /// Trigger a reconnect of the socket connection
@@ -397,7 +398,7 @@ public class WebSocketConnection
         if (Status == WebSocketStatus.Closing || Status == WebSocketStatus.Closed || Status == WebSocketStatus.Disposed)
             return;
 
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} closing subscription {subscription.Id}");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} closing subscription {subscription.Id}");
         if (subscription.CancellationTokenRegistration.HasValue)
             subscription.CancellationTokenRegistration.Value.Dispose();
 
@@ -409,7 +410,7 @@ public class WebSocketConnection
         {
             if (Status == WebSocketStatus.Closing)
             {
-                    _log.Write(LogLevel.Debug, $"WebSocket {Id} already closing");
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} already closing");
                 return;
             }
 
@@ -420,7 +421,7 @@ public class WebSocketConnection
 
         if (shouldCloseConnection)
         {
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} closing as there are no more subscriptions");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} closing as there are no more subscriptions");
             await CloseAsync().ConfigureAwait(false);
         }
 
@@ -450,7 +451,7 @@ public class WebSocketConnection
 
             _subscriptions.Add(subscription);
             if (subscription.UserSubscription)
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} adding new subscription with id {subscription.Id}, total subscriptions on connection: {_subscriptions.Count(s => s.UserSubscription)}");
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} adding new subscription with id {subscription.Id}, total subscriptions on connection: {_subscriptions.Count(s => s.UserSubscription)}");
             return true;
         }
     }
@@ -472,7 +473,7 @@ public class WebSocketConnection
     /// <returns></returns>
     public WebSocketSubscription GetSubscriptionByRequest(Func<object, bool> predicate)
     {
-        lock(_subscriptionLock)
+        lock (_subscriptionLock)
             return _subscriptions.SingleOrDefault(s => predicate(s.Request));
     }
 
@@ -485,7 +486,7 @@ public class WebSocketConnection
     {
         WebSocketSubscription currentSubscription = null;
         try
-        { 
+        {
             var handled = false;
             TimeSpan userCodeDuration = TimeSpan.Zero;
 
@@ -521,12 +522,12 @@ public class WebSocketConnection
                     }
                 }
             }
-                           
+
             return (handled, userCodeDuration, currentSubscription);
         }
         catch (Exception ex)
         {
-                _log.Write(LogLevel.Error, $"WebSocket {Id} Exception during message processing\r\nException: {ex.ToLogString()}\r\nData: {messageEvent.JsonData}");
+            _logger.Log(LogLevel.Error, $"WebSocket {Id} Exception during message processing\r\nException: {ex.ToLogString()}\r\nData: {messageEvent.JsonData}");
             currentSubscription?.InvokeExceptionHandler(ex);
             return (false, TimeSpan.Zero, null);
         }
@@ -540,18 +541,37 @@ public class WebSocketConnection
     /// <param name="timeout">The timeout for response</param>
     /// <param name="handler">The response handler, should return true if the received JToken was the response to the request</param>
     /// <returns></returns>
-    public virtual Task SendAndWaitAsync<T>(T obj, TimeSpan timeout, Func<JToken, bool> handler)
+    public virtual async Task SendAndWaitAsync<T>(T obj, TimeSpan timeout, Func<JToken, bool> handler)
     {
         var pending = new WebSocketRequest(handler, timeout);
         lock (_pendingRequests)
         {
             _pendingRequests.Add(pending);
         }
-        var sendOk = Send(obj);
-        if(!sendOk)            
-            pending.Fail();            
 
-        return pending.Event.WaitAsync(timeout);
+        var sendOk = Send(obj);
+        if (!sendOk)
+        {
+            pending.Fail();
+            return;
+        }
+
+        while (true)
+        {
+            if (!_wsc.IsOpen)
+            {
+                pending.Fail();
+                return;
+            }
+
+            if (pending.Completed)
+                return;
+
+            await pending.Event.WaitAsync(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+
+            if (pending.Completed)
+                return;
+        }
     }
 
     /// <summary>
@@ -562,7 +582,7 @@ public class WebSocketConnection
     /// <param name="nullValueHandling">How null values should be serialized</param>
     public virtual bool Send<T>(T obj, NullValueHandling nullValueHandling = NullValueHandling.Ignore)
     {
-        if(obj is string str)
+        if (obj is string str)
             return Send(str);
         else
             return Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
@@ -574,13 +594,13 @@ public class WebSocketConnection
     /// <param name="data">The data to send</param>
     public virtual bool Send(string data)
     {
-            _log.Write(LogLevel.Trace, $"WebSocket {Id} sending data: {data}");
+        _logger.Log(LogLevel.Trace, $"WebSocket {Id} sending data: {data}");
         try
         {
             _wsc.Send(data);
             return true;
         }
-        catch(Exception)
+        catch (Exception)
         {
             return false;
         }
@@ -598,23 +618,27 @@ public class WebSocketConnection
         if (!anySubscriptions)
         {
             // No need to resubscribe anything
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} Nothing to resubscribe, closing connection");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} Nothing to resubscribe, closing connection");
             _ = _wsc.CloseAsync();
             return new CallResult<bool>(true);
         }
 
-        if (_subscriptions.Any(s => s.Authenticated))
+        bool anyAuthenticated = false;
+        lock (_subscriptionLock)
+            anyAuthenticated = _subscriptions.Any(s => s.Authenticated);
+
+        if (anyAuthenticated)
         {
             // If we reconnected a authenticated connection we need to re-authenticate
             var authResult = await ApiClient.AuthenticateAsync(this).ConfigureAwait(false);
             if (!authResult)
             {
-                    _log.Write(LogLevel.Warning, $"WebSocket {Id} authentication failed on reconnected socket. Disconnecting and reconnecting.");
+                _logger.Log(LogLevel.Warning, $"WebSocket {Id} authentication failed on reconnected socket. Disconnecting and reconnecting.");
                 return authResult;
             }
 
             Authenticated = true;
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} authentication succeeded on reconnected socket.");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} authentication succeeded on reconnected socket.");
         }
 
         // Get a list of all subscriptions on the socket
@@ -630,12 +654,12 @@ public class WebSocketConnection
             }
         }
 
-        foreach(var subscription in subscriptionList.Where(s => s.Request != null))
+        foreach (var subscription in subscriptionList.Where(s => s.Request != null))
         {
             var result = await ApiClient.RevitalizeRequestAsync(subscription.Request!).ConfigureAwait(false);
             if (!result)
             {
-                    _log.Write(LogLevel.Warning, "Failed request revitalization: " + result.Error);
+                _logger.Log(LogLevel.Warning, "Failed request revitalization: " + result.Error);
                 return result.As<bool>(false);
             }
         }
@@ -661,7 +685,7 @@ public class WebSocketConnection
         if (!_wsc.IsOpen)
             return new CallResult<bool>(new WebError("WebSocket is not connected"));
 
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} all subscription successfully resubscribed on reconnected socket.");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} all subscription successfully resubscribed on reconnected socket.");
         return new CallResult<bool>(true);
     }
 

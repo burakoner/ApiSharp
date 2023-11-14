@@ -2,7 +2,7 @@
 
 public abstract class TcpSocketApiClient : BaseClient
 {
-    public new TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base.ClientOptions; } }
+    public new TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base._options; } }
 
     // Public Properties
     public long BytesSent { get; private set; }
@@ -27,11 +27,11 @@ public abstract class TcpSocketApiClient : BaseClient
     protected CancellationTokenSource CancellationTokenSource { get; set; }
     protected CancellationToken CancellationToken { get; set; }
 
-    protected TcpSocketApiClient() : this("", new())
+    protected TcpSocketApiClient() : this(null, new())
     {
     }
 
-    protected TcpSocketApiClient(string name, TcpSocketApiClientOptions options) : base(name, options ?? new())
+    protected TcpSocketApiClient(ILogger logger, TcpSocketApiClientOptions options) : base(logger, options ?? new())
     {
         // Tcp Client
         _socketClient = new TcpSocketClient(ClientOptions.ServerHost, ClientOptions.ServerPort);

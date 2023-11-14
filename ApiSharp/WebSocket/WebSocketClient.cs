@@ -13,12 +13,12 @@ public class WebSocketClient
     private static int _lastWebSocketId;
     private static readonly object _webSocketIdLock = new();
 
-    private readonly AsyncEvent _sendEvent;
+    private readonly AsyncResetEvent _sendEvent;
     private readonly ConcurrentQueue<byte[]> _sendBuffer;
     private readonly SemaphoreSlim _closeSem;
     private readonly List<DateTime> _outgoingMessages;
 
-    private ClientWebSocket _cws;
+    private ClientWebSocket _socket;
     private CancellationTokenSource _ctsSource;
     private DateTime _lastReceivedMessagesUpdate;
     private Task _processTask;
@@ -31,14 +31,14 @@ public class WebSocketClient
     /// <summary>
     /// Received messages, the size and the timstamp
     /// </summary>
-    protected readonly List<ReceiveItem> _receivedMessages;
+    protected readonly List<WebSocketReceiveItem> _receivedMessages;
 
     /// <summary>
     /// Received messages lock
     /// </summary>
     protected readonly object _receivedMessagesLock;
 
-    protected Log _log;
+    protected ILogger _logger;
 
     public int Id { get; }
 
@@ -48,12 +48,12 @@ public class WebSocketClient
     /// The timestamp this socket has been active for the last time
     /// </summary>
     public DateTime LastActionTime { get; private set; }
-    
+
     public Uri Uri => Parameters.Uri;
 
-    public bool IsClosed => _cws.State == WebSocketState.Closed;
+    public bool IsClosed => _socket.State == WebSocketState.Closed;
 
-    public bool IsOpen => _cws.State == WebSocketState.Open && !_ctsSource.IsCancellationRequested;
+    public bool IsOpen => _socket.State == WebSocketState.Open && !_ctsSource.IsCancellationRequested;
 
     public double IncomingKbps
     {
@@ -73,37 +73,38 @@ public class WebSocketClient
 
     public event Action OnClose;
     public event Action<string> OnMessage;
+    public event Action<int> OnRequestSent;
     public event Action<Exception> OnError;
     public event Action OnOpen;
     public event Action OnReconnecting;
     public event Action OnReconnected;
     public Func<Task<Uri>> GetReconnectionUrl { get; set; }
 
-    public WebSocketClient(Log log, WebSocketParameters parameters)
+    public WebSocketClient(ILogger logger, WebSocketParameters parameters)
     {
         Id = NextWebSocketId();
-        _log = log;
+        _logger = logger;
 
         Parameters = parameters;
         _outgoingMessages = new List<DateTime>();
-        _receivedMessages = new List<ReceiveItem>();
-        _sendEvent = new AsyncEvent();
+        _receivedMessages = new List<WebSocketReceiveItem>();
+        _sendEvent = new AsyncResetEvent();
         _sendBuffer = new ConcurrentQueue<byte[]>();
         _ctsSource = new CancellationTokenSource();
         _receivedMessagesLock = new object();
 
         _closeSem = new SemaphoreSlim(1, 1);
-        _cws = CreateWebSocket();
+        _socket = CreateWebSocket();
     }
 
     public virtual async Task<bool> ConnectAsync()
     {
         if (!await ConnectInternalAsync().ConfigureAwait(false))
             return false;
-        
+
         OnOpen?.Invoke();
         _processTask = ProcessAsync();
-        return true;            
+        return true;
     }
 
     private ClientWebSocket CreateWebSocket()
@@ -134,19 +135,19 @@ public class WebSocketClient
 
     private async Task<bool> ConnectInternalAsync()
     {
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} connecting");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} connecting");
         try
         {
             using CancellationTokenSource tcs = new(TimeSpan.FromSeconds(10));
-            await _cws.ConnectAsync(Uri, tcs.Token).ConfigureAwait(false);
+            await _socket.ConnectAsync(Uri, tcs.Token).ConfigureAwait(false);
         }
         catch (Exception e)
         {
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} connection failed: " + e.ToLogString());
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} connection failed: " + e.ToLogString());
             return false;
         }
 
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} connected to {Uri}");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} connected to {Uri}");
         return true;
     }
 
@@ -154,13 +155,13 @@ public class WebSocketClient
     {
         while (!_stopRequested)
         {
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} starting processing tasks");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} starting processing tasks");
             _processState = ProcessState.Processing;
             var sendTask = SendLoopAsync();
             var receiveTask = ReceiveLoopAsync();
             var timeoutTask = Parameters.Timeout != null && Parameters.Timeout > TimeSpan.FromSeconds(0) ? CheckTimeoutAsync() : Task.CompletedTask;
             await Task.WhenAll(sendTask, receiveTask, timeoutTask).ConfigureAwait(false);
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} processing tasks finished");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} processing tasks finished");
 
             _processState = ProcessState.WaitingForClose;
             while (_closeTask == null)
@@ -174,12 +175,12 @@ public class WebSocketClient
                 _processState = ProcessState.Idle;
                 OnClose?.Invoke();
                 return;
-            }    
+            }
 
             if (!_stopRequested)
             {
                 _processState = ProcessState.Reconnecting;
-                OnReconnecting?.Invoke();                    
+                OnReconnecting?.Invoke();
             }
 
             var sinceLastReconnect = DateTime.UtcNow - _lastReconnectTime;
@@ -188,19 +189,19 @@ public class WebSocketClient
 
             while (!_stopRequested)
             {
-                    _log.Write(LogLevel.Debug, $"WebSocket {Id} attempting to reconnect");
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} attempting to reconnect");
                 var task = GetReconnectionUrl?.Invoke();
                 if (task != null)
                 {
                     var reconnectUri = await task.ConfigureAwait(false);
                     if (reconnectUri != null && Parameters.Uri != reconnectUri)
                     {
-                            _log.Write(LogLevel.Debug, $"WebSocket {Id} reconnect URI set to {reconnectUri}");
+                        _logger.Log(LogLevel.Debug, $"WebSocket {Id} reconnect URI set to {reconnectUri}");
                         Parameters.Uri = reconnectUri;
                     }
                 }
 
-                _cws = CreateWebSocket();
+                _socket = CreateWebSocket();
                 _ctsSource.Dispose();
                 _ctsSource = new CancellationTokenSource();
                 while (_sendBuffer.TryDequeue(out _)) { } // Clear send buffer
@@ -227,7 +228,7 @@ public class WebSocketClient
             return;
 
         var bytes = Parameters.Encoding.GetBytes(data);
-            _log.Write(LogLevel.Trace, $"WebSocket {Id} Adding {bytes.Length} to sent buffer");
+        _logger.Log(LogLevel.Trace, $"WebSocket {Id} Adding {bytes.Length} to sent buffer");
         _sendBuffer.Enqueue(bytes);
         _sendEvent.Set();
     }
@@ -237,7 +238,7 @@ public class WebSocketClient
         if (_processState != ProcessState.Processing && IsOpen)
             return;
 
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} reconnect requested");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} reconnect requested");
         _closeTask = CloseInternalAsync();
         await _closeTask.ConfigureAwait(false);
     }
@@ -251,18 +252,18 @@ public class WebSocketClient
         {
             if (_closeTask?.IsCompleted == false)
             {
-                    _log.Write(LogLevel.Debug, $"WebSocket {Id} CloseAsync() waiting for existing close task");
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} CloseAsync() waiting for existing close task");
                 await _closeTask.ConfigureAwait(false);
                 return;
             }
 
             if (!IsOpen)
             {
-                    _log.Write(LogLevel.Debug, $"WebSocket {Id} CloseAsync() socket not open");
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} CloseAsync() socket not open");
                 return;
             }
 
-                _log.Write(LogLevel.Debug, $"WebSocket {Id} closing");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} closing");
             _closeTask = CloseInternalAsync();
         }
         finally
@@ -271,10 +272,10 @@ public class WebSocketClient
         }
 
         await _closeTask.ConfigureAwait(false);
-        if(_processTask != null)
+        if (_processTask != null)
             await _processTask.ConfigureAwait(false);
         OnClose?.Invoke();
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} closed");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} closed");
     }
 
     private async Task CloseInternalAsync()
@@ -286,11 +287,11 @@ public class WebSocketClient
         _ctsSource.Cancel();
         _sendEvent.Set();
 
-        if (_cws.State == WebSocketState.Open)
+        if (_socket.State == WebSocketState.Open)
         {
             try
             {
-                await _cws.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
+                await _socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -299,11 +300,11 @@ public class WebSocketClient
                 // So socket might go to aborted state, might still be open
             }
         }
-        else if(_cws.State == WebSocketState.CloseReceived)
+        else if (_socket.State == WebSocketState.CloseReceived)
         {
             try
             {
-                await _cws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
+                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", default).ConfigureAwait(false);
             }
             catch (Exception)
             {
@@ -319,11 +320,11 @@ public class WebSocketClient
         if (_disposed)
             return;
 
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} disposing");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} disposing");
         _disposed = true;
-        _cws.Dispose();
+        _socket.Dispose();
         _ctsSource.Dispose();
-            _log.Write(LogLevel.Trace, $"WebSocket {Id} disposed");
+        _logger.Log(LogLevel.Trace, $"WebSocket {Id} disposed");
     }
 
     private async Task SendLoopAsync()
@@ -353,14 +354,14 @@ public class WebSocketClient
                         }
 
                         if (start != null)
-                            _log.Write(LogLevel.Debug, $"WebSocket {Id} sent delayed {Math.Round((DateTime.UtcNow - start.Value).TotalMilliseconds)}ms because of rate limit");
+                            _logger.Log(LogLevel.Debug, $"WebSocket {Id} sent delayed {Math.Round((DateTime.UtcNow - start.Value).TotalMilliseconds)}ms because of rate limit");
                     }
 
                     try
                     {
-                        await _cws.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, _ctsSource.Token).ConfigureAwait(false);
+                        await _socket.SendAsync(new ArraySegment<byte>(data, 0, data.Length), WebSocketMessageType.Text, true, _ctsSource.Token).ConfigureAwait(false);
                         _outgoingMessages.Add(DateTime.UtcNow);
-                            _log.Write(LogLevel.Trace, $"WebSocket {Id} sent {data.Length} bytes");
+                        _logger.Log(LogLevel.Trace, $"WebSocket {Id} sent {data.Length} bytes");
                     }
                     catch (OperationCanceledException)
                     {
@@ -383,13 +384,13 @@ public class WebSocketClient
             // Because this is running in a separate task and not awaited until the socket gets closed
             // any exception here will crash the send processing, but do so silently unless the socket get's stopped.
             // Make sure we at least let the owner know there was an error
-                _log.Write(LogLevel.Warning, $"WebSocket {Id} Send loop stopped with exception");
+            _logger.Log(LogLevel.Warning, $"WebSocket {Id} Send loop stopped with exception");
             OnError?.Invoke(e);
             throw;
         }
         finally
         {
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} Send loop finished");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} Send loop finished");
         }
     }
 
@@ -415,10 +416,10 @@ public class WebSocketClient
                 {
                     try
                     {
-                        receiveResult = await _cws.ReceiveAsync(buffer, _ctsSource.Token).ConfigureAwait(false);
+                        receiveResult = await _socket.ReceiveAsync(buffer, _ctsSource.Token).ConfigureAwait(false);
                         received += receiveResult.Count;
                         lock (_receivedMessagesLock)
-                            _receivedMessages.Add(new ReceiveItem(DateTime.UtcNow, receiveResult.Count));
+                            _receivedMessages.Add(new WebSocketReceiveItem(DateTime.UtcNow, receiveResult.Count));
                     }
                     catch (OperationCanceledException)
                     {
@@ -437,7 +438,7 @@ public class WebSocketClient
                     if (receiveResult.MessageType == WebSocketMessageType.Close)
                     {
                         // Connection closed unexpectedly        
-                            _log.Write(LogLevel.Debug, $"WebSocket {Id} received `Close` message");
+                        _logger.Log(LogLevel.Debug, $"WebSocket {Id} received `Close` message");
                         if (_closeTask?.IsCompleted != false)
                             _closeTask = CloseInternalAsync();
                         break;
@@ -448,7 +449,7 @@ public class WebSocketClient
                         // We received data, but it is not complete, write it to a memory stream for reassembling
                         multiPartMessage = true;
                         memoryStream ??= new MemoryStream();
-                            _log.Write(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
+                        _logger.Log(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
                         await memoryStream.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
                     }
                     else
@@ -456,13 +457,13 @@ public class WebSocketClient
                         if (!multiPartMessage)
                         {
                             // Received a complete message and it's not multi part
-                                _log.Write(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in single message");
+                            _logger.Log(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in single message");
                             HandleMessage(buffer.Array!, buffer.Offset, receiveResult.Count, receiveResult.MessageType);
                         }
                         else
                         {
                             // Received the end of a multipart message, write to memory stream for reassembling
-                                _log.Write(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
+                            _logger.Log(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
                             await memoryStream!.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
                         }
                         break;
@@ -490,29 +491,29 @@ public class WebSocketClient
                     if (receiveResult?.EndOfMessage == true)
                     {
                         // Reassemble complete message from memory stream
-                        _log.Write(LogLevel.Trace, $"WebSocket {Id} reassembled message of {memoryStream!.Length} bytes");
+                        _logger.Log(LogLevel.Trace, $"WebSocket {Id} reassembled message of {memoryStream!.Length} bytes");
                         HandleMessage(memoryStream!.ToArray(), 0, (int)memoryStream.Length, receiveResult.MessageType);
                         memoryStream.Dispose();
                     }
                     else
                     {
-                        _log.Write(LogLevel.Trace, $"WebSocket {Id} discarding incomplete message of {memoryStream!.Length} bytes");
+                        _logger.Log(LogLevel.Trace, $"WebSocket {Id} discarding incomplete message of {memoryStream!.Length} bytes");
                     }
                 }
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             // Because this is running in a separate task and not awaited until the socket gets closed
             // any exception here will crash the receive processing, but do so silently unless the socket gets stopped.
             // Make sure we at least let the owner know there was an error
-                _log.Write(LogLevel.Warning, $"WebSocket {Id} Receive loop stopped with exception");
+            _logger.Log(LogLevel.Warning, $"WebSocket {Id} Receive loop stopped with exception");
             OnError?.Invoke(e);
             throw;
         }
         finally
         {
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} Receive loop finished");
+            _logger.Log(LogLevel.Debug, $"WebSocket {Id} Receive loop finished");
         }
     }
 
@@ -539,7 +540,7 @@ public class WebSocketClient
             }
             catch (Exception e)
             {
-                _log.Write(LogLevel.Error, $"WebSocket {Id} unhandled exception during byte data interpretation: " + e.ToLogString());
+                _logger.Log(LogLevel.Error, $"WebSocket {Id} unhandled exception during byte data interpretation: " + e.ToLogString());
                 return;
             }
         }
@@ -554,7 +555,7 @@ public class WebSocketClient
             }
             catch (Exception e)
             {
-                _log.Write(LogLevel.Error, $"WebSocket {Id} unhandled exception during string data interpretation: " + e.ToLogString());
+                _logger.Log(LogLevel.Error, $"WebSocket {Id} unhandled exception during string data interpretation: " + e.ToLogString());
                 return;
             }
         }
@@ -566,7 +567,7 @@ public class WebSocketClient
         }
         catch (Exception e)
         {
-            _log.Write(LogLevel.Error, $"WebSocket {Id} unhandled exception during message processing: " + e.ToLogString());
+            _logger.Log(LogLevel.Error, $"WebSocket {Id} unhandled exception during message processing: " + e.ToLogString());
         }
     }
 
@@ -612,10 +613,10 @@ public class WebSocketClient
     /// <returns></returns>
     protected async Task CheckTimeoutAsync()
     {
-            _log.Write(LogLevel.Debug, $"WebSocket {Id} Starting task checking for no data received for {Parameters.Timeout}");
+        _logger.Log(LogLevel.Debug, $"WebSocket {Id} Starting task checking for no data received for {Parameters.Timeout}");
         LastActionTime = DateTime.UtcNow;
-        try 
-        { 
+        try
+        {
             while (true)
             {
                 if (_ctsSource.IsCancellationRequested)
@@ -623,7 +624,7 @@ public class WebSocketClient
 
                 if (DateTime.UtcNow - LastActionTime > Parameters.Timeout)
                 {
-                        _log.Write(LogLevel.Warning, $"WebSocket {Id} No data received for {Parameters.Timeout}, reconnecting socket");
+                    _logger.Log(LogLevel.Warning, $"WebSocket {Id} No data received for {Parameters.Timeout}, reconnecting socket");
                     _ = ReconnectAsync().ConfigureAwait(false);
                     return;
                 }
@@ -665,7 +666,7 @@ public class WebSocketClient
     {
         var testTime = DateTime.UtcNow;
         _outgoingMessages.RemoveAll(r => testTime - r > TimeSpan.FromSeconds(1));
-        return _outgoingMessages.Count;            
+        return _outgoingMessages.Count;
     }
 
     /// <summary>
@@ -704,27 +705,5 @@ public class WebSocketClient
 
         if (proxy.Username != null)
             ws.Options.Proxy.Credentials = new NetworkCredential(proxy.Username.GetString(), proxy.Password.GetString());
-    }
-}
-
-/// <summary>
-/// Received message info
-/// </summary>
-public struct ReceiveItem
-{
-    /// <summary>
-    /// Timestamp of the received data
-    /// </summary>
-    public DateTime Timestamp { get; set; }
-
-    /// <summary>
-    /// Number of bytes received
-    /// </summary>
-    public int Bytes { get; set; }
-
-    public ReceiveItem(DateTime timestamp, int bytes)
-    {
-        Timestamp = timestamp;
-        Bytes = bytes;
     }
 }

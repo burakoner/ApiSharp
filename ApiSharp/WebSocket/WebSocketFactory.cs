@@ -2,8 +2,8 @@
 
 public class WebSocketFactory
 {
-    public WebSocketClient CreateWebSocketClient(Log log, WebSocketParameters parameters)
+    public WebSocketClient CreateWebSocketClient(ILogger logger, WebSocketParameters parameters)
     {
-        return new WebSocketClient(log, parameters);
+        return new WebSocketClient(logger, parameters);
     }
 }

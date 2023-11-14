@@ -32,13 +32,13 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     protected ArraySerialization ArraySerialization = ArraySerialization.Array;
 
-    public new RestApiClientOptions ClientOptions { get { return (RestApiClientOptions)base.ClientOptions; } }
+    public new RestApiClientOptions ClientOptions { get { return (RestApiClientOptions)base._options; } }
 
-    protected RestApiClient() : this("", new())
+    protected RestApiClient() : this(null, new())
     {
     }
 
-    protected RestApiClient(string name, RestApiClientOptions options) : base(name, options ?? new())
+    protected RestApiClient(ILogger logger, RestApiClientOptions options) : base(logger, options ?? new())
     {
         RequestFactory.Configure(options.HttpOptions, options.Proxy, options.HttpClient);
     }
@@ -47,7 +47,7 @@ public abstract class RestApiClient : BaseClient
     /// Get time sync info for an API client
     /// </summary>
     protected internal virtual TimeSyncInfo GetTimeSyncInfo()
-        => new(log, false, TimeSpan.MaxValue, new TimeSyncState(""));
+        => new(_logger, false, TimeSpan.MaxValue, new TimeSyncState(""));
 
     /// <summary>
     /// Get time offset for an API client
@@ -113,7 +113,7 @@ public abstract class RestApiClient : BaseClient
                 var syncTimeResult = await syncTask.ConfigureAwait(false);
                 if (!syncTimeResult)
                 {
-                    log.Write(LogLevel.Debug, $"[{requestId}] Failed to sync time, aborting request: " + syncTimeResult.Error);
+                    _logger.Log(LogLevel.Debug, $"[{requestId}] Failed to sync time, aborting request: " + syncTimeResult.Error);
                     return syncTimeResult.As<IRequest>(default);
                 }
             }
@@ -123,7 +123,7 @@ public abstract class RestApiClient : BaseClient
         {
             foreach (var limiter in ClientOptions.RateLimiters)
             {
-                var limitResult = await limiter.LimitRequestAsync(log, uri.AbsolutePath, method, signed, ClientOptions.ApiCredentials?.Key, ClientOptions.RateLimitingBehavior, requestWeight, cancellationToken).ConfigureAwait(false);
+                var limitResult = await limiter.LimitRequestAsync(_logger, uri.AbsolutePath, method, signed, ClientOptions.ApiCredentials?.Key, ClientOptions.RateLimitingBehavior, requestWeight, cancellationToken).ConfigureAwait(false);
                 if (!limitResult.Success)
                     return new CallResult<IRequest>(limitResult.Error!);
             }
@@ -131,20 +131,12 @@ public abstract class RestApiClient : BaseClient
 
         if (signed && AuthenticationProvider == null)
         {
-            log.Write(LogLevel.Warning, $"[{requestId}] Request {uri.AbsolutePath} failed because no ApiCredentials were provided");
+            _logger.Log(LogLevel.Warning, $"[{requestId}] Request {uri.AbsolutePath} failed because no ApiCredentials were provided");
             return new CallResult<IRequest>(new NoApiCredentialsError());
         }
 
-        log.Write(LogLevel.Information, $"[{requestId}] Creating request for " + uri);
-        var request = ConstructRequest(
-            uri,
-            method,
-            signed,
-            queryParameters,
-            bodyParameters,
-            headerParameters,
-            serialization ?? this.ArraySerialization, 
-            requestId);
+        _logger.Log(LogLevel.Information, $"[{requestId}] Creating request for " + uri);
+        var request = ConstructRequest(uri, method, signed, queryParameters, bodyParameters, headerParameters, serialization ?? this.ArraySerialization, requestId);
 
         var paramString = "";
         if (!string.IsNullOrWhiteSpace(request.Content))
@@ -155,7 +147,7 @@ public abstract class RestApiClient : BaseClient
             paramString += " with headers " + string.Join(", ", headers.Select(h => h.Key + $"=[{string.Join(",", h.Value)}]"));
 
         TotalRequestsMade++;
-        log.Write(LogLevel.Trace, $"[{requestId}] Sending {method}{(signed ? " signed" : "")} request to {request.Uri}{paramString ?? " "}{(ClientOptions.Proxy == null ? "" : $" via proxy {ClientOptions.Proxy.Host}")}");
+        _logger.Log(LogLevel.Trace, $"[{requestId}] Sending {method}{(signed ? " signed" : "")} request to {request.Uri}{paramString ?? " "}{(ClientOptions.Proxy == null ? "" : $" via proxy {ClientOptions.Proxy.Host}")}");
         return new CallResult<IRequest>(request);
     }
 
@@ -190,7 +182,7 @@ public abstract class RestApiClient : BaseClient
                     var data = await reader.ReadToEndAsync().ConfigureAwait(false);
                     responseStream.Close();
                     response.Close();
-                    log.Write(LogLevel.Debug, $"[{request.RequestId}] Response received in {sw.ElapsedMilliseconds}ms{(log.Level == LogLevel.Trace ? (": " + data) : "")}");
+                    _logger.Log(LogLevel.Debug, $"[{request.RequestId}] Response received in {sw.ElapsedMilliseconds}ms: " + data);
 
                     if (!expectedEmptyResponse)
                     {
@@ -251,7 +243,7 @@ public abstract class RestApiClient : BaseClient
                 // Http status code indicates error
                 using var reader = new StreamReader(responseStream);
                 var data = await reader.ReadToEndAsync().ConfigureAwait(false);
-                log.Write(LogLevel.Warning, $"[{request.RequestId}] Error received in {sw.ElapsedMilliseconds}ms: {data}");
+                _logger.Log(LogLevel.Warning, $"[{request.RequestId}] Error received in {sw.ElapsedMilliseconds}ms: {data}");
                 responseStream.Close();
                 response.Close();
                 var parseResult = ValidateJson(data);
@@ -265,7 +257,7 @@ public abstract class RestApiClient : BaseClient
         {
             // Request exception, can't reach server for instance
             var exceptionInfo = requestException.ToLogString();
-            log.Write(LogLevel.Warning, $"[{request.RequestId}] Request exception: " + exceptionInfo);
+            _logger.Log(LogLevel.Warning, $"[{request.RequestId}] Request exception: " + exceptionInfo);
             return new RestCallResult<T>(null, null, null, null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, new WebError(exceptionInfo));
         }
         catch (OperationCanceledException canceledException)
@@ -273,13 +265,13 @@ public abstract class RestApiClient : BaseClient
             if (cancellationToken != default && canceledException.CancellationToken == cancellationToken)
             {
                 // Cancellation token canceled by caller
-                log.Write(LogLevel.Warning, $"[{request.RequestId}] Request canceled by cancellation token");
+                _logger.Log(LogLevel.Warning, $"[{request.RequestId}] Request canceled by cancellation token");
                 return new RestCallResult<T>(null, null, null, null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, new CancellationRequestedError());
             }
             else
             {
                 // Request timed out
-                log.Write(LogLevel.Warning, $"[{request.RequestId}] Request timed out: " + canceledException.ToLogString());
+                _logger.Log(LogLevel.Warning, $"[{request.RequestId}] Request timed out: " + canceledException.ToLogString());
                 return new RestCallResult<T>(null, null, null, null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, new WebError($"[{request.RequestId}] Request timed out"));
             }
         }

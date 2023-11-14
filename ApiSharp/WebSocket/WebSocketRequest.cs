@@ -5,7 +5,8 @@ internal class WebSocketRequest
     public Func<JToken, bool> Handler { get; }
     public JToken Result { get; private set; }
     public bool Completed { get; private set; }
-    public AsyncEvent Event { get; }
+    public AsyncResetEvent Event { get; }
+    public DateTime RequestTimestamp { get; set; }
     public TimeSpan Timeout { get; }
 
     private CancellationTokenSource cts;
@@ -13,7 +14,8 @@ internal class WebSocketRequest
     public WebSocketRequest(Func<JToken, bool> handler, TimeSpan timeout)
     {
         Handler = handler;
-        Event = new AsyncEvent(false, false);
+        Event = new AsyncResetEvent(false, false);
+        RequestTimestamp = DateTime.UtcNow;
         Timeout = timeout;
 
         cts = new CancellationTokenSource(timeout);

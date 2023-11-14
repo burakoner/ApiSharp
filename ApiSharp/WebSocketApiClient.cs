@@ -2,17 +2,9 @@
 
 public abstract class WebSocketApiClient : BaseClient
 {
-    public new WebSocketApiClientOptions ClientOptions { get { return (WebSocketApiClientOptions)base.ClientOptions; } }
+    public new WebSocketApiClientOptions ClientOptions { get { return (WebSocketApiClientOptions)base._options; } }
 
-    protected WebSocketApiClient() : this("", new())
-    {
-    }
-
-    protected WebSocketApiClient(string name, WebSocketApiClientOptions options) : base(name, options ?? new())
-    {
-    }
-
-    protected internal List<string> IgnoreHandlingList = new List<string>();
+    protected internal List<string> IgnoreHandlingList = new();
 
     /// <summary>
     /// The factory for creating sockets. Used for unit testing
@@ -57,7 +49,7 @@ public abstract class WebSocketApiClient : BaseClient
     /// <summary>
     /// Wait event for the periodicTask
     /// </summary>
-    protected AsyncEvent PeriodicEvent;
+    protected AsyncResetEvent PeriodicEvent;
 
     /// <summary>
     /// If true; data which is a response to a query will also be distributed to subscriptions
@@ -95,6 +87,14 @@ public abstract class WebSocketApiClient : BaseClient
 
             return WebSocketConnections.Sum(s => s.Value.SubscriptionCount);
         }
+    }
+
+    protected WebSocketApiClient() : this(null, new())
+    {
+    }
+
+    protected WebSocketApiClient(ILogger logger, WebSocketApiClientOptions options) : base(logger, options ?? new())
+    {
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public abstract class WebSocketApiClient : BaseClient
                 subscription = AddSubscription(request, identifier, true, connection, dataHandler, authenticated);
                 if (subscription == null)
                 {
-                    log.Write(LogLevel.Trace, $"WebSocket {connection.Id} failed to add subscription, retrying on different connection");
+                    _logger.Log(LogLevel.Trace, $"WebSocket {connection.Id} failed to add subscription, retrying on different connection");
                     continue;
                 }
 
@@ -178,7 +178,6 @@ public abstract class WebSocketApiClient : BaseClient
                 }
 
                 var needsConnecting = !connection.Connected;
-
                 var connectResult = await ConnectIfNeededAsync(connection, authenticated).ConfigureAwait(false);
                 if (!connectResult) return new CallResult<WebSocketUpdateSubscription>(connectResult.Error!);
 
@@ -193,7 +192,7 @@ public abstract class WebSocketApiClient : BaseClient
 
         if (connection.PausedActivity)
         {
-            log.Write(LogLevel.Warning, $"WebSocket {connection.Id} has been paused, can't subscribe at this moment");
+            _logger.Log(LogLevel.Warning, $"WebSocket {connection.Id} has been paused, can't subscribe at this moment");
             return new CallResult<WebSocketUpdateSubscription>(new ServerError("WebSocket is paused"));
         }
 
@@ -203,7 +202,7 @@ public abstract class WebSocketApiClient : BaseClient
             var subResult = await SubscribeAndWaitAsync(connection, request, subscription).ConfigureAwait(false);
             if (!subResult)
             {
-                log.Write(LogLevel.Warning, $"WebSocket {connection.Id} failed to subscribe: {subResult.Error}");
+                _logger.Log(LogLevel.Warning, $"WebSocket {connection.Id} failed to subscribe: {subResult.Error}");
                 await connection.CloseAsync(subscription).ConfigureAwait(false);
                 return new CallResult<WebSocketUpdateSubscription>(subResult.Error!);
             }
@@ -218,12 +217,12 @@ public abstract class WebSocketApiClient : BaseClient
         {
             subscription.CancellationTokenRegistration = ct.Register(async () =>
             {
-                log.Write(LogLevel.Information, $"WebSocket {connection.Id} Cancellation token set, closing subscription");
+                _logger.Log(LogLevel.Information, $"WebSocket {connection.Id} Cancellation token set, closing subscription");
                 await connection.CloseAsync(subscription).ConfigureAwait(false);
             }, false);
         }
 
-        log.Write(LogLevel.Information, $"WebSocket {connection.Id} subscription {subscription.Id} completed successfully");
+        _logger.Log(LogLevel.Information, $"WebSocket {connection.Id} subscription {subscription.Id} completed successfully");
         return new CallResult<WebSocketUpdateSubscription>(new WebSocketUpdateSubscription(connection, subscription));
     }
 
@@ -282,11 +281,9 @@ public abstract class WebSocketApiClient : BaseClient
         try
         {
             var webSocketResult = await GetWebSocketConnection(url, authenticated).ConfigureAwait(false);
-            if (!webSocketResult)
-                return webSocketResult.As<T>(default);
+            if (!webSocketResult) return webSocketResult.As<T>(default);
 
             connection = webSocketResult.Data;
-
             if (ClientOptions.SubscriptionsCombineTarget == 1)
             {
                 // Can release early when only a single sub per connection
@@ -295,8 +292,7 @@ public abstract class WebSocketApiClient : BaseClient
             }
 
             var connectResult = await ConnectIfNeededAsync(connection, authenticated).ConfigureAwait(false);
-            if (!connectResult)
-                return new CallResult<T>(connectResult.Error!);
+            if (!connectResult) return new CallResult<T>(connectResult.Error!);
         }
         finally
         {
@@ -306,7 +302,7 @@ public abstract class WebSocketApiClient : BaseClient
 
         if (connection.PausedActivity)
         {
-            log.Write(LogLevel.Warning, $"WebSocket {connection.Id} has been paused, can't send query at this moment");
+            _logger.Log(LogLevel.Warning, $"WebSocket {connection.Id} has been paused, can't send query at this moment");
             return new CallResult<T>(new ServerError("WebSocket is paused"));
         }
 
@@ -356,11 +352,11 @@ public abstract class WebSocketApiClient : BaseClient
         if (!authenticated || connection.Authenticated)
             return new CallResult<bool>(true);
 
-        log.Write(LogLevel.Debug, $"Attempting to authenticate {connection.Id}");
+        _logger.Log(LogLevel.Debug, $"Attempting to authenticate {connection.Id}");
         var result = await AuthenticateAsync(connection).ConfigureAwait(false);
         if (!result)
         {
-            log.Write(LogLevel.Warning, $"WebSocket {connection.Id} authentication failed");
+            _logger.Log(LogLevel.Warning, $"WebSocket {connection.Id} authentication failed");
             if (connection.Connected)
                 await connection.CloseAsync().ConfigureAwait(false);
 
@@ -470,7 +466,7 @@ public abstract class WebSocketApiClient : BaseClient
             var desResult = Deserialize<T>(messageEvent.JsonData);
             if (!desResult)
             {
-                log.Write(LogLevel.Warning, $"WebSocket {connection.Id} Failed to deserialize data into type {typeof(T)}: {desResult.Error}");
+                _logger.Log(LogLevel.Warning, $"WebSocket {connection.Id} Failed to deserialize data into type {typeof(T)}: {desResult.Error}");
                 return;
             }
 
@@ -482,6 +478,7 @@ public abstract class WebSocketApiClient : BaseClient
             : WebSocketSubscription.CreateForRequest(NextId(), request, userSubscription, authenticated, InternalHandler);
         if (!connection.AddSubscription(subscription))
             return null;
+
         return subscription;
     }
 
@@ -558,16 +555,16 @@ public abstract class WebSocketApiClient : BaseClient
         var connectionAddress = await GetConnectionUrlAsync(address, authenticated).ConfigureAwait(false);
         if (!connectionAddress)
         {
-            log.Write(LogLevel.Warning, $"Failed to determine connection url: " + connectionAddress.Error);
+            _logger.Log(LogLevel.Warning, $"Failed to determine connection url: " + connectionAddress.Error);
             return connectionAddress.As<WebSocketConnection>(null);
         }
 
         if (connectionAddress.Data != address)
-            log.Write(LogLevel.Debug, $"Connection address set to " + connectionAddress.Data);
+            _logger.Log(LogLevel.Debug, $"Connection address set to " + connectionAddress.Data);
 
         // Create new socket
         var webSocket = CreateWebSocket(connectionAddress.Data!);
-        var connection = new WebSocketConnection(log, this, webSocket, address);
+        var connection = new WebSocketConnection(_logger, this, webSocket, address);
         connection.UnhandledMessage += HandleUnhandledMessage;
         foreach (var kvp in GenericHandlers)
         {
@@ -627,8 +624,8 @@ public abstract class WebSocketApiClient : BaseClient
     /// <returns></returns>
     protected virtual WebSocketClient CreateWebSocket(string address)
     {
-        var webSocket = WebSocketFactory.CreateWebSocketClient(log, GetWebSocketParameters(address));
-        log.Write(LogLevel.Debug, $"WebSocket {webSocket.Id} new socket created for " + address);
+        var webSocket = WebSocketFactory.CreateWebSocketClient(_logger, GetWebSocketParameters(address));
+        _logger.Log(LogLevel.Debug, $"WebSocket {webSocket.Id} new socket created for " + address);
         return webSocket;
     }
 
@@ -643,7 +640,7 @@ public abstract class WebSocketApiClient : BaseClient
         if (objGetter == null)
             throw new ArgumentNullException(nameof(objGetter));
 
-        PeriodicEvent = new AsyncEvent();
+        PeriodicEvent = new AsyncResetEvent();
         PeriodicTask = Task.Run(async () =>
         {
             while (!_disposing)
@@ -664,7 +661,7 @@ public abstract class WebSocketApiClient : BaseClient
                     if (obj == null)
                         continue;
 
-                    log.Write(LogLevel.Trace, $"WebSocket {connection.Id} sending periodic {identifier}");
+                    _logger.Log(LogLevel.Trace, $"WebSocket {connection.Id} sending periodic {identifier}");
 
                     try
                     {
@@ -672,7 +669,7 @@ public abstract class WebSocketApiClient : BaseClient
                     }
                     catch (Exception ex)
                     {
-                        log.Write(LogLevel.Warning, $"Socket {connection.Id} Periodic send {identifier} failed: " + ex.ToLogString());
+                        _logger.Log(LogLevel.Warning, $"Socket {connection.Id} Periodic send {identifier} failed: " + ex.ToLogString());
                     }
                 }
             }
@@ -701,7 +698,7 @@ public abstract class WebSocketApiClient : BaseClient
         if (subscription == null || connection == null)
             return false;
 
-        log.Write(LogLevel.Information, $"WebSocket {connection.Id} Unsubscribing subscription " + subscriptionId);
+        _logger.Log(LogLevel.Information, $"WebSocket {connection.Id} Unsubscribing subscription " + subscriptionId);
         await connection.CloseAsync(subscription).ConfigureAwait(false);
         return true;
     }
@@ -716,7 +713,7 @@ public abstract class WebSocketApiClient : BaseClient
         if (subscription == null)
             throw new ArgumentNullException(nameof(subscription));
 
-        log.Write(LogLevel.Information, $"Socket {subscription.Id} Unsubscribing subscription  " + subscription.Id);
+        _logger.Log(LogLevel.Information, $"Socket {subscription.Id} Unsubscribing subscription  " + subscription.Id);
         await subscription.CloseAsync().ConfigureAwait(false);
     }
 
@@ -726,12 +723,12 @@ public abstract class WebSocketApiClient : BaseClient
     /// <returns></returns>
     public virtual async Task UnsubscribeAllAsync()
     {
-        log.Write(LogLevel.Information, $"Unsubscribing all {WebSocketConnections.Sum(s => s.Value.SubscriptionCount)} subscriptions");
+        _logger.Log(LogLevel.Information, $"Unsubscribing all {WebSocketConnections.Sum(s => s.Value.SubscriptionCount)} subscriptions");
         var tasks = new List<Task>();
+        var conns = WebSocketConnections.Values;
+        foreach (var conn in conns)
         {
-            var conns = WebSocketConnections.Values;
-            foreach (var conn in conns)
-                tasks.Add(conn.CloseAsync());
+            tasks.Add(conn.CloseAsync());
         }
 
         await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
@@ -743,12 +740,12 @@ public abstract class WebSocketApiClient : BaseClient
     /// <returns></returns>
     public virtual async Task ReconnectAsync()
     {
-        log.Write(LogLevel.Information, $"Reconnecting all {WebSocketConnections.Count} connections");
+        _logger.Log(LogLevel.Information, $"Reconnecting all {WebSocketConnections.Count} connections");
         var tasks = new List<Task>();
+        var conns = WebSocketConnections.Values;
+        foreach (var conn in conns)
         {
-            var conns = WebSocketConnections.Values;
-            foreach (var conn in conns)
-                tasks.Add(conn.TriggerReconnectAsync());
+            tasks.Add(conn.TriggerReconnectAsync());
         }
 
         await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
@@ -765,7 +762,9 @@ public abstract class WebSocketApiClient : BaseClient
         {
             sb.AppendLine($"  Connection {connection.Key}: {connection.Value.SubscriptionCount} subscriptions, status: {connection.Value.Status}, authenticated: {connection.Value.Authenticated}, kbps: {connection.Value.IncomingKbps}");
             foreach (var subscription in connection.Value.Subscriptions)
+            {
                 sb.AppendLine($"    Subscription {subscription.Id}, authenticated: {subscription.Authenticated}, confirmed: {subscription.Confirmed}");
+            }
         }
         return sb.ToString();
     }
@@ -780,7 +779,7 @@ public abstract class WebSocketApiClient : BaseClient
         PeriodicEvent?.Dispose();
         if (WebSocketConnections.Sum(s => s.Value.SubscriptionCount) > 0)
         {
-            log.Write(LogLevel.Debug, "Disposing socket client, closing all subscriptions");
+            _logger.Log(LogLevel.Debug, "Disposing socket client, closing all subscriptions");
             _ = UnsubscribeAllAsync();
         }
         Semaphore?.Dispose();

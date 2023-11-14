@@ -1,25 +1,54 @@
 ﻿namespace ApiSharp.Comparers;
 
+/// <summary>
+/// Comparer for byte order
+/// </summary>
 public class ByteOrderComparer : IComparer<byte[]>
 {
+    /// <summary>
+    /// Compare function
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
     public int Compare(byte[] x, byte[] y)
     {
+        // Shortcuts: If both are null, they are the same.
         if (x == null && y == null) return 0;
+
+        // If one is null and the other isn't, then the
+        // one that is null is "lesser".
         if (x == null) return -1;
         if (y == null) return 1;
 
-        int num = Math.Min(x.Length, y.Length);
-        for (int i = 0; i < num; i++)
+        // Both arrays are non-null.  Find the shorter
+        // of the two lengths.
+        var bytesToCompare = Math.Min(x.Length, y.Length);
+
+        // Compare the bytes.
+        for (var index = 0; index < bytesToCompare; ++index)
         {
-            byte x2 = x[i];
-            byte y2 = y[i];
-            int num2 = Comparer<byte>.Default.Compare(x2, y2);
-            if (num2 != 0) return num2;
+            // The x and y bytes.
+            var xByte = x[index];
+            var yByte = y[index];
+
+            // Compare result.
+            var compareResult = Comparer<byte>.Default.Compare(xByte, yByte);
+
+            // If not the same, then return the result of the
+            // comparison of the bytes, as they were the same
+            // up until now.
+            if (compareResult != 0) return compareResult;
+
+            // They are the same, continue.
         }
 
+        // The first n bytes are the same.  Compare lengths.
+        // If the lengths are the same, the arrays
+        // are the same.
         if (x.Length == y.Length) return 0;
-        if (x.Length >= y.Length) return 1;
 
-        return -1;
+        // Compare lengths.
+        return x.Length < y.Length ? -1 : 1;
     }
 }

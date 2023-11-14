@@ -5,7 +5,6 @@ global using ApiSharp.Events;
 global using ApiSharp.Exceptions;
 global using ApiSharp.Extensions;
 global using ApiSharp.Interfaces;
-global using ApiSharp.Logging;
 global using ApiSharp.Models;
 global using ApiSharp.Rest;
 global using ApiSharp.Security;
