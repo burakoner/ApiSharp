@@ -8,10 +8,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>2.0.1</Version>
-		<FileVersion>2.0.1</FileVersion>
-		<PackageVersion>2.0.1</PackageVersion>
-		<AssemblyVersion>2.0.1</AssemblyVersion>
+		<Version>2.0.2</Version>
+		<FileVersion>2.0.2</FileVersion>
+		<PackageVersion>2.0.2</PackageVersion>
+		<AssemblyVersion>2.0.2</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
@@ -19,7 +19,7 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
-			Version 2.0.1 - 15 Nov 2023
+			Version 2.0.2 - 17 Nov 2023
 		</PackageReleaseNotes>
 		<PackageIcon>ApiSharp.png</PackageIcon>
 		<PackageIconUrl />
@@ -49,8 +49,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="[6.0.0,9)" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[6.0.0,9)" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 
