@@ -7,7 +7,7 @@
 public class AsyncResetEvent : IDisposable
 {
     private static readonly Task<bool> _completed = Task.FromResult(true);
-    private Queue<TaskCompletionSource<bool>> _waits = new();
+    private ConcurrentQueue<TaskCompletionSource<bool>> _waits = new();
     private bool _signaled;
     private readonly bool _reset;
 
@@ -29,32 +29,27 @@ public class AsyncResetEvent : IDisposable
     /// <returns></returns>
     public Task<bool> WaitAsync(TimeSpan? timeout = null)
     {
-        lock (_waits)
+        if (_signaled)
         {
-            if (_signaled)
+            if (_reset)
+                _signaled = false;
+            return _completed;
+        }
+        else
+        {
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            if (timeout != null)
             {
-                if (_reset)
-                    _signaled = false;
-                return _completed;
-            }
-            else
-            {
-                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                if (timeout != null)
+                var cancellationSource = new CancellationTokenSource(timeout.Value);
+                var registration = cancellationSource.Token.Register(() =>
                 {
-                    var cancellationSource = new CancellationTokenSource(timeout.Value);
-                    var registration = cancellationSource.Token.Register(() =>
-                    {
-                        tcs.TrySetResult(false);
-
-                        // Not the cleanest but it works
-                        _waits = new Queue<TaskCompletionSource<bool>>(_waits.Where(i => i != tcs));
-                    }, useSynchronizationContext: false);
-                }
-
-                _waits.Enqueue(tcs);
-                return tcs.Task;
+                    tcs.TrySetResult(false);
+                    _waits = new ConcurrentQueue<TaskCompletionSource<bool>>(_waits.Where(i => i != tcs));
+                }, useSynchronizationContext: false);
             }
+
+            _waits.Enqueue(tcs);
+            return tcs.Task;
         }
     }
 
@@ -63,29 +58,26 @@ public class AsyncResetEvent : IDisposable
     /// </summary>
     public void Set()
     {
-        lock (_waits)
+        if (!_reset)
         {
-            if (!_reset)
+            // Act as ManualResetEvent. Once set keep it signaled and signal everyone who is waiting
+            _signaled = true;
+            while (_waits.Count > 0)
             {
-                // Act as ManualResetEvent. Once set keep it signaled and signal everyone who is waiting
+                if (_waits.TryDequeue(out var toRelease) && toRelease != null)
+                    toRelease.TrySetResult(true);
+            }
+        }
+        else
+        {
+            // Act as AutoResetEvent. When set signal 1 waiter
+            if (_waits.Count > 0)
+            {
+                if (_waits.TryDequeue(out var toRelease) && toRelease != null)
+                    toRelease.TrySetResult(true);
+            }
+            else if (!_signaled)
                 _signaled = true;
-                while (_waits.Count > 0)
-                {
-                    var toRelease = _waits.Dequeue();
-                    toRelease.TrySetResult(true);
-                }
-            }
-            else
-            {
-                // Act as AutoResetEvent. When set signal 1 waiter
-                if (_waits.Count > 0)
-                {
-                    var toRelease = _waits.Dequeue();
-                    toRelease.TrySetResult(true);
-                }
-                else if (!_signaled)
-                    _signaled = true;
-            }
         }
     }
 
@@ -94,6 +86,9 @@ public class AsyncResetEvent : IDisposable
     /// </summary>
     public void Dispose()
     {
+#if NETSTANDARD2_1_OR_GREATER
         _waits.Clear();
+#endif
+        _waits = null;
     }
 }

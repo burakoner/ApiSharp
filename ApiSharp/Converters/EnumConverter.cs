@@ -40,8 +40,10 @@ public class EnumConverter : JsonConverter
                     Trace.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss:fff} | Warning | Received empty string as enum value, but property type is not a nullable enum. EnumType: {enumType.Name}. If you think {enumType.Name} should be nullable please open an issue on the Github repo");
             }
             else
+            {
                 // We received an enum value but weren't able to parse it.
                 Trace.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss:fff} | Warning | Cannot map enum value. EnumType: {enumType.Name}, Value: {reader.Value}, Known values: {string.Join(", ", mapping.Select(m => m.Value))}. If you think {reader.Value} should added please open an issue on the Github repo");
+            }
             return defaultValue;
         }
 
