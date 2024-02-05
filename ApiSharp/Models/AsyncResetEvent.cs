@@ -9,8 +9,9 @@ public class AsyncResetEvent : IDisposable
     private static readonly Task<bool> _completed = Task.FromResult(true);
     private ConcurrentQueue<TaskCompletionSource<bool>> _waits = new();
     private bool _signaled;
+    private bool _disposed;
     private readonly bool _reset;
-
+    private readonly ConcurrentDictionary<CancellationTokenSource, byte> _ctsCollection = new();
     /// <summary>
     /// New AsyncResetEvent
     /// </summary>
@@ -29,7 +30,7 @@ public class AsyncResetEvent : IDisposable
     /// <returns></returns>
     public Task<bool> WaitAsync(TimeSpan? timeout = null)
     {
-        if (_signaled)
+        if (_signaled || _disposed)
         {
             if (_reset)
                 _signaled = false;
@@ -41,10 +42,17 @@ public class AsyncResetEvent : IDisposable
             if (timeout != null)
             {
                 var cancellationSource = new CancellationTokenSource(timeout.Value);
+                _ctsCollection.TryAdd(cancellationSource, 0);
                 var registration = cancellationSource.Token.Register(() =>
                 {
                     tcs.TrySetResult(false);
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
                     _waits = new ConcurrentQueue<TaskCompletionSource<bool>>(_waits.Where(i => i != tcs));
+                    _ctsCollection.TryRemove(cancellationSource, out _);
                 }, useSynchronizationContext: false);
             }
 
@@ -86,7 +94,14 @@ public class AsyncResetEvent : IDisposable
     /// </summary>
     public void Dispose()
     {
+        _disposed = true;
+        foreach (var cts in _ctsCollection.Keys)
+        {
+            cts.Dispose();
+        }
+
 #if NETSTANDARD2_1_OR_GREATER
+        _ctsCollection.Clear();
         _waits.Clear();
 #endif
         _waits = null;
