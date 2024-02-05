@@ -7,11 +7,12 @@
 public class AsyncResetEvent : IDisposable
 {
     private static readonly Task<bool> _completed = Task.FromResult(true);
+    private readonly ConcurrentDictionary<CancellationTokenSource, byte> _cts = new();
     private ConcurrentQueue<TaskCompletionSource<bool>> _waits = new();
-    private bool _signaled;
     private bool _disposed;
+    private bool _signaled;
     private readonly bool _reset;
-    private readonly ConcurrentDictionary<CancellationTokenSource, byte> _ctsCollection = new();
+
     /// <summary>
     /// New AsyncResetEvent
     /// </summary>
@@ -32,8 +33,7 @@ public class AsyncResetEvent : IDisposable
     {
         if (_signaled || _disposed)
         {
-            if (_reset)
-                _signaled = false;
+            if (_reset) _signaled = false;
             return _completed;
         }
         else
@@ -42,17 +42,14 @@ public class AsyncResetEvent : IDisposable
             if (timeout != null)
             {
                 var cancellationSource = new CancellationTokenSource(timeout.Value);
-                _ctsCollection.TryAdd(cancellationSource, 0);
+                _cts.TryAdd(cancellationSource, 0);
                 var registration = cancellationSource.Token.Register(() =>
                 {
                     tcs.TrySetResult(false);
-                    if (_disposed)
-                    {
-                        return;
-                    }
+                    if (_disposed) return;
 
                     _waits = new ConcurrentQueue<TaskCompletionSource<bool>>(_waits.Where(i => i != tcs));
-                    _ctsCollection.TryRemove(cancellationSource, out _);
+                    _cts.TryRemove(cancellationSource, out _);
                 }, useSynchronizationContext: false);
             }
 
@@ -84,8 +81,7 @@ public class AsyncResetEvent : IDisposable
                 if (_waits.TryDequeue(out var toRelease) && toRelease != null)
                     toRelease.TrySetResult(true);
             }
-            else if (!_signaled)
-                _signaled = true;
+            else _signaled = true;
         }
     }
 
@@ -95,13 +91,13 @@ public class AsyncResetEvent : IDisposable
     public void Dispose()
     {
         _disposed = true;
-        foreach (var cts in _ctsCollection.Keys)
+        foreach (var cts in _cts.Keys)
         {
             cts.Dispose();
         }
 
 #if NETSTANDARD2_1_OR_GREATER
-        _ctsCollection.Clear();
+        _cts.Clear();
         _waits.Clear();
 #endif
         _waits = null;
