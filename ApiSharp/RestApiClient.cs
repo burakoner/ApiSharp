@@ -148,7 +148,7 @@ public abstract class RestApiClient : BaseClient
 
         TotalRequestsMade++;
         _logger.Log(LogLevel.Trace, $"[{requestId}] Sending {method}{(signed ? " signed" : "")} request to {request.Uri}{paramString ?? " "}{(ClientOptions.Proxy == null ? "" : $" via proxy {ClientOptions.Proxy.Host}")}");
-        return new CallResult<IRequest>(request);
+        return new CallResult<IRequest>(request, request.Content);
     }
 
     /// <summary>

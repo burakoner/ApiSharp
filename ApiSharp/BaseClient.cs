@@ -78,7 +78,7 @@ public abstract class BaseClient : IDisposable
 
         try
         {
-            return new CallResult<JToken>(JToken.Parse(data));
+            return new CallResult<JToken>(JToken.Parse(data), data);
         }
         catch (JsonReaderException jre)
         {
@@ -116,7 +116,7 @@ public abstract class BaseClient : IDisposable
 
         try
         {
-            return new CallResult<T>(obj.ToObject<T>(serializer)!);
+            return new CallResult<T>(obj.ToObject<T>(serializer)!, obj.ToString());
         }
         catch (JsonReaderException jre)
         {

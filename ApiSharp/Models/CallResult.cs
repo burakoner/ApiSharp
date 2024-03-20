@@ -33,6 +33,8 @@ public class CallResult<T> : CallResult
 
     public CallResult(T data) : this(data, null, null) { }
 
+    public CallResult(T data, string raw) : this(data, raw, null) { }
+
     public CallResult(Error error) : this(default, null, error) { }
 
     /// <summary>
