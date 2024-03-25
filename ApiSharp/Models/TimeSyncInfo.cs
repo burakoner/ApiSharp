@@ -3,42 +3,34 @@
 /// <summary>
 /// Time synchronization info
 /// </summary>
-public class TimeSyncInfo
+/// <remarks>
+/// ctor
+/// </remarks>
+/// <param name="logger"></param>
+/// <param name="recalculationInterval"></param>
+/// <param name="syncTime"></param>
+/// <param name="syncState"></param>
+public class TimeSyncInfo(ILogger logger, bool syncTime, TimeSpan recalculationInterval, TimeSyncState syncState)
 {
     /// <summary>
     /// Logger
     /// </summary>
-    public ILogger Logger { get; }
+    public ILogger Logger { get; } = logger;
 
     /// <summary>
     /// Should synchronize time
     /// </summary>
-    public bool SyncTime { get; }
+    public bool SyncTime { get; } = syncTime;
 
     /// <summary>
     /// Timestamp recalulcation interval
     /// </summary>
-    public TimeSpan RecalculationInterval { get; }
+    public TimeSpan RecalculationInterval { get; } = recalculationInterval;
 
     /// <summary>
     /// Time sync state for the API client
     /// </summary>
-    public TimeSyncState TimeSyncState { get; }
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="logger"></param>
-    /// <param name="recalculationInterval"></param>
-    /// <param name="syncTime"></param>
-    /// <param name="syncState"></param>
-    public TimeSyncInfo(ILogger logger, bool syncTime, TimeSpan recalculationInterval, TimeSyncState syncState)
-    {
-        Logger = logger;
-        SyncTime = syncTime;
-        RecalculationInterval = recalculationInterval;
-        TimeSyncState = syncState;
-    }
+    public TimeSyncState TimeSyncState { get; } = syncState;
 
     /// <summary>
     /// Set the time offset

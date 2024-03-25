@@ -29,27 +29,15 @@ public class BooleanConverter : JsonConverter
     /// <returns>
     /// The object value.
     /// </returns>
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
-        switch (reader.Value?.ToString().ToLower().Trim())
+        return (reader.Value?.ToString().ToLower().Trim()) switch
         {
-            case "true":
-            case "yes":
-            case "y":
-            case "1":
-            case "on":
-                return true;
-            case "false":
-            case "no":
-            case "n":
-            case "0":
-            case "off":
-            case "-1":
-                return false;
-        }
-
-        // If we reach here, we're pretty much going to throw an error so let's let Json.NET throw it's pretty-fied error message.
-        return new JsonSerializer().Deserialize(reader, objectType);
+            "true" or "yes" or "y" or "1" or "on" => true,
+            "false" or "no" or "n" or "0" or "off" or "-1" => false,
+            // If we reach here, we're pretty much going to throw an error so let's let Json.NET throw it's pretty-fied error message.
+            _ => new JsonSerializer().Deserialize(reader, objectType),
+        };
     }
 
     /// <summary>

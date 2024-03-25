@@ -4,32 +4,39 @@
 /// Base class for enum converters
 /// </summary>
 /// <typeparam name="T">Type of enum to convert</typeparam>
-public abstract class BaseConverter<T> : JsonConverter where T : struct
+/// <remarks>
+/// ctor
+/// </remarks>
+/// <param name="useQuotes"></param>
+public abstract class BaseConverter<T>(bool useQuotes) : JsonConverter where T : struct
 {
     /// <summary>
     /// The enum->string mapping
     /// </summary>
     protected abstract List<KeyValuePair<T, string>> Mapping { get; }
-    private readonly bool quotes;
+    private readonly bool _quotes = useQuotes;
 
     /// <summary>
-    /// ctor
+    /// Write the json
     /// </summary>
-    /// <param name="useQuotes"></param>
-    protected BaseConverter(bool useQuotes)
-    {
-        quotes = useQuotes;
-    }
-
+    /// <param name="writer"></param>
+    /// <param name="value"></param>
+    /// <param name="serializer"></param>
     public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
         var stringValue = value == null ? null : GetValue((T)value);
-        if (quotes)
-            writer.WriteValue(stringValue);
-        else
-            writer.WriteRawValue(stringValue);
+        if (_quotes) writer.WriteValue(stringValue);
+        else writer.WriteRawValue(stringValue);
     }
 
+    /// <summary>
+    /// Read the json
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="objectType"></param>
+    /// <param name="existingValue"></param>
+    /// <param name="serializer"></param>
+    /// <returns></returns>
     public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
     {
         if (reader.Value == null)
@@ -58,6 +65,11 @@ public abstract class BaseConverter<T> : JsonConverter where T : struct
         return Mapping.FirstOrDefault(v => v.Value == data).Key;
     }
 
+    /// <summary>
+    /// CanConvert
+    /// </summary>
+    /// <param name="objectType"></param>
+    /// <returns></returns>
     public override bool CanConvert(Type objectType)
     {
         // Check if it is type, or nullable of type

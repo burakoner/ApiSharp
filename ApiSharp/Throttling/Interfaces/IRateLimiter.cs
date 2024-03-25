@@ -8,7 +8,7 @@ public interface IRateLimiter
     /// <summary>
     /// Limit a request based on previous requests made
     /// </summary>
-    /// <param name="log">The logger</param>
+    /// <param name="logger">The logger</param>
     /// <param name="endpoint">The endpoint the request is for</param>
     /// <param name="method">The Http request method</param>
     /// <param name="signed">Whether the request is singed(private) or not</param>

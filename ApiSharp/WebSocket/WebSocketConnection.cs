@@ -151,6 +151,7 @@ public class WebSocketConnection
     /// <summary>
     /// New socket connection
     /// </summary>
+    /// <param name="logger">Logger</param>
     /// <param name="apiClient">The api client</param>
     /// <param name="webSocketClient">The socket</param>
     /// <param name="tag"></param>
@@ -161,15 +162,15 @@ public class WebSocketConnection
         ApiClient = apiClient;
         Tag = tag;
 
-        _pendingRequests = new List<WebSocketRequest>();
-        _subscriptions = new List<WebSocketSubscription>();
+        _pendingRequests = [];
+        _subscriptions = [];
 
         _wsc = webSocketClient;
         _wsc.OnMessage += HandleMessage;
         _wsc.OnOpen += HandleOpen;
         _wsc.OnClose += HandleClose;
         _wsc.OnReconnecting += HandleReconnecting;
-        _wsc.OnReconnected += HandleReconnected;
+        _wsc.OnReconnected += HandleReconnectedAsync;
         _wsc.OnError += HandleError;
         _wsc.GetReconnectionUrl = GetReconnectionUrlAsync;
     }
@@ -227,7 +228,7 @@ public class WebSocketConnection
     /// <summary>
     /// Handler for a socket which has reconnected
     /// </summary>
-    protected virtual async void HandleReconnected()
+    protected virtual async void HandleReconnectedAsync()
     {
         Status = WebSocketStatus.Resubscribing;
         lock (_pendingRequests)
@@ -299,7 +300,7 @@ public class WebSocketConnection
         lock (_pendingRequests)
         {
             _pendingRequests.RemoveAll(r => r.Completed && DateTime.UtcNow - r.RequestTimestamp > TimeSpan.FromMinutes(5));
-            requests = _pendingRequests.ToArray();
+            requests = [.. _pendingRequests];
         }
 
         // Check if this message is an answer on any pending requests
@@ -493,7 +494,7 @@ public class WebSocketConnection
             // Loop the subscriptions to check if any of them signal us that the message is for them
             List<WebSocketSubscription> subscriptionsCopy;
             lock (_subscriptionLock)
-                subscriptionsCopy = _subscriptions.ToList();
+                subscriptionsCopy = [.. _subscriptions];
 
             foreach (var subscription in subscriptionsCopy)
             {

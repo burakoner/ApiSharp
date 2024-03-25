@@ -1,29 +1,53 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// Base Client Options
+/// </summary>
 public abstract class BaseClientOptions
 {
-    // Base Address
+    /// <summary>
+    /// Base Address
+    /// </summary>
     public string BaseAddress { get; set; }
 
-    // Encoding
+    /// <summary>
+    /// Encoding
+    /// </summary>
     public Encoding Encoding { get; set; }
 
-    // Json Options
+    /// <summary>
+    /// Json Options
+    /// </summary>
     public JsonOptions JsonOptions { get; set; }
 
-    // Debug Mode
+    /// <summary>
+    /// Debug Mode
+    /// </summary>
     public bool DebugMode { get; set; }
 
-    // Output
+    /// <summary>
+    /// Output
+    /// </summary>
     public bool RawResponse { get; set; }
 
-    // Proxy
+    /// <summary>
+    /// Proxy
+    /// </summary>
     public ProxyCredentials Proxy { get; set; }
 
-    // Authentication
+    /// <summary>
+    /// ApiCredentials
+    /// </summary>
     public ApiCredentials ApiCredentials { get; set; }
+
+    /// <summary>
+    /// Authentication Provider
+    /// </summary>
     public AuthenticationProvider AuthenticationProvider { get; set; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     public BaseClientOptions()
     {
         // Encoding
@@ -43,6 +67,10 @@ public abstract class BaseClientOptions
         AuthenticationProvider = null;
     }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="clientOptions"></param>
     public BaseClientOptions(BaseClientOptions clientOptions)
     {
         // Check Point
@@ -69,6 +97,10 @@ public abstract class BaseClientOptions
         // AuthenticationProvider = new AuthenticationProvider(ApiCredentials);
     }
 
+    /// <summary>
+    /// ToString
+    /// </summary>
+    /// <returns></returns>
     public override string ToString()
     {
         return $"BaseAddress: {BaseAddress}, Encoding: {Encoding}, RawResponse: {RawResponse}, Proxy: {(Proxy == null ? "-" : Proxy.Host)}";

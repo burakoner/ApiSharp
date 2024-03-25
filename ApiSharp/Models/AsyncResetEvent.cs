@@ -4,25 +4,19 @@
 /// Async auto reset based on Stephen Toub`s implementation
 /// https://devblogs.microsoft.com/pfxteam/building-async-coordination-primitives-part-2-asyncautoresetevent/
 /// </summary>
-public class AsyncResetEvent : IDisposable
+/// <remarks>
+/// New AsyncResetEvent
+/// </remarks>
+/// <param name="initialState"></param>
+/// <param name="reset"></param>
+public class AsyncResetEvent(bool initialState = false, bool reset = true) : IDisposable
 {
     private static readonly Task<bool> _completed = Task.FromResult(true);
     private readonly ConcurrentDictionary<CancellationTokenSource, byte> _cts = new();
     private ConcurrentQueue<TaskCompletionSource<bool>> _waits = new();
     private bool _disposed;
-    private bool _signaled;
-    private readonly bool _reset;
-
-    /// <summary>
-    /// New AsyncResetEvent
-    /// </summary>
-    /// <param name="initialState"></param>
-    /// <param name="reset"></param>
-    public AsyncResetEvent(bool initialState = false, bool reset = true)
-    {
-        _signaled = initialState;
-        _reset = reset;
-    }
+    private bool _signaled = initialState;
+    private readonly bool _reset = reset;
 
     /// <summary>
     /// Wait for the AsyncResetEvent to be set

@@ -32,9 +32,8 @@ public static class JTokenExtensions
         if (node == null)
             return null;
 
-        var contained = node.AncestorsAndSelf().Where(t => t.Parent is JContainer && t.Parent.Type != JTokenType.Property).FirstOrDefault();
-        if (contained != null)
-            contained.Remove();
+        var contained = node.AncestorsAndSelf().Where(t => t.Parent is not null && t.Parent.Type != JTokenType.Property).FirstOrDefault();
+        contained?.Remove();
 
         // Also detach the node from its immediate containing property -- Remove() does not do this even though it seems like it should
         if (node.Parent is JProperty property)

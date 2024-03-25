@@ -5,7 +5,7 @@ namespace ApiSharp.Throttling;
 /// </summary>
 public class RateLimiter : IRateLimiter
 {
-    private readonly ConcurrentBag<Limiter> _limiters = new();
+    private readonly ConcurrentBag<Limiter> _limiters = [];
 
     /// <summary>
     /// Create a new RateLimiter. Configure the rate limiter by calling <see cref="AddTotalRateLimit"/>, 
@@ -38,7 +38,7 @@ public class RateLimiter : IRateLimiter
     /// <param name="ignoreOtherRateLimits">If set to true it ignores other rate limits</param>
     public RateLimiter AddEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod method = null, bool ignoreOtherRateLimits = false)
     {
-        _limiters.Add(new EndpointRateLimiter(new[] { endpoint }, limit, period, method, ignoreOtherRateLimits));
+        _limiters.Add(new EndpointRateLimiter([endpoint], limit, period, method, ignoreOtherRateLimits));
 
         return this;
     }
@@ -69,7 +69,7 @@ public class RateLimiter : IRateLimiter
     /// <param name="ignoreOtherRateLimits">If set to true it ignores other rate limits</param>
     public RateLimiter AddPartialEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod method = null, bool countPerEndpoint = false, bool ignoreOtherRateLimits = false)
     {
-        _limiters.Add(new PartialEndpointRateLimiter(new[] { endpoint }, limit, period, countPerEndpoint, method, ignoreOtherRateLimits));
+        _limiters.Add(new PartialEndpointRateLimiter([endpoint], limit, period, countPerEndpoint, method, ignoreOtherRateLimits));
 
         return this;
     }
@@ -88,6 +88,18 @@ public class RateLimiter : IRateLimiter
         return this;
     }
 
+    /// <summary>
+    /// Limit Action
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="endpoint"></param>
+    /// <param name="method"></param>
+    /// <param name="signed"></param>
+    /// <param name="apikey"></param>
+    /// <param name="limitBehaviour"></param>
+    /// <param name="requestWeight"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async Task<CallResult<int>> LimitRequestAsync(ILogger logger, string endpoint, HttpMethod method, bool signed, SensitiveString apikey, RateLimitingBehavior limitBehaviour, int requestWeight, CancellationToken ct)
     {
         var totalWaitTime = 0;
@@ -101,7 +113,7 @@ public class RateLimiter : IRateLimiter
         var endpointLimit = _limiters.OfType<EndpointRateLimiter>().SingleOrDefault(h => h.Endpoints.Contains(endpoint) && (h.Method == null || h.Method == method));
         if (endpointLimit != null)
         {
-            var waitResult = await ProcessTopic(logger, endpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+            var waitResult = await ProcessTopicAsync(logger, endpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
             if (!waitResult) return waitResult;
             totalWaitTime += waitResult.Data;
         }
@@ -123,14 +135,14 @@ public class RateLimiter : IRateLimiter
                     _limiters.Add(thisEndpointLimit);
                 }
 
-                var waitResult = await ProcessTopic(logger, thisEndpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+                var waitResult = await ProcessTopicAsync(logger, thisEndpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
                 if (!waitResult) return waitResult;
 
                 totalWaitTime += waitResult.Data;
             }
             else
             {
-                var waitResult = await ProcessTopic(logger, partialEndpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+                var waitResult = await ProcessTopicAsync(logger, partialEndpointLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
                 if (!waitResult) return waitResult;
 
                 totalWaitTime += waitResult.Data;
@@ -149,7 +161,7 @@ public class RateLimiter : IRateLimiter
             {
                 if (!apiLimit.OnlyForSignedRequests)
                 {
-                    var waitResult = await ProcessTopic(logger, apiLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+                    var waitResult = await ProcessTopicAsync(logger, apiLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
                     if (!waitResult) return waitResult;
 
                     totalWaitTime += waitResult.Data;
@@ -164,7 +176,7 @@ public class RateLimiter : IRateLimiter
                     _limiters.Add(thisApiLimit);
                 }
 
-                var waitResult = await ProcessTopic(logger, thisApiLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+                var waitResult = await ProcessTopicAsync(logger, thisApiLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
                 if (!waitResult) return waitResult;
 
                 totalWaitTime += waitResult.Data;
@@ -179,7 +191,7 @@ public class RateLimiter : IRateLimiter
         var totalLimit = _limiters.OfType<TotalRateLimiter>().SingleOrDefault();
         if (totalLimit != null)
         {
-            var waitResult = await ProcessTopic(logger, totalLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
+            var waitResult = await ProcessTopicAsync(logger, totalLimit, endpoint, requestWeight, limitBehaviour, ct).ConfigureAwait(false);
             if (!waitResult) return waitResult;
             totalWaitTime += waitResult.Data;
         }
@@ -191,7 +203,7 @@ public class RateLimiter : IRateLimiter
         return new CallResult<int>(totalWaitTime);
     }
 
-    private static async Task<CallResult<int>> ProcessTopic(ILogger logger, Limiter historyTopic, string endpoint, int requestWeight, RateLimitingBehavior limitBehaviour, CancellationToken ct)
+    private static async Task<CallResult<int>> ProcessTopicAsync(ILogger logger, Limiter historyTopic, string endpoint, int requestWeight, RateLimitingBehavior limitBehaviour, CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
         try

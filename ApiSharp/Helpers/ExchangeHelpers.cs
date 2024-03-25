@@ -119,7 +119,7 @@ public static class ExchangeHelpers
     /// <summary>
     /// Lock for id generating
     /// </summary>
-    private static object _idLock = new();
+    private static readonly object _idLock = new();
 
     /// <summary>
     /// Generate a new unique id. The id is staticly stored so it is guarenteed to be unique
@@ -134,12 +134,13 @@ public static class ExchangeHelpers
         }
     }
 
+    private const string _allowedRandomChars = "ABCDEFGHIJKLMONOPQRSTUVWXYZabcdefghijklmonopqrstuvwxyz0123456789";
+
     /// <summary>
     /// Generate a random string of specified length
     /// </summary>
     /// <param name="length">Length of the random string</param>
     /// <returns></returns>
-    private const string _allowedRandomChars = "ABCDEFGHIJKLMONOPQRSTUVWXYZabcdefghijklmonopqrstuvwxyz0123456789";
     public static string RandomString(int length)
     {
         var randomChars = new char[length];

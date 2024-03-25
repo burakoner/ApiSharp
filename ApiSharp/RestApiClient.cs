@@ -32,12 +32,23 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     protected ArraySerialization ArraySerialization = ArraySerialization.Array;
 
-    public new RestApiClientOptions ClientOptions { get { return (RestApiClientOptions)base._options; } }
+    /// <summary>
+    /// Client Options
+    /// </summary>
+    public RestApiClientOptions ClientOptions { get { return (RestApiClientOptions)base._options; } }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     protected RestApiClient() : this(null, new())
     {
     }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="options"></param>
     protected RestApiClient(ILogger logger, RestApiClientOptions options) : base(logger, options ?? new())
     {
         RequestFactory.Configure(options.HttpOptions, options.Proxy, options.HttpClient);
@@ -55,6 +66,22 @@ public abstract class RestApiClient : BaseClient
     protected internal virtual TimeSpan GetTimeOffset()
         => TimeSpan.Zero;
 
+    /// <summary>
+    /// Sends Request
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="uri"></param>
+    /// <param name="method"></param>
+    /// <param name="cancellationToken"></param>
+    /// <param name="signed"></param>
+    /// <param name="queryParameters"></param>
+    /// <param name="bodyParameters"></param>
+    /// <param name="headerParameters"></param>
+    /// <param name="serialization"></param>
+    /// <param name="deserializer"></param>
+    /// <param name="ignoreRatelimit"></param>
+    /// <param name="requestWeight"></param>
+    /// <returns></returns>
     protected virtual async Task<RestCallResult<T>> SendRequestAsync<T>(
         Uri uri,
         HttpMethod method,
@@ -311,9 +338,9 @@ public abstract class RestApiClient : BaseClient
         int requestId
         )
     {
-        queryParameters ??= new Dictionary<string, object>();
-        bodyParameters ??= new Dictionary<string, object>();
-        headerParameters ??= new Dictionary<string, string>();
+        queryParameters ??= [];
+        bodyParameters ??= [];
+        headerParameters ??= [];
 
         for (var i = 0; i < queryParameters.Count; i++)
         {

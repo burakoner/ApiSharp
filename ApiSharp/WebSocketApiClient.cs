@@ -1,10 +1,18 @@
 ﻿namespace ApiSharp;
 
-public abstract class WebSocketApiClient : BaseClient
+/// <summary>
+/// WebSocket Api Client
+/// </summary>
+/// <param name="logger"></param>
+/// <param name="options"></param>
+public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptions options) : BaseClient(logger, options ?? new())
 {
-    public new WebSocketApiClientOptions ClientOptions { get { return (WebSocketApiClientOptions)base._options; } }
+    /// <summary>
+    /// Client Options
+    /// </summary>
+    public WebSocketApiClientOptions ClientOptions { get { return (WebSocketApiClientOptions)base._options; } }
 
-    protected internal List<string> IgnoreHandlingList = new();
+    protected internal List<string> IgnoreHandlingList = [];
 
     /// <summary>
     /// The factory for creating sockets. Used for unit testing
@@ -39,7 +47,7 @@ public abstract class WebSocketApiClient : BaseClient
     /// <summary>
     /// Handlers for data from the socket which doesn't need to be forwarded to the caller. Ping or welcome messages for example.
     /// </summary>
-    protected Dictionary<string, Action<WebSocketMessageEvent>> GenericHandlers = new();
+    protected Dictionary<string, Action<WebSocketMessageEvent>> GenericHandlers = [];
 
     /// <summary>
     /// The task that is sending periodic data on the websocket. Can be used for sending Ping messages every x seconds or similair. Not necesarry.
@@ -90,10 +98,6 @@ public abstract class WebSocketApiClient : BaseClient
     }
 
     protected WebSocketApiClient() : this(null, new())
-    {
-    }
-
-    protected WebSocketApiClient(ILogger logger, WebSocketApiClientOptions options) : base(logger, options ?? new())
     {
     }
 
@@ -158,7 +162,7 @@ public abstract class WebSocketApiClient : BaseClient
             while (true)
             {
                 // Get a new or existing socket connection
-                var webSocketResult = await GetWebSocketConnection(url, authenticated).ConfigureAwait(false);
+                var webSocketResult = await GetWebSocketConnectionAsync(url, authenticated).ConfigureAwait(false);
                 if (!webSocketResult) return webSocketResult.As<WebSocketUpdateSubscription>(null);
                 connection = webSocketResult.Data;
 
@@ -280,7 +284,7 @@ public abstract class WebSocketApiClient : BaseClient
         await Semaphore.WaitAsync().ConfigureAwait(false);
         try
         {
-            var webSocketResult = await GetWebSocketConnection(url, authenticated).ConfigureAwait(false);
+            var webSocketResult = await GetWebSocketConnectionAsync(url, authenticated).ConfigureAwait(false);
             if (!webSocketResult) return webSocketResult.As<T>(default);
 
             connection = webSocketResult.Data;
@@ -532,7 +536,7 @@ public abstract class WebSocketApiClient : BaseClient
     /// <param name="address">The address the socket is for</param>
     /// <param name="authenticated">Whether the socket should be authenticated</param>
     /// <returns></returns>
-    protected virtual async Task<CallResult<WebSocketConnection>> GetWebSocketConnection(string address, bool authenticated)
+    protected virtual async Task<CallResult<WebSocketConnection>> GetWebSocketConnectionAsync(string address, bool authenticated)
     {
         var webSocketResult = WebSocketConnections.Where(s => (s.Value.Status == WebSocketStatus.None || s.Value.Status == WebSocketStatus.Connected)
             && s.Value.Tag.TrimEnd('/') == address.TrimEnd('/')
@@ -731,7 +735,7 @@ public abstract class WebSocketApiClient : BaseClient
             tasks.Add(conn.CloseAsync());
         }
 
-        await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
+        await Task.WhenAll([.. tasks]).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -748,7 +752,7 @@ public abstract class WebSocketApiClient : BaseClient
             tasks.Add(conn.TriggerReconnectAsync());
         }
 
-        await Task.WhenAll(tasks.ToArray()).ConfigureAwait(false);
+        await Task.WhenAll([.. tasks]).ConfigureAwait(false);
     }
 
     /// <summary>

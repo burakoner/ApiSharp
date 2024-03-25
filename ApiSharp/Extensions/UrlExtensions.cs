@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Extensions;
 
+/// <summary>
+/// Url Extensions
+/// </summary>
 public static class UrlExtensions
 {
     /// <summary>
@@ -48,11 +51,13 @@ public static class UrlExtensions
     /// <returns></returns>
     public static Uri SetParameters(this Uri baseUri, SortedDictionary<string, object> parameters, ArraySerialization arraySerialization)
     {
-        var uriBuilder = new UriBuilder();
-        uriBuilder.Scheme = baseUri.Scheme;
-        uriBuilder.Host = baseUri.Host;
-        uriBuilder.Port = baseUri.Port;
-        uriBuilder.Path = baseUri.AbsolutePath;
+        var uriBuilder = new UriBuilder
+        {
+            Scheme = baseUri.Scheme,
+            Host = baseUri.Host,
+            Port = baseUri.Port,
+            Path = baseUri.AbsolutePath
+        };
         var httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
         foreach (var parameter in parameters)
         {
@@ -77,11 +82,13 @@ public static class UrlExtensions
     /// <returns></returns>
     public static Uri SetParameters(this Uri baseUri, IOrderedEnumerable<KeyValuePair<string, object>> parameters, ArraySerialization arraySerialization)
     {
-        var uriBuilder = new UriBuilder();
-        uriBuilder.Scheme = baseUri.Scheme;
-        uriBuilder.Host = baseUri.Host;
-        uriBuilder.Port = baseUri.Port;
-        uriBuilder.Path = baseUri.AbsolutePath;
+        var uriBuilder = new UriBuilder
+        {
+            Scheme = baseUri.Scheme,
+            Host = baseUri.Host,
+            Port = baseUri.Port,
+            Path = baseUri.AbsolutePath
+        };
         var httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
         foreach (var parameter in parameters)
         {
@@ -111,8 +118,10 @@ public static class UrlExtensions
         httpValueCollection.Remove(name);
         httpValueCollection.Add(name, value);
 
-        var ub = new UriBuilder(uri);
-        ub.Query = httpValueCollection.ToString();
+        var ub = new UriBuilder(uri)
+        {
+            Query = httpValueCollection.ToString()
+        };
 
         return ub.Uri;
     }

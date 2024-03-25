@@ -1,8 +1,14 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// Tcp Socket Api Client
+/// </summary>
 public abstract class TcpSocketApiClient : BaseClient
 {
-    public new TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base._options; } }
+    /// <summary>
+    /// Client Options
+    /// </summary>
+    public TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base._options; } }
 
     // Public Properties
     public long BytesSent { get; private set; }
@@ -19,18 +25,26 @@ public abstract class TcpSocketApiClient : BaseClient
 
     // Private Properties
     private readonly System.Timers.Timer _hbTimer;
-    private readonly List<byte> _socketBuffer = new();
-    private readonly BlockingCollection<byte[]> _packetBuffer = new();
+    private readonly List<byte> _socketBuffer = [];
+    private readonly BlockingCollection<byte[]> _packetBuffer = [];
     private readonly TcpSocketClient _socketClient;
 
     // Cancellation Token
     protected CancellationTokenSource CancellationTokenSource { get; set; }
     protected CancellationToken CancellationToken { get; set; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     protected TcpSocketApiClient() : this(null, new())
     {
     }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="options"></param>
     protected TcpSocketApiClient(ILogger logger, TcpSocketApiClientOptions options) : base(logger, options ?? new())
     {
         // Tcp Client
@@ -46,18 +60,28 @@ public abstract class TcpSocketApiClient : BaseClient
         this._hbTimer.Elapsed += PingTimer;
     }
 
+    /// <summary>
+    /// Connect
+    /// </summary>
     public void Connect()
     {
         if (!_socketClient.Connected)
             _socketClient.Connect();
     }
 
+    /// <summary>
+    /// Disconnect
+    /// </summary>
     public void Disconnect()
     {
         if (_socketClient.Connected)
             _socketClient.Disconnect();
     }
 
+    /// <summary>
+    /// Send
+    /// </summary>
+    /// <param name="bytes"></param>
     protected void Send(byte[] bytes)
     {
         if (_socketClient.Connected)
@@ -197,13 +221,13 @@ public abstract class TcpSocketApiClient : BaseClient
 
                         // Arta kalanları veri için bu methodu yeniden çalıştır
                         if (bufferLength > packetLength)
-                            OnDataIn(Array.Empty<byte>(), connectionId);
+                            OnDataIn([], connectionId);
                     }
                 }
                 else
                 {
                     _socketBuffer.RemoveRange(0, indexOf);
-                    OnDataIn(Array.Empty<byte>(), connectionId);
+                    OnDataIn([], connectionId);
                 }
             }
         }

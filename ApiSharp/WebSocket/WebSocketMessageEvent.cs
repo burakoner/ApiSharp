@@ -1,39 +1,31 @@
 ﻿namespace ApiSharp.WebSocket;
 
-public class WebSocketMessageEvent
+/// <summary>
+/// WebSocketMessageEvent
+/// </summary>
+/// <param name="connection"></param>
+/// <param name="jsonData"></param>
+/// <param name="raw"></param>
+/// <param name="timestamp"></param>
+public class WebSocketMessageEvent(WebSocketConnection connection, JToken jsonData, string raw, DateTime timestamp)
 {
     /// <summary>
     /// The connection the message was received on
     /// </summary>
-    public WebSocketConnection Connection { get; set; }
+    public WebSocketConnection Connection { get; set; } = connection;
 
     /// <summary>
     /// The json object of the data
     /// </summary>
-    public JToken JsonData { get; set; }
+    public JToken JsonData { get; set; } = jsonData;
 
     /// <summary>
     /// The originally received string data
     /// </summary>
-    public string Raw { get; set; }
+    public string Raw { get; set; } = raw;
 
     /// <summary>
     /// The timestamp of when the data was received
     /// </summary>
-    public DateTime ReceivedTimestamp { get; set; }
-
-    /// <summary>
-    /// ctor
-    /// </summary>
-    /// <param name="connection"></param>
-    /// <param name="jsonData"></param>
-    /// <param name="raw"></param>
-    /// <param name="timestamp"></param>
-    public WebSocketMessageEvent(WebSocketConnection connection, JToken jsonData, string raw, DateTime timestamp)
-    {
-        Connection = connection;
-        JsonData = jsonData;
-        Raw = raw;
-        ReceivedTimestamp = timestamp;
-    }
+    public DateTime ReceivedTimestamp { get; set; } = timestamp;
 }

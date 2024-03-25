@@ -1,14 +1,20 @@
 ﻿namespace ApiSharp.Models;
 
-public class CallResult
+/// <summary>
+/// CallResult
+/// </summary>
+/// <param name="error"></param>
+public class CallResult(Error error)
 {
-    public Error Error { get; internal set; }
-    public bool Success => Error == null;
+    /// <summary>
+    /// Error
+    /// </summary>
+    public Error Error { get; internal set; } = error;
 
-    public CallResult(Error error)
-    {
-        Error = error;
-    }
+    /// <summary>
+    /// Success Flag
+    /// </summary>
+    public bool Success => Error == null;
 
     /// <summary>
     /// Overwrite bool check so we can use if(callResult) instead of if(callResult.Success)
@@ -20,21 +26,51 @@ public class CallResult
     }
 }
 
+/// <summary>
+/// CallResult
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class CallResult<T> : CallResult
 {
+    /// <summary>
+    /// Data
+    /// </summary>
     public T Data { get; internal set; }
+
+    /// <summary>
+    /// Raw Data
+    /// </summary>
     public string Raw { get; internal set; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="raw"></param>
+    /// <param name="error"></param>
     protected CallResult(T data, string raw, Error error) : base(error)
     {
         Raw = raw;
         Data = data;
     }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="data"></param>
     public CallResult(T data) : this(data, null, null) { }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="raw"></param>
     public CallResult(T data, string raw) : this(data, raw, null) { }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="error"></param>
     public CallResult(Error error) : this(default, null, error) { }
 
     /// <summary>
@@ -46,6 +82,12 @@ public class CallResult<T> : CallResult
         return obj?.Success == true;
     }
 
+    /// <summary>
+    /// GetResultOrError
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="error"></param>
+    /// <returns></returns>
     public bool GetResultOrError(out T data, out Error error)
     {
         if (Success)

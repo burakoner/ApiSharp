@@ -8,10 +8,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>2.1.0</Version>
-		<FileVersion>2.1.0</FileVersion>
-		<PackageVersion>2.1.0</PackageVersion>
-		<AssemblyVersion>2.1.0</AssemblyVersion>
+		<Version>2.2.0</Version>
+		<FileVersion>2.2.0</FileVersion>
+		<PackageVersion>2.2.0</PackageVersion>
+		<AssemblyVersion>2.2.0</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
@@ -19,6 +19,13 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
+			Version 2.2.0 - 25 Mar 2023
+			* Refactored some parts according to the latest C# features
+			* Added some XML comments (summaries)
+			* Merge pulled request https://github.com/burakoner/ApiSharp/pull/5
+			* Fixed minor issues
+			* Dependencies Updated
+			
 			Version 2.1.0 - 05 Feb 2023
 			* Microsoft.Extensions.Logging updated to 8.0.0
 			* Microsoft.Extensions.Logging.Abstractions updated to 8.0.0
@@ -54,7 +61,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 	</ItemGroup>
 

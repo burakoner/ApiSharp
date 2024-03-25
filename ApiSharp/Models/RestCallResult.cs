@@ -1,41 +1,55 @@
 ﻿namespace ApiSharp.Models;
 
-
-public class RestCallRequest
+/// <summary>
+/// Rest Call Request
+/// </summary>
+/// <param name="url"></param>
+/// <param name="method"></param>
+/// <param name="body"></param>
+/// <param name="headers"></param>
+public class RestCallRequest(string url, HttpMethod method, string body, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
 {
-    public string Url { get; set; }
-    public HttpMethod Method { get; set; }
-    public string Body { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; }
-
-    public RestCallRequest(string url, HttpMethod method, string body, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
-    {
-        Url = url;
-        Method = method;
-        Body = body;
-        Headers = headers;
-    }
+    public string Url { get; set; } = url;
+    public HttpMethod Method { get; set; } = method;
+    public string Body { get; set; } = body;
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers;
 }
 
-public class RestCallResponse
+/// <summary>
+/// Rest Call Response
+/// </summary>
+/// <param name="time"></param>
+/// <param name="statusCode"></param>
+/// <param name="headers"></param>
+public class RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
 {
-    public TimeSpan? ResponseTime { get; set; }
-    public HttpStatusCode? StatusCode { get; set; }
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; }
-
-    public RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
-    {
-        Headers = headers;
-        ResponseTime = time;
-        StatusCode = statusCode;
-    }
+    public TimeSpan? ResponseTime { get; set; } = time;
+    public HttpStatusCode? StatusCode { get; set; } = statusCode;
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers;
 }
 
-public class RestCallResult : CallResult
+/// <summary>
+/// Rest Call Result
+/// </summary>
+/// <param name="request"></param>
+/// <param name="response"></param>
+/// <param name="error"></param>
+public class RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : CallResult(error)
 {
-    public RestCallRequest Request { get; set; }
-    public RestCallResponse Response { get; set; }
+    public RestCallRequest Request { get; set; } = request;
+    public RestCallResponse Response { get; set; } = response;
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="responseCode"></param>
+    /// <param name="responseHeaders"></param>
+    /// <param name="responseTime"></param>
+    /// <param name="requestUrl"></param>
+    /// <param name="requestBody"></param>
+    /// <param name="requestMethod"></param>
+    /// <param name="requestHeaders"></param>
+    /// <param name="error"></param>
     public RestCallResult(
         HttpStatusCode? responseCode,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders,
@@ -49,25 +63,50 @@ public class RestCallResult : CallResult
             new RestCallResponse(responseTime, responseCode, responseHeaders), 
             error) { }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="error"></param>
     public RestCallResult(Error error) : this(null, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : base(error)
-    {
-        Request = request;
-        Response = response;
-    }
-
+    /// <summary>
+    /// Error Response
+    /// </summary>
+    /// <param name="error"></param>
+    /// <returns></returns>
     public RestCallResult AsError(Error error)
     {
         return new RestCallResult(Request, Response, error);
     }
 }
 
-public class RestCallResult<T> : CallResult<T>
+/// <summary>
+/// Rest Call Result
+/// </summary>
+/// <typeparam name="T"></typeparam>
+/// <param name="request"></param>
+/// <param name="response"></param>
+/// <param name="data"></param>
+/// <param name="raw"></param>
+/// <param name="error"></param>
+public class RestCallResult<T>(RestCallRequest request, RestCallResponse response, T data, string raw, Error error) : CallResult<T>(data, raw, error)
 {
-    public RestCallRequest Request { get; set; }
-    public RestCallResponse Response { get; set; }
+    public RestCallRequest Request { get; set; } = request;
+    public RestCallResponse Response { get; set; } = response;
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="responseCode"></param>
+    /// <param name="responseHeaders"></param>
+    /// <param name="responseTime"></param>
+    /// <param name="responseRaw"></param>
+    /// <param name="requestUrl"></param>
+    /// <param name="requestBody"></param>
+    /// <param name="requestMethod"></param>
+    /// <param name="requestHeaders"></param>
+    /// <param name="data"></param>
+    /// <param name="error"></param>
     public RestCallResult(
         HttpStatusCode? responseCode,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders,
@@ -86,12 +125,6 @@ public class RestCallResult<T> : CallResult<T>
     public RestCallResult(Error error) : this(null, null, default, null, error) { }
 
     public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error error) : this(request, response, default, raw, error) { }
-
-    public RestCallResult(RestCallRequest request, RestCallResponse response, T data, string raw, Error error) : base(data, raw, error)
-    {
-        Request = request;
-        Response = response;
-    }
 
     /// <summary>
     /// Copy the RestCallResult to a new data type

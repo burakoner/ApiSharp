@@ -1,15 +1,23 @@
 ﻿namespace ApiSharp;
 
-public abstract class BaseClient : IDisposable
+/// <summary>
+/// Base Client
+/// </summary>
+/// <param name="logger"></param>
+/// <param name="options"></param>
+public abstract class BaseClient(ILogger logger, BaseClientOptions options) : IDisposable
 {
-    protected ILogger _logger;
-    protected BaseClientOptions _options { get; }
-    protected ApiCredentials _credentials;
+    protected ILogger _logger = logger ?? CreateLogger();
+    protected BaseClientOptions _options { get; } = options;
+    protected ApiCredentials _credentials = options.ApiCredentials?.Copy();
     protected AuthenticationProvider _authenticationProvider;
     protected bool _disposing;
     protected bool _created;
     protected int _id;
 
+    /// <summary>
+    /// Authentication Provider
+    /// </summary>
     protected AuthenticationProvider AuthenticationProvider
     {
         get
@@ -29,32 +37,38 @@ public abstract class BaseClient : IDisposable
         DateTimeZoneHandling = DateTimeZoneHandling.Utc,
         Culture = CultureInfo.InvariantCulture
     });
+    private static ILoggerFactory _factory = null;
 
-    protected BaseClient(ILogger logger, BaseClientOptions options)
-    {
-        _logger = logger ?? CreateLogger();
-        _options = options;
-        _credentials = options.ApiCredentials?.Copy();
-    }
-
-    private static ILoggerFactory _Factory = null;
-
+    /// <summary>
+    /// Logger Factory
+    /// </summary>
     public static ILoggerFactory LoggerFactory
     {
         get
         {
-            if (_Factory == null)
-            {
-                _Factory = new LoggerFactory();
-            }
-            return _Factory;
+            _factory ??= new LoggerFactory();
+            return _factory;
         }
-        set { _Factory = value; }
+        set { _factory = value; }
     }
+
+    /// <summary>
+    /// Creates Logger
+    /// </summary>
+    /// <returns></returns>
     public static ILogger CreateLogger() => LoggerFactory.CreateLogger("ApiSharp");
 
+    /// <summary>
+    /// Creates Authentication Provider
+    /// </summary>
+    /// <param name="credentials"></param>
+    /// <returns></returns>
     protected abstract AuthenticationProvider CreateAuthenticationProvider(ApiCredentials credentials);
 
+    /// <summary>
+    /// Sets Api Credentials
+    /// </summary>
+    /// <param name="credentials"></param>
     public void SetApiCredentials(ApiCredentials credentials)
     {
         _credentials = credentials?.Copy();
@@ -62,11 +76,20 @@ public abstract class BaseClient : IDisposable
         _authenticationProvider = null;
     }
 
+    /// <summary>
+    /// Incremented Id
+    /// </summary>
+    /// <returns></returns>
     protected int NextId()
     {
         return Interlocked.Add(ref _id, 1);
     }
 
+    /// <summary>
+    /// Validate Json
+    /// </summary>
+    /// <param name="data"></param>
+    /// <returns></returns>
     protected CallResult<JToken> ValidateJson(string data)
     {
         if (string.IsNullOrEmpty(data))
@@ -98,6 +121,14 @@ public abstract class BaseClient : IDisposable
         }
     }
 
+    /// <summary>
+    /// Deserialize
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="data"></param>
+    /// <param name="serializer"></param>
+    /// <param name="requestId"></param>
+    /// <returns></returns>
     protected CallResult<T> Deserialize<T>(string data, JsonSerializer serializer = null, int? requestId = null)
     {
         var tokenResult = ValidateJson(data);
@@ -110,6 +141,14 @@ public abstract class BaseClient : IDisposable
         return Deserialize<T>(tokenResult.Data, serializer, requestId);
     }
 
+    /// <summary>
+    /// Deserialize
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="obj"></param>
+    /// <param name="serializer"></param>
+    /// <param name="requestId"></param>
+    /// <returns></returns>
     protected CallResult<T> Deserialize<T>(JToken obj, JsonSerializer serializer = null, int? requestId = null)
     {
         serializer ??= _defaultSerializer;
@@ -139,7 +178,16 @@ public abstract class BaseClient : IDisposable
         }
     }
 
-    protected async Task<CallResult<T>> DeserializeAsync<T>(System.IO.Stream stream, JsonSerializer serializer = null, int? requestId = null, long? elapsedMilliseconds = null)
+    /// <summary>
+    /// Deserialize
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="stream"></param>
+    /// <param name="serializer"></param>
+    /// <param name="requestId"></param>
+    /// <param name="elapsedMilliseconds"></param>
+    /// <returns></returns>
+    protected async Task<CallResult<T>> DeserializeAsync<T>(Stream stream, JsonSerializer serializer = null, int? requestId = null, long? elapsedMilliseconds = null)
     {
         serializer ??= _defaultSerializer;
         string data = null;
@@ -230,6 +278,9 @@ public abstract class BaseClient : IDisposable
         return await reader.ReadToEndAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Dispose
+    /// </summary>
     public virtual void Dispose()
     {
         _logger.Log(LogLevel.Debug, "Disposing client");
