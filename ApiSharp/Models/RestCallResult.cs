@@ -85,7 +85,7 @@ public class RestCallResult<T> : CallResult<T>
 
     public RestCallResult(Error error) : this(null, null, default, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : this(request, response, default, null, error) { }
+    public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error error) : this(request, response, default, raw, error) { }
 
     public RestCallResult(RestCallRequest request, RestCallResponse response, T data, string raw, Error error) : base(data, raw, error)
     {
