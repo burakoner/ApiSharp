@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Security;
 
+/// <summary>
+/// Cryptology Methods
+/// </summary>
 public static class Cryptology
 {
     /// <summary>
@@ -33,7 +36,7 @@ public static class Cryptology
     public static string Encrypt(string clearText, string password)
     {
         var clearBytes = Encoding.Unicode.GetBytes(clearText);
-        var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+        var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
         var encryptedData = Encrypt(clearBytes, pdb.GetBytes(32), pdb.GetBytes(16));
         return Convert.ToBase64String(encryptedData);
     }
@@ -46,7 +49,7 @@ public static class Cryptology
     /// <returns></returns>
     public static byte[] Encrypt(byte[] clearData, string password)
     {
-        var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+        var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
         return Encrypt(clearData, pdb.GetBytes(32), pdb.GetBytes(16));
     }
 
@@ -63,7 +66,7 @@ public static class Cryptology
         {
             var fsIn = new FileStream(fileIn, FileMode.Open, FileAccess.Read);
             var fsOut = new FileStream(fileOut, FileMode.OpenOrCreate, FileAccess.Write);
-            var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+            var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(32);
             alg.IV = pdb.GetBytes(16);
@@ -130,7 +133,7 @@ public static class Cryptology
     public static string Decrypt(string cipherText, string password)
     {
         var cipherBytes = Convert.FromBase64String(cipherText);
-        var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+        var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
         var decryptedData = Decrypt(cipherBytes, pdb.GetBytes(32), pdb.GetBytes(16));
         return Encoding.Unicode.GetString(decryptedData);
     }
@@ -143,7 +146,7 @@ public static class Cryptology
     /// <returns></returns>
     public static byte[] Decrypt(byte[] cipherData, string password)
     {
-        var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+        var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
         return Decrypt(cipherData, pdb.GetBytes(32), pdb.GetBytes(16));
     }
 
@@ -161,7 +164,7 @@ public static class Cryptology
             // First we are going to open the file streams 
             var fsIn = new FileStream(fileIn, FileMode.Open, FileAccess.Read);
             var fsOut = new FileStream(fileOut, FileMode.OpenOrCreate, FileAccess.Write);
-            var pdb = new PasswordDeriveBytes(password, new byte[] { 0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76 });
+            var pdb = new PasswordDeriveBytes(password, [0x49, 0x76, 0x61, 0x6e, 0x20, 0x4d, 0x65, 0x64, 0x76, 0x65, 0x64, 0x65, 0x76]);
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(32);
             alg.IV = pdb.GetBytes(16);
@@ -197,63 +200,34 @@ public static class Cryptology
     /// </summary>
     public enum HashType
     {
-        HMAC, HMACMD5, HMACSHA1, HMACSHA256, HMACSHA384, HMACSHA512, /*MACTripleDES,*/ MD5, /*RIPEMD160,*/ SHA1, SHA256, SHA384, SHA512
+        HMAC, HMACMD5, HMACSHA1, HMACSHA256, HMACSHA384, HMACSHA512, MD5, SHA1, SHA256, SHA384, SHA512
     }
 
     private static byte[] GetHash(string source, HashType hash)
     {
         byte[] inputBytes = Encoding.ASCII.GetBytes(source);
 
-        switch (hash)
+        return hash switch
         {
-            case HashType.HMAC:
-                return HMAC.Create().ComputeHash(inputBytes);
-
-            case HashType.HMACMD5:
-                return HMACMD5.Create().ComputeHash(inputBytes);
-
-            case HashType.HMACSHA1:
-                return HMACSHA1.Create().ComputeHash(inputBytes);
-
-            case HashType.HMACSHA256:
-                return HMACSHA256.Create().ComputeHash(inputBytes);
-
-            case HashType.HMACSHA384:
-                return HMACSHA384.Create().ComputeHash(inputBytes);
-
-            case HashType.HMACSHA512:
-                return HMACSHA512.Create().ComputeHash(inputBytes);
-            /*
-        case HashType.MACTripleDES:
-            return MACTripleDES.Create().ComputeHash(inputBytes);
-            */
-            case HashType.MD5:
-                return MD5.Create().ComputeHash(inputBytes);
-            /*
-        case HashType.RIPEMD160:
-            return RIPEMD160.Create().ComputeHash(inputBytes);
-            */
-            case HashType.SHA1:
-                return SHA1.Create().ComputeHash(inputBytes);
-
-            case HashType.SHA256:
-                return SHA256.Create().ComputeHash(inputBytes);
-
-            case HashType.SHA384:
-                return SHA384.Create().ComputeHash(inputBytes);
-
-            case HashType.SHA512:
-                return SHA512.Create().ComputeHash(inputBytes);
-
-            default:
-                return inputBytes;
-        }
+            HashType.HMAC => HMAC.Create().ComputeHash(inputBytes),
+            HashType.HMACMD5 => HMACMD5.Create().ComputeHash(inputBytes),
+            HashType.HMACSHA1 => HMACSHA1.Create().ComputeHash(inputBytes),
+            HashType.HMACSHA256 => HMACSHA256.Create().ComputeHash(inputBytes),
+            HashType.HMACSHA384 => HMACSHA384.Create().ComputeHash(inputBytes),
+            HashType.HMACSHA512 => HMACSHA512.Create().ComputeHash(inputBytes),
+            HashType.MD5 => MD5.Create().ComputeHash(inputBytes),
+            HashType.SHA1 => SHA1.Create().ComputeHash(inputBytes),
+            HashType.SHA256 => SHA256.Create().ComputeHash(inputBytes),
+            HashType.SHA384 => SHA384.Create().ComputeHash(inputBytes),
+            HashType.SHA512 => SHA512.Create().ComputeHash(inputBytes),
+            _ => inputBytes,
+        };
     }
 
     /// <summary>
     /// Computes the hash of the string using a specified hash algorithm
     /// </summary>
-    /// <param name="input">The string to hash</param>
+    /// <param name="source">The string to hash</param>
     /// <param name="hashType">The hash algorithm to use</param>
     /// <returns>The resulting hash or an empty string on error</returns>
     public static string Hash(string source, HashType hashType)
@@ -292,34 +266,28 @@ public static class Cryptology
     public static string Hmac256(string message, string secret)
     {
         var encoding = Encoding.UTF8;
-        using (var hmac = new HMACSHA256(encoding.GetBytes(secret)))
-        {
-            var msg = encoding.GetBytes(message);
-            var hash = hmac.ComputeHash(msg);
-            return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
-        }
+        using var hmac = new HMACSHA256(encoding.GetBytes(secret));
+        var msg = encoding.GetBytes(message);
+        var hash = hmac.ComputeHash(msg);
+        return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
     public static string Hmac384(string message, string secret)
     {
         var encoding = Encoding.UTF8;
-        using (var hmac = new HMACSHA384(encoding.GetBytes(secret)))
-        {
-            var msg = encoding.GetBytes(message);
-            var hash = hmac.ComputeHash(msg);
-            return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
-        }
+        using var hmac = new HMACSHA384(encoding.GetBytes(secret));
+        var msg = encoding.GetBytes(message);
+        var hash = hmac.ComputeHash(msg);
+        return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
     public static string Hmac512(string message, string secret)
     {
         var encoding = Encoding.UTF8;
-        using (var hmac = new HMACSHA512(encoding.GetBytes(secret)))
-        {
-            var msg = encoding.GetBytes(message);
-            var hash = hmac.ComputeHash(msg);
-            return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
-        }
+        using var hmac = new HMACSHA512(encoding.GetBytes(secret));
+        var msg = encoding.GetBytes(message);
+        var hash = hmac.ComputeHash(msg);
+        return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
     public static string Encode128(string data, string key)
@@ -327,7 +295,7 @@ public static class Cryptology
         try
         {
             var clearBytes = Encoding.Unicode.GetBytes(data);
-            var pdb = new PasswordDeriveBytes(key, new byte[] { 0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4 });
+            var pdb = new PasswordDeriveBytes(key, [0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4]);
             var ms = new MemoryStream();
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(16);
@@ -338,9 +306,8 @@ public static class Cryptology
             var encryptedData = ms.ToArray();
             return Convert.ToBase64String(encryptedData);
         }
-        catch (Exception Ex)
+        catch
         {
-            string cat = Ex.Message.ToString();
             return "Failed!";
         }
     }
@@ -350,7 +317,7 @@ public static class Cryptology
         try
         {
             var clearBytes = Convert.FromBase64String(data);
-            var pdb = new PasswordDeriveBytes(key, new byte[] { 0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4 });
+            var pdb = new PasswordDeriveBytes(key, [0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4]);
             var ms = new MemoryStream();
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(16);
@@ -361,9 +328,8 @@ public static class Cryptology
             var decryptedData = ms.ToArray();
             return Encoding.Unicode.GetString(decryptedData);
         }
-        catch (Exception Ex)
+        catch
         {
-            string cat = Ex.Message.ToString();
             return "Failed!";
         }
     }
@@ -373,7 +339,7 @@ public static class Cryptology
         try
         {
             var clearBytes = Encoding.Unicode.GetBytes(data);
-            var pdb = new PasswordDeriveBytes(key, new byte[] { 0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4 });
+            var pdb = new PasswordDeriveBytes(key, [0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4]);
             var ms = new MemoryStream();
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(32);
@@ -384,9 +350,8 @@ public static class Cryptology
             var encryptedData = ms.ToArray();
             return Convert.ToBase64String(encryptedData);
         }
-        catch (Exception Ex)
+        catch
         {
-            string cat = Ex.Message.ToString();
             return "Failed!";
         }
     }
@@ -396,7 +361,7 @@ public static class Cryptology
         try
         {
             var clearBytes = Convert.FromBase64String(data);
-            var pdb = new PasswordDeriveBytes(key, new byte[] { 0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4 });
+            var pdb = new PasswordDeriveBytes(key, [0x00, 0x01, 0x02, 0x1C, 0x1D, 0x1E, 0x03, 0x04, 0x05, 0x0F, 0x20, 0x21, 0xAD, 0xAF, 0xA4]);
             var ms = new MemoryStream();
             var alg = Rijndael.Create();
             alg.Key = pdb.GetBytes(32);
@@ -407,9 +372,8 @@ public static class Cryptology
             var decryptedData = ms.ToArray();
             return Encoding.Unicode.GetString(decryptedData);
         }
-        catch (Exception Ex)
+        catch
         {
-            string cat = Ex.Message.ToString();
             return "Failed!";
         }
     }
@@ -441,20 +405,20 @@ public static class Cryptology
         Hexadecimal, AlphaNumeric, AlphaNumericWithSpecialChars
     }
 
-    private static readonly char[] OneWayTicketHexadecimalChars = new[] {
+    private static readonly char[] _oneWayTicketHexadecimalChars = [
         '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'
-    };
-    private static readonly char[] OneWayTicketAlphaNumericChars = new[] {
+    ];
+    private static readonly char[] _oneWayTicketAlphaNumericChars = [
         '0','1','2','3','4','5','6','7','8','9',
         'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
         'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
-    };
-    private static readonly char[] OneWayTicketAlphaNumericWithSpecialChars = new[] {
+    ];
+    private static readonly char[] _oneWayTicketAlphaNumericWithSpecialChars = [
         '0','1','2','3','4','5','6','7','8','9',
         'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
         'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
         '!','#','$','&','(',')','[',']','{','}','+','-','*','/','%','|','^','~','?',':','.',',',':',';','=','~'
-    };
+    ];
 
     public static string OneWayTicket(string password, OneWayTicketHashType type = OneWayTicketHashType.AlphaNumeric, int blockSize = 32)
     {
@@ -472,9 +436,9 @@ public static class Cryptology
         var rest = blockSize - (data.Length % blockSize);
 
         var chars = new char[0];
-        if (type == OneWayTicketHashType.Hexadecimal) chars = OneWayTicketHexadecimalChars;
-        else if (type == OneWayTicketHashType.AlphaNumeric) chars = OneWayTicketAlphaNumericChars;
-        else if (type == OneWayTicketHashType.AlphaNumericWithSpecialChars) chars = OneWayTicketAlphaNumericWithSpecialChars;
+        if (type == OneWayTicketHashType.Hexadecimal) chars = _oneWayTicketHexadecimalChars;
+        else if (type == OneWayTicketHashType.AlphaNumeric) chars = _oneWayTicketAlphaNumericChars;
+        else if (type == OneWayTicketHashType.AlphaNumericWithSpecialChars) chars = _oneWayTicketAlphaNumericWithSpecialChars;
 
         var sb = new StringBuilder();
         for (var i = 0; i < data.Length + rest; i++)

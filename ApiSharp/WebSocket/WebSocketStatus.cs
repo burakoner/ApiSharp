@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.WebSocket;
 
+/// <summary>
+/// WebSocketStatus
+/// </summary>
 public enum WebSocketStatus
 {
     /// <summary>

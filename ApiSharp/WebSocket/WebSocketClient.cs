@@ -86,8 +86,8 @@ public class WebSocketClient
         _logger = logger;
 
         Parameters = parameters;
-        _outgoingMessages = new List<DateTime>();
-        _receivedMessages = new List<WebSocketReceiveItem>();
+        _outgoingMessages = [];
+        _receivedMessages = [];
         _sendEvent = new AsyncResetEvent();
         _sendBuffer = new ConcurrentQueue<byte[]>();
         _ctsSource = new CancellationTokenSource();

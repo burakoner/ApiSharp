@@ -7,13 +7,24 @@
 /// <param name="options"></param>
 public abstract class BaseClient(ILogger logger, BaseClientOptions options) : IDisposable
 {
+    /// <summary>
+    /// Logger
+    /// </summary>
     protected ILogger _logger = logger ?? CreateLogger();
+
+    /// <summary>
+    /// Client Options
+    /// </summary>
     protected BaseClientOptions _options { get; } = options;
-    protected ApiCredentials _credentials = options.ApiCredentials?.Copy();
-    protected AuthenticationProvider _authenticationProvider;
+    private ApiCredentials _credentials = options.ApiCredentials?.Copy();
+    private AuthenticationProvider _authenticationProvider;
+
+    /// <summary>
+    /// Disposing or Disposed
+    /// </summary>
     protected bool _disposing;
-    protected bool _created;
-    protected int _id;
+    private bool _created;
+    private int _id;
 
     /// <summary>
     /// Authentication Provider
@@ -71,8 +82,8 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     /// <param name="credentials"></param>
     public void SetApiCredentials(ApiCredentials credentials)
     {
-        _credentials = credentials?.Copy();
         _created = false;
+        _credentials = credentials?.Copy();
         _authenticationProvider = null;
     }
 
