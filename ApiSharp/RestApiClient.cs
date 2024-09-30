@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// Rest API Base Client
+/// </summary>
 public abstract class RestApiClient : BaseClient
 {
     /// <summary>
@@ -415,7 +418,7 @@ public abstract class RestApiClient : BaseClient
         {
             if (ClientOptions.SetRequestBodyEmptyContentMethods.Contains(method))
             {
-                request.SetContent(ClientOptions.RequestBodyEmptyContent, contentType);
+                request.SetContent(RestApiConstants.RequestBodyEmptyContent, contentType);
             }
         }
 
@@ -429,13 +432,13 @@ public abstract class RestApiClient : BaseClient
     /// <param name="format">Rest Request Body Format</param>
     protected virtual string PrepareBodyContent(SortedDictionary<string, object> parameters, RestRequestBodyFormat format)
     {
-        var stringData = ClientOptions.RequestBodyEmptyContent;
+        var stringData = RestApiConstants.RequestBodyEmptyContent;
         if (parameters == null || !parameters.Any()) return stringData;
 
         if (format == RestRequestBodyFormat.Json)
         {
             // Write the parameters as json in the body
-            stringData = JsonConvert.SerializeObject(parameters);
+            stringData = JsonConvert.SerializeObject(parameters, SerializerOptions.WithConverters);
         }
         else if (format == RestRequestBodyFormat.FormData)
         {
@@ -445,15 +448,15 @@ public abstract class RestApiClient : BaseClient
 
         if (format == RestRequestBodyFormat.Json)
         {
-            if (!string.IsNullOrWhiteSpace(ClientOptions.RequestBodyParameterKey) && parameters.Count == 1 && parameters.Keys.First() == ClientOptions.RequestBodyParameterKey)
+            if (!string.IsNullOrWhiteSpace(RestApiConstants.RequestBodyParameterKey) && parameters.Count == 1 && parameters.Keys.First() == RestApiConstants.RequestBodyParameterKey)
             {
                 // Write the parameters as json in the body
-                stringData = JsonConvert.SerializeObject(parameters[ClientOptions.RequestBodyParameterKey]);
+                stringData = JsonConvert.SerializeObject(parameters[RestApiConstants.RequestBodyParameterKey], SerializerOptions.WithConverters);
             }
             else
             {
                 // Write the parameters as json in the body
-                stringData = JsonConvert.SerializeObject(parameters);
+                stringData = JsonConvert.SerializeObject(parameters, SerializerOptions.WithConverters);
             }
         }
         else if (format == RestRequestBodyFormat.FormData)

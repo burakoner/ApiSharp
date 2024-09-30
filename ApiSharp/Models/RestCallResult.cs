@@ -132,7 +132,11 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
     /// <typeparam name="K">The new type</typeparam>
     /// <param name="data">The data of the new type</param>
     /// <returns></returns>
-    public new RestCallResult<K> As<K>([AllowNull] K data)
+    public new RestCallResult<K> As<K>(
+        #if NETSTANDARD2_1_OR_GREATER
+        [AllowNull] 
+        #endif
+        K data)
     {
         return new RestCallResult<K>(Request, Response, data, Raw, Error);
     }

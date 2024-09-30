@@ -1,11 +1,14 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// Rest API Constants
+/// </summary>
 public class RestApiConstants
 {
     /// <summary>
     /// Http Client User Agent
     /// </summary>
-    public const string USER_AGENT = "ApiSharp/1.3.0";
+    public const string USER_AGENT = "ApiSharp/3.0.0";
 
     /// <summary>
     /// Json content type header
@@ -21,4 +24,14 @@ public class RestApiConstants
     /// Form content type header
     /// </summary>
     public const string FORM_CONTENT_HEADER = "application/x-www-form-urlencoded";
+
+    /// <summary>
+    /// Flag for Request Body
+    /// </summary>
+    public const string RequestBodyParameterKey  = "__BODY__";
+
+    /// <summary>
+    /// Flag for Request Body Empty Content
+    /// </summary>
+    public const string RequestBodyEmptyContent  = "__EMPTY__";
 }

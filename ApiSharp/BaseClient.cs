@@ -43,11 +43,16 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
         }
     }
 
-    private static readonly JsonSerializer _defaultSerializer = JsonSerializer.Create(new JsonSerializerSettings
-    {
-        DateTimeZoneHandling = DateTimeZoneHandling.Utc,
-        Culture = CultureInfo.InvariantCulture
-    });
+    /// <summary>
+    /// Default Json Serializer
+    /// </summary>
+    private static readonly JsonSerializer _defaultSerializer = JsonSerializer.Create(SerializerOptions.WithConverters);
+    //private static readonly JsonSerializer _defaultSerializer = JsonSerializer.Create(new JsonSerializerSettings
+    //{
+    //    DateTimeZoneHandling = DateTimeZoneHandling.Utc,
+    //    Culture = CultureInfo.InvariantCulture,
+    //});
+
     private static ILoggerFactory _factory = null;
 
     /// <summary>

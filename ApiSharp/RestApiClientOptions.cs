@@ -14,9 +14,7 @@ public class RestApiClientOptions : BaseClientOptions
     public RateLimitingBehavior RateLimitingBehavior { get; set; }
 
     // Request Body
-    public string RequestBodyParameterKey { get; set; } = "";
-    public string RequestBodyEmptyContent { get; set; } = "";
-    public IEnumerable<HttpMethod> SetRequestBodyEmptyContentMethods { get; set; } = new List<HttpMethod>();
+    public IEnumerable<HttpMethod> SetRequestBodyEmptyContentMethods { get; set; } = [];
 
     public RestApiClientOptions() : this(string.Empty) { }
     public RestApiClientOptions(string baseAddress)

@@ -3,27 +3,50 @@
 /// <summary>
 /// Converter for enum values. Enums entries should be noted with a MapAttribute to map the enum value to a string value
 /// </summary>
-public class EnumConverter : JsonConverter
+public class MapConverter : JsonConverter
 {
-    private static readonly ConcurrentDictionary<Type, List<KeyValuePair<object, string>>> _mapping = new();
+    private bool _writeAsInt;
+    private bool _traceOnMissingEntry = true;
 
-    public override bool CanConvert(Type objectType)
+    /// <summary>
+    /// </summary>
+    public MapConverter()
     {
-        return objectType.IsEnum;
+        _writeAsInt = false;
+        _traceOnMissingEntry = false;
     }
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    /// <summary>
+    /// </summary>
+    /// <param name="writeAsInt"></param>
+    /// <param name="traceOnMissingEntry"></param>
+    public MapConverter(bool writeAsInt, bool traceOnMissingEntry)
+    {
+        _writeAsInt = writeAsInt;
+        _traceOnMissingEntry = traceOnMissingEntry;
+    }
+
+    private static readonly ConcurrentDictionary<Type, List<KeyValuePair<object, string>>> _mapping = new();
+
+    /// <inheritdoc />
+    public override bool CanConvert(Type objectType)
+    {
+        return objectType.IsEnum || Nullable.GetUnderlyingType(objectType)?.IsEnum == true;
+    }
+
+    /// <inheritdoc />
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         var enumType = Nullable.GetUnderlyingType(objectType) ?? objectType;
         if (!_mapping.TryGetValue(enumType, out var mapping))
             mapping = AddMapping(enumType);
 
         var stringValue = reader.Value?.ToString();
-        if (stringValue == null)
+        if (stringValue == null || stringValue == "")
         {
             // Received null value
             var emptyResult = GetDefaultValue(objectType, enumType);
-            if(emptyResult != null)
+            if (emptyResult != null)
                 // If the property we're parsing to isn't nullable there isn't a correct way to return this as null will either throw an exception (.net framework) or the default enum value (dotnet core).
                 Trace.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss:fff} | Warning | Received null enum value, but property type is not a nullable enum. EnumType: {enumType.Name}. If you think {enumType.Name} should be nullable please open an issue on the Github repo");
 
@@ -42,15 +65,17 @@ public class EnumConverter : JsonConverter
             else
             {
                 // We received an enum value but weren't able to parse it.
-                Trace.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss:fff} | Warning | Cannot map enum value. EnumType: {enumType.Name}, Value: {reader.Value}, Known values: {string.Join(", ", mapping.Select(m => m.Value))}. If you think {reader.Value} should added please open an issue on the Github repo");
+                if (_traceOnMissingEntry)
+                    Trace.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss:fff} | Warning | Cannot map enum value. EnumType: {enumType.Name}, Value: {reader.Value}, Known values: {string.Join(", ", mapping.Select(m => m.Value))}. If you think {reader.Value} should added please open an issue on the Github repo");
             }
+
             return defaultValue;
         }
 
         return result;
     }
 
-    private static object GetDefaultValue(Type objectType, Type enumType)
+    private static object? GetDefaultValue(Type objectType, Type enumType)
     {
         if (Nullable.GetUnderlyingType(objectType) != null)
             return null;
@@ -58,7 +83,7 @@ public class EnumConverter : JsonConverter
         return Activator.CreateInstance(enumType); // return default value
     }
 
-    private static List<KeyValuePair<object, string>> AddMapping(Type objectType) 
+    private static List<KeyValuePair<object, string>> AddMapping(Type objectType)
     {
         var mapping = new List<KeyValuePair<object, string>>();
         var enumMembers = objectType.GetMembers();
@@ -68,14 +93,16 @@ public class EnumConverter : JsonConverter
             foreach (MapAttribute attribute in maps)
             {
                 foreach (var value in attribute.Values)
+                {
                     mapping.Add(new KeyValuePair<object, string>(Enum.Parse(objectType, member.Name), value));
+                }
             }
         }
         _mapping.TryAdd(objectType, mapping);
         return mapping;
     }
 
-    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object result)
+    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object? result)
     {
         // Check for exact match first, then if not found fallback to a case insensitive match 
         var mapping = enumMapping.FirstOrDefault(kv => kv.Value.Equals(value, StringComparison.InvariantCulture));
@@ -105,23 +132,41 @@ public class EnumConverter : JsonConverter
     /// Get the string value for an enum value using the MapAttribute mapping. When multiple values are mapped for a enum entry the first value will be returned
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    /// <param name="enumValue"></param>
+    /// <param name="mapValue"></param>
     /// <returns></returns>
-    [return: NotNullIfNotNull("enumValue")]
-    public static string GetString<T>(T enumValue)
+    [return: NotNullIfNotNull(nameof(mapValue))]
+    public static string? GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
+
+
+    [return: NotNullIfNotNull(nameof(mapValue))]
+    private static string? GetString(Type objectType, object? mapValue)
     {
-        var objectType = typeof(T);
         objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
 
         if (!_mapping.TryGetValue(objectType, out var mapping))
             mapping = AddMapping(objectType);
 
-        return enumValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(enumValue)).Value ?? enumValue.ToString());            
+        return mapValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(mapValue)).Value ?? mapValue.ToString());
     }
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    /// <inheritdoc />
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
-        var stringValue = GetString(value);
-        writer.WriteValue(stringValue);
+        if (value == null)
+        {
+            writer.WriteNull();
+        }
+        else
+        {
+            if (_writeAsInt)
+            {
+                writer.WriteValue((int)value);
+            }
+            else
+            {
+                var stringValue = GetString(value.GetType(), value);
+                writer.WriteValue(stringValue);
+            }
+        }
     }
 }
