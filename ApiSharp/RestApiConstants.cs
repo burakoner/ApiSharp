@@ -33,5 +33,5 @@ public class RestApiConstants
     /// <summary>
     /// Flag for Request Body Empty Content
     /// </summary>
-    public const string RequestBodyEmptyContent  = "__EMPTY__";
+    public const string RequestBodyEmptyContent  = "";
 }
