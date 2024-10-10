@@ -1,10 +1,18 @@
 ﻿namespace ApiSharp.Authentication;
 
+/// <summary>
+/// AuthenticationProvider
+/// </summary>
 public abstract class AuthenticationProvider
 {
     public ApiCredentials Credentials { get; }
     protected byte[] SecretBytes { get; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="credentials"></param>
+    /// <exception cref="ArgumentException"></exception>
     protected AuthenticationProvider(ApiCredentials credentials)
     {
         if (credentials.Key == null || credentials.Secret == null)
@@ -26,7 +34,6 @@ public abstract class AuthenticationProvider
     /// <param name="body">Parameters that need to be in the body of the request. Should include the provided parameters if they should go in the body</param>
     /// <param name="bodyContent">The body content of the request</param>
     /// <param name="headers">Additional headers to send with the request</param>
-    /// <param name="authenticationHeaders">The headers that should be send with the request</param>
     public abstract void AuthenticateRestApi(
         RestApiClient apiClient,
         Uri uri,
@@ -37,11 +44,6 @@ public abstract class AuthenticationProvider
         SortedDictionary<string, object> body,
         string bodyContent,
         SortedDictionary<string, string> headers);
-
-    public abstract void AuthenticateTcpSocketApi();
-
-    public abstract void AuthenticateWebSocketApi();
-
 
     /// <summary>
     /// SHA256 sign the data and return the bytes
@@ -182,8 +184,7 @@ public abstract class AuthenticationProvider
     protected static string BytesToHexString(byte[] buff)
     {
         var result = string.Empty;
-        foreach (var t in buff)
-            result += t.ToString("X2");
+        foreach (var t in buff) result += t.ToString("X2");
         return result;
     }
 

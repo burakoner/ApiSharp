@@ -35,7 +35,7 @@ public class MapConverter : JsonConverter
     }
 
     /// <inheritdoc />
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         var enumType = Nullable.GetUnderlyingType(objectType) ?? objectType;
         if (!_mapping.TryGetValue(enumType, out var mapping))
@@ -75,7 +75,7 @@ public class MapConverter : JsonConverter
         return result;
     }
 
-    private static object? GetDefaultValue(Type objectType, Type enumType)
+    private static object GetDefaultValue(Type objectType, Type enumType)
     {
         if (Nullable.GetUnderlyingType(objectType) != null)
             return null;
@@ -102,7 +102,7 @@ public class MapConverter : JsonConverter
         return mapping;
     }
 
-    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object? result)
+    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object result)
     {
         // Check for exact match first, then if not found fallback to a case insensitive match 
         var mapping = enumMapping.FirstOrDefault(kv => kv.Value.Equals(value, StringComparison.InvariantCulture));
@@ -128,29 +128,8 @@ public class MapConverter : JsonConverter
         }
     }
 
-    /// <summary>
-    /// Get the string value for an enum value using the MapAttribute mapping. When multiple values are mapped for a enum entry the first value will be returned
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="mapValue"></param>
-    /// <returns></returns>
-    [return: NotNullIfNotNull(nameof(mapValue))]
-    public static string? GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
-
-
-    [return: NotNullIfNotNull(nameof(mapValue))]
-    private static string? GetString(Type objectType, object? mapValue)
-    {
-        objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
-
-        if (!_mapping.TryGetValue(objectType, out var mapping))
-            mapping = AddMapping(objectType);
-
-        return mapValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(mapValue)).Value ?? mapValue.ToString());
-    }
-
     /// <inheritdoc />
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
     {
         if (value == null)
         {
@@ -169,4 +148,76 @@ public class MapConverter : JsonConverter
             }
         }
     }
+    
+    /// <summary>
+    /// Get the string value for an enum value using the MapAttribute mapping. When multiple values are mapped for a enum entry the first value will be returned
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="mapValue"></param>
+    /// <returns></returns>
+    public static string GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
+
+    private static string GetString(Type objectType, object mapValue)
+    {
+        objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
+
+        if (!_mapping.TryGetValue(objectType, out var mapping))
+            mapping = AddMapping(objectType);
+
+        return mapValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(mapValue)).Value ?? mapValue.ToString());
+    }
+
+    /// <summary>
+    /// Get the enum value for a string value using the MapAttribute mapping
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static T GetEnumByLabel<T>(string text) where T : Enum
+    {
+        // Get Default Value
+        var defaultValue = default(T);
+
+        // Check Point
+        if (string.IsNullOrEmpty(text))
+        {
+            return defaultValue;
+        }
+
+        // Action
+        foreach (T item in Enum.GetValues(typeof(T)))
+        {
+            if (text.Trim().Equals(GetString(item), StringComparison.OrdinalIgnoreCase))
+                return item;
+        }
+
+        // Return Dummy
+        return defaultValue;
+    }
+
+    /// <summary>
+    /// Get the enum value for a string value using the MapAttribute mapping
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static T GetEnumByValue<T>(int text) where T : Enum
+    {
+        // Get Default Value
+        var defaultValue = default(T);
+
+        // Action
+        foreach (T item in Enum.GetValues(typeof(T)))
+        {
+            Enum test = Enum.Parse(typeof(T), item.ToString()) as Enum;
+            int intValue = Convert.ToInt32(test);
+
+            if (text == intValue)
+                return item;
+        }
+
+        // Return Dummy
+        return defaultValue;
+    }
+
 }
