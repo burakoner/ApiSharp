@@ -148,7 +148,7 @@ public class MapConverter : JsonConverter
             }
         }
     }
-    
+
     /// <summary>
     /// Get the string value for an enum value using the MapAttribute mapping. When multiple values are mapped for a enum entry the first value will be returned
     /// </summary>
@@ -165,6 +165,32 @@ public class MapConverter : JsonConverter
             mapping = AddMapping(objectType);
 
         return mapValue == null ? null : (mapping.FirstOrDefault(v => v.Key.Equals(mapValue)).Value ?? mapValue.ToString());
+    }
+
+    /// <summary>
+    /// Get the string values for an enum value using the MapAttribute mapping
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="mapValue"></param>
+    /// <returns></returns>
+    public static List<string> GetStrings<T>(T mapValue) => GetStrings(typeof(T), mapValue);
+    private static List<string> GetStrings(Type objectType, object mapValue)
+    {
+        objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
+
+        if (!_mapping.TryGetValue(objectType, out var mapping))
+            mapping = AddMapping(objectType);
+
+        if (mapping == null) return [];
+
+        var values = new List<string>();
+        foreach (var map in mapping)
+        {
+            if (map.Key.Equals(mapValue))
+                values.Add(map.Value);
+        }
+
+        return values;
     }
 
     /// <summary>
