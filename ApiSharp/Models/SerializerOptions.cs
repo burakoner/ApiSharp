@@ -17,7 +17,7 @@ public static class SerializerOptions
             new MapConverter(),
             new DateTimeConverter(),
             new BooleanConverter()
-        }
+        },
     };
 
     /// <summary>

@@ -584,9 +584,14 @@ public class WebSocketConnection
     public virtual bool Send<T>(T obj, NullValueHandling nullValueHandling = NullValueHandling.Ignore)
     {
         if (obj is string str)
+        {
             return Send(str);
+        }
         else
-            return Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
+        {
+            // return Send(JsonConvert.SerializeObject(obj, Formatting.None, new JsonSerializerSettings { NullValueHandling = nullValueHandling }));
+            return Send(JsonConvert.SerializeObject(obj, Formatting.None, SerializerOptions.WithConverters));
+        }
     }
 
     /// <summary>
