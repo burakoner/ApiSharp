@@ -79,7 +79,8 @@ public class CallResult<T> : CallResult
     /// <param name="obj"></param>
     public static implicit operator bool(CallResult<T> obj)
     {
-        return obj?.Success == true;
+        // return obj?.Success == true;
+        return obj != null && obj.Success && obj.Data != null;
     }
 
     /// <summary>

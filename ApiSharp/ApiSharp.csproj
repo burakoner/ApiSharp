@@ -8,10 +8,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>3.1.0</Version>
-		<FileVersion>3.1.0</FileVersion>
-		<PackageVersion>3.1.0</PackageVersion>
-		<AssemblyVersion>3.1.0</AssemblyVersion>
+		<Version>3.2.0</Version>
+		<FileVersion>3.2.0</FileVersion>
+		<PackageVersion>3.2.0</PackageVersion>
+		<AssemblyVersion>3.2.0</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
@@ -19,25 +19,27 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
+			Version 3.2.0 - 22 Oct 2024
+			
 			Version 3.1.0 - 25 Oct 2024
 			* Fixed issue https://github.com/burakoner/OKX.Api/issues/67
-			
+
 			Version 3.0.3 - 18 Oct 2024
-			
+
 			Version 3.0.2 - 10 Oct 2024
-			
+
 			Version 3.0.0 - 30 Sep 2024
-			
+
 			Version 2.2.1 - 27 Mar 2023
 			* Fixed minor bugs
-			
+
 			Version 2.2.0 - 25 Mar 2023
 			* Refactored some parts according to the latest C# features
 			* Added some XML comments (summaries)
 			* Merge pulled request https://github.com/burakoner/ApiSharp/pull/5
 			* Fixed minor issues
 			* Dependencies Updated
-			
+
 			Version 2.1.0 - 05 Feb 2023
 			* Microsoft.Extensions.Logging updated to 8.0.0
 			* Microsoft.Extensions.Logging.Abstractions updated to 8.0.0
