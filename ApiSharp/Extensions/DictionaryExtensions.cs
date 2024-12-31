@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Extensions;
 
+/// <summary>
+/// Dictionary extensions
+/// </summary>
 public static class DictionaryExtensions
 {
     /// <summary>
@@ -144,6 +147,28 @@ public static class DictionaryExtensions
     /// <param name="parameters"></param>
     /// <returns></returns>
     public static string ToFormData(this SortedDictionary<string, object> parameters)
+    {
+        var formData = HttpUtility.ParseQueryString(string.Empty);
+        foreach (var kvp in parameters)
+        {
+            if (kvp.Value.GetType().IsArray)
+            {
+                var array = (Array)kvp.Value;
+                foreach (var value in array)
+                    formData.Add(kvp.Key, value.ToString());
+            }
+            else
+                formData.Add(kvp.Key, kvp.Value.ToString());
+        }
+        return formData.ToString();
+    }
+
+    /// <summary>
+    /// Convert a dictionary to formdata string
+    /// </summary>
+    /// <param name="parameters"></param>
+    /// <returns></returns>
+    public static string ToFormData(this Dictionary<string, object> parameters)
     {
         var formData = HttpUtility.ParseQueryString(string.Empty);
         foreach (var kvp in parameters)

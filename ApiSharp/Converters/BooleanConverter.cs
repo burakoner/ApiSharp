@@ -33,9 +33,8 @@ public class BooleanConverter : JsonConverter
     {
         return (reader.Value?.ToString().ToLower().Trim()) switch
         {
-            "true" or "yes" or "y" or "1" or "on" => true,
-            "false" or "no" or "n" or "0" or "off" or "-1" => false,
-            // If we reach here, we're pretty much going to throw an error so let's let Json.NET throw it's pretty-fied error message.
+            "true" or "t" or "yes" or "y" or "1" or "on" => true,
+            "false" or "f" or "no" or "n" or "0" or "off" or "-1" => false,
             _ => new JsonSerializer().Deserialize(reader, objectType),
         };
     }
