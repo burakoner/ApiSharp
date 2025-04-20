@@ -1,5 +1,8 @@
-﻿namespace ApiSharp.Enums;
+﻿namespace ApiSharp.Authentication;
 
+/// <summary>
+/// Output string type
+/// </summary>
 public enum SignatureOutputType
 {
     /// <summary>
