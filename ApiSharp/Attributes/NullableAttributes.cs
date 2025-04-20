@@ -1,5 +1,7 @@
-﻿#if !NETSTANDARD2_1
+﻿#if NETSTANDARD2_0
 namespace System.Diagnostics.CodeAnalysis;
+
+using System;
 
 /// <summary>
 ///     Specifies that <see langword="null"/> is allowed as an input even if the

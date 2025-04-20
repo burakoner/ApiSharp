@@ -109,7 +109,7 @@ public class RateLimiter : IRateLimiter
         if (_limiters.OfType<ApiKeyRateLimiter>().Any(x => x.IgnoreOtherRateLimits)) goto ApiKeyRateLimiter;
         if (_limiters.OfType<TotalRateLimiter>().Any(x => x.IgnoreOtherRateLimits)) goto TotalRateLimiter;
 
-    EndpointRateLimiter:
+        EndpointRateLimiter:
         var endpointLimit = _limiters.OfType<EndpointRateLimiter>().SingleOrDefault(h => h.Endpoints.Contains(endpoint) && (h.Method == null || h.Method == method));
         if (endpointLimit != null)
         {
@@ -246,11 +246,11 @@ public class RateLimiter : IRateLimiter
                     {
                         historyTopic.Semaphore.Release();
                         var msg = $"Request to {endpoint} failed because of rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}";
-                            logger.Log(LogLevel.Warning, msg);
-                        return new CallResult<int>(new RateLimitError(msg));
+                        logger.Log(LogLevel.Warning, msg);
+                        return new CallResult<int>(new ClientRateLimitError(msg));
                     }
 
-                        logger.Log(LogLevel.Information, $"Request to {endpoint} waiting {thisWaitTime}ms for rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}");
+                    logger.Log(LogLevel.Information, $"Request to {endpoint} waiting {thisWaitTime}ms for rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}");
                     try
                     {
                         await Task.Delay(thisWaitTime, ct).ConfigureAwait(false);

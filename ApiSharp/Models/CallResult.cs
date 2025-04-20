@@ -4,12 +4,12 @@
 /// CallResult
 /// </summary>
 /// <param name="error"></param>
-public class CallResult(Error error)
+public class CallResult(Error? error)
 {
     /// <summary>
     /// Error
     /// </summary>
-    public Error Error { get; internal set; } = error;
+    public Error? Error { get; internal set; } = error;
 
     /// <summary>
     /// Success Flag
@@ -23,6 +23,12 @@ public class CallResult(Error error)
     public static implicit operator bool(CallResult obj)
     {
         return obj?.Success == true;
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Success ? $"Success" : $"Error: {Error}";
     }
 }
 
@@ -40,7 +46,7 @@ public class CallResult<T> : CallResult
     /// <summary>
     /// Raw Data
     /// </summary>
-    public string Raw { get; internal set; }
+    public string? Raw { get; internal set; }
 
     /// <summary>
     /// Constructor
@@ -48,11 +54,15 @@ public class CallResult<T> : CallResult
     /// <param name="data"></param>
     /// <param name="raw"></param>
     /// <param name="error"></param>
-    protected CallResult(T data, string raw, Error error) : base(error)
+#pragma warning disable 8618
+    protected CallResult([AllowNull] T data, string? raw, Error? error) : base(error)
     {
         Raw = raw;
+#pragma warning disable 8601
         Data = data;
+#pragma warning restore 8601
     }
+#pragma warning restore 8618
 
     /// <summary>
     /// Constructor
@@ -63,15 +73,22 @@ public class CallResult<T> : CallResult
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="data"></param>
-    /// <param name="raw"></param>
-    public CallResult(T data, string raw) : this(data, raw, null) { }
+    /// <param name="error"></param>
+    public CallResult(Error error) : this(default, null, error) { }
+
+    /// <summary>
+    /// Create a new error result
+    /// </summary>
+    /// <param name="error">The error to return</param>
+    /// <param name="raw">The original response data</param>
+    public CallResult(Error error, string? raw) : this(default, raw, error) { }
 
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="error"></param>
-    public CallResult(Error error) : this(default, null, error) { }
+    /// <param name="data"></param>
+    /// <param name="raw"></param>
+    public CallResult(T data, string? raw) : this(data, raw, null) { }
 
     /// <summary>
     /// Overwrite bool check so we can use if(callResult) instead of if(callResult.Success)
@@ -89,7 +106,7 @@ public class CallResult<T> : CallResult
     /// <param name="data"></param>
     /// <param name="error"></param>
     /// <returns></returns>
-    public bool GetResultOrError(out T data, out Error error)
+    public bool GetResultOrError([MaybeNullWhen(false)] out T data, [NotNullWhen(false)] out Error? error)
     {
         if (Success)
         {
@@ -113,9 +130,27 @@ public class CallResult<T> : CallResult
     /// <typeparam name="K">The new type</typeparam>
     /// <param name="data">The data of the new type</param>
     /// <returns></returns>
-    public CallResult<K> As<K>(K data)
+    public CallResult<K> As<K>([AllowNull] K data)
     {
         return new CallResult<K>(data, Raw, Error);
+    }
+
+    /// <summary>
+    /// Copy as a dataless result
+    /// </summary>
+    /// <returns></returns>
+    public CallResult AsDataless()
+    {
+        return new CallResult(null);
+    }
+
+    /// <summary>
+    /// Copy as a dataless result
+    /// </summary>
+    /// <returns></returns>
+    public CallResult AsDatalessError(Error error)
+    {
+        return new CallResult(error);
     }
 
     /// <summary>
@@ -127,5 +162,11 @@ public class CallResult<T> : CallResult
     public CallResult<K> AsError<K>(Error error)
     {
         return new CallResult<K>(default, Raw, error);
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        return Success ? $"Success" : $"Error: {Error}";
     }
 }

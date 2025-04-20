@@ -6,7 +6,7 @@
 /// <param name="code"></param>
 /// <param name="message"></param>
 /// <param name="data"></param>
-public abstract class Error(int? code, string message, object data)
+public abstract class Error(int? code, string message, object? data)
 {
     /// <summary>
     /// Code
@@ -21,7 +21,7 @@ public abstract class Error(int? code, string message, object data)
     /// <summary>
     /// Data
     /// </summary>
-    public object Data { get; set; } = data;
+    public object? Data { get; set; } = data;
 
     /// <summary>
     /// ToString Override
@@ -29,7 +29,7 @@ public abstract class Error(int? code, string message, object data)
     /// <returns></returns>
     public override string ToString()
     {
-        return $"{Code}: {Message} {Data}";
+        return Code != null ? $"[{GetType().Name}] {Code}: {Message} {Data}" : $"[{GetType().Name}] {Message} {Data}";
     }
 }
 
@@ -42,6 +42,14 @@ public class CantConnectError : Error
     /// Constructor
     /// </summary>
     public CantConnectError() : base(null, "Can't connect to the server", null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected CantConnectError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
@@ -53,19 +61,6 @@ public class NoApiCredentialsError : Error
     /// Constructor
     /// </summary>
     public NoApiCredentialsError() : base(null, "No credentials provided for private endpoint", null) { }
-}
-
-/// <summary>
-/// Call Error
-/// </summary>
-public class CallError : Error
-{
-    /// <summary>
-    /// Constructor
-    /// </summary>
-    /// <param name="message"></param>
-    /// <param name="data"></param>
-    public CallError(string message, object data = null) : base(null, message, data) { }
 
     /// <summary>
     /// Constructor
@@ -73,7 +68,7 @@ public class CallError : Error
     /// <param name="code"></param>
     /// <param name="message"></param>
     /// <param name="data"></param>
-    public CallError(int code, string message, object data = null) : base(code, message, data) { }
+    protected NoApiCredentialsError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
@@ -86,7 +81,7 @@ public class ServerError : Error
     /// </summary>
     /// <param name="message"></param>
     /// <param name="data"></param>
-    public ServerError(string message, object data = null) : base(null, message, data) { }
+    public ServerError(string message, object? data = null) : base(null, message, data) { }
 
     /// <summary>
     /// Constructor
@@ -94,11 +89,19 @@ public class ServerError : Error
     /// <param name="code"></param>
     /// <param name="message"></param>
     /// <param name="data"></param>
-    public ServerError(int code, string message, object data = null) : base(code, message, data) { }
+    public ServerError(int code, string message, object? data = null) : base(code, message, data) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected ServerError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Web Error
+/// Web error returned by the server
 /// </summary>
 public class WebError : Error
 {
@@ -107,7 +110,7 @@ public class WebError : Error
     /// </summary>
     /// <param name="message"></param>
     /// <param name="data"></param>
-    public WebError(string message, object data = null) : base(null, message, data) { }
+    public WebError(string message, object? data = null) : base(null, message, data) { }
 
     /// <summary>
     /// Constructor
@@ -115,45 +118,140 @@ public class WebError : Error
     /// <param name="code"></param>
     /// <param name="message"></param>
     /// <param name="data"></param>
-    public WebError(int code, string message, object data = null) : base(code, message, data) { }
+    public WebError(int code, string message, object? data = null) : base(code, message, data) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected WebError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Deserialize Error
+/// Error while deserializing data
 /// </summary>
-/// <param name="message"></param>
-/// <param name="data"></param>
-public class DeserializeError(string message, object data) : Error(null, message, data)
+public class DeserializeError : Error
 {
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message">The error message</param>
+    /// <param name="data">The data which caused the error</param>
+    public DeserializeError(string message, object? data) : base(null, message, data) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected DeserializeError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Unknown Error
+/// Unknown error
 /// </summary>
-/// <param name="message"></param>
-/// <param name="data"></param>
-public class UnknownError(string message, object data = null) : Error(null, message, data)
+public class UnknownError : Error
 {
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message">Error message</param>
+    /// <param name="data">Error data</param>
+    public UnknownError(string message, object? data = null) : base(null, message, data) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected UnknownError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Argument Error
+/// An invalid parameter has been provided
 /// </summary>
-/// <param name="message"></param>
-public class ArgumentError(string message) : Error(null, "Invalid parameter: " + message, null)
+public class ArgumentError : Error
 {
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message"></param>
+    public ArgumentError(string message) : base(null, "Invalid parameter: " + message, null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected ArgumentError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Rate Limit Error
+/// Rate limit exceeded (client side)
 /// </summary>
-/// <param name="message"></param>
-public class RateLimitError(string message) : Error(null, "Rate limit exceeded: " + message, null)
+public abstract class BaseRateLimitError : Error
 {
+    /// <summary>
+    /// When the request can be retried
+    /// </summary>
+    public DateTime? RetryAfter { get; set; }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected BaseRateLimitError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Cancellation Requested Error
+/// Rate limit exceeded (client side)
+/// </summary>
+public class ClientRateLimitError : BaseRateLimitError
+{
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message"></param>
+    public ClientRateLimitError(string message) : base(null, "Client rate limit exceeded: " + message, null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected ClientRateLimitError(int? code, string message, object? data) : base(code, message, data) { }
+}
+
+/// <summary>
+/// Rate limit exceeded (server side)
+/// </summary>
+public class ServerRateLimitError : BaseRateLimitError
+{
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message"></param>
+    public ServerRateLimitError(string message) : base(null, "Server rate limit exceeded: " + message, null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected ServerRateLimitError(int? code, string message, object? data) : base(code, message, data) { }
+}
+
+/// <summary>
+/// Cancellation requested
 /// </summary>
 public class CancellationRequestedError : Error
 {
@@ -161,12 +259,53 @@ public class CancellationRequestedError : Error
     /// Constructor
     /// </summary>
     public CancellationRequestedError() : base(null, "Cancellation requested", null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    public CancellationRequestedError(int? code, string message, object? data) : base(code, message, data) { }
 }
 
 /// <summary>
-/// Invalid Operation Error
+/// Invalid operation requested
 /// </summary>
-/// <param name="message"></param>
-public class InvalidOperationError(string message) : Error(null, message, null)
+public class InvalidOperationError : Error
 {
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message"></param>
+    public InvalidOperationError(string message) : base(null, message, null) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    protected InvalidOperationError(int? code, string message, object? data) : base(code, message, data) { }
+}
+
+/// <summary>
+/// Call Error
+/// </summary>
+public class CallError : Error
+{
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    public CallError(string message, object? data = null) : base(null, message, data) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="code"></param>
+    /// <param name="message"></param>
+    /// <param name="data"></param>
+    public CallError(int code, string message, object? data = null) : base(code, message, data) { }
 }

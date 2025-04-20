@@ -1,6 +1,4 @@
-﻿using System.Net.Sockets;
-
-namespace ApiSharp.WebSocket;
+﻿namespace ApiSharp.WebSocket;
 
 /// <summary>
 /// A single stream connection to the server

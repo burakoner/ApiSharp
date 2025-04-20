@@ -16,15 +16,9 @@ public class ApiCredentials : IDisposable
     public SensitiveString Secret { get; }
 
     /// <summary>
-    /// Constructor
+    /// Type of the credentials
     /// </summary>
-    /// <param name="key">Api Key</param>
-    /// <param name="secret">Api Secret</param>
-    public ApiCredentials(SensitiveString key, SensitiveString secret)
-    {
-        Key = key ?? string.Empty.ToSensitiveString();
-        Secret = secret ?? string.Empty.ToSensitiveString();
-    }
+    public ApiCredentialsType Type { get; set; }
 
     /// <summary>
     /// Constructor
@@ -41,10 +35,25 @@ public class ApiCredentials : IDisposable
     /// </summary>
     /// <param name="key">Api Key</param>
     /// <param name="secret">Api Secret</param>
-    public ApiCredentials(string key, string secret)
+    /// <param name="type">The type of credentials</param>
+    public ApiCredentials(string key, string secret, ApiCredentialsType type = ApiCredentialsType.HMAC)
     {
         Key = !string.IsNullOrEmpty(key) ? key.ToSensitiveString() : string.Empty.ToSensitiveString();
         Secret = !string.IsNullOrEmpty(secret) ? secret.ToSensitiveString() : string.Empty.ToSensitiveString();
+        Type = type;
+    }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="key">Api Key</param>
+    /// <param name="secret">Api Secret</param>
+    /// <param name="type">The type of credentials</param>
+    public ApiCredentials(SensitiveString key, SensitiveString secret, ApiCredentialsType type = ApiCredentialsType.HMAC)
+    {
+        Key = key ?? string.Empty.ToSensitiveString();
+        Secret = secret ?? string.Empty.ToSensitiveString();
+        Type = type;
     }
 
     /// <summary>
@@ -54,7 +63,7 @@ public class ApiCredentials : IDisposable
     public virtual ApiCredentials Copy()
     {
         // Use .GetString() to create a copy of the SensitiveString
-        return new ApiCredentials(Key!.GetString(), Secret!.GetString());
+        return new ApiCredentials(Key!.GetString(), Secret!.GetString(), Type);
     }
 
     /// <summary>

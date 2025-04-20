@@ -1,11 +1,13 @@
 ﻿namespace ApiSharp.Attributes;
 
-public class MapAttribute : Attribute
+/// <summary>
+/// Map a enum entry to string values
+/// </summary>
+[AttributeUsage(AttributeTargets.Field)]
+public class MapAttribute(params string[] maps) : Attribute
 {
-    public string[] Values { get; set; }
-
-    public MapAttribute(params string[] maps)
-    {
-        Values = maps;
-    }
+    /// <summary>
+    /// Values mapping to the enum entry
+    /// </summary>
+    public string[] Values { get; set; } = maps;
 }

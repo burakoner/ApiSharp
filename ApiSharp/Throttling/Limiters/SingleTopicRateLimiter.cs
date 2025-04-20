@@ -1,12 +1,6 @@
 ﻿namespace ApiSharp.Throttling.Limiters;
 
-internal class SingleTopicRateLimiter : Limiter
+internal class SingleTopicRateLimiter(object topic, Limiter limiter) : Limiter(limiter.Type, limiter.Limit, limiter.Period, limiter.Method, limiter.IgnoreOtherRateLimits)
 {
-    public object Topic { get; set; }
-
-    public SingleTopicRateLimiter(object topic, Limiter limiter)
-        : base(limiter.Type, limiter.Limit, limiter.Period, limiter.Method, limiter.IgnoreOtherRateLimits)
-    {
-        Topic = topic;
-    }
+    public object Topic { get; set; } = topic;
 }
