@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.WebSocket;
 
+/// <summary>
+/// WebSocket client
+/// </summary>
 public class WebSocketClient
 {
     enum ProcessState
@@ -38,10 +41,19 @@ public class WebSocketClient
     /// </summary>
     protected readonly object _receivedMessagesLock;
 
+    /// <summary>
+    /// Logger for this websocket
+    /// </summary>
     protected ILogger _logger;
 
+    /// <summary>
+    /// Identifier for this websocket
+    /// </summary>
     public int Id { get; }
 
+    /// <summary>
+    /// Websocket Parameters
+    /// </summary>
     public WebSocketParameters Parameters { get; }
 
     /// <summary>
@@ -49,12 +61,24 @@ public class WebSocketClient
     /// </summary>
     public DateTime LastActionTime { get; private set; }
 
+    /// <summary>
+    /// The URI of the websocket
+    /// </summary>
     public Uri Uri => Parameters.Uri;
 
+    /// <summary>
+    /// The state of the websocket
+    /// </summary>
     public bool IsClosed => _socket.State == WebSocketState.Closed;
 
+    /// <summary>
+    /// The state of the websocket
+    /// </summary>
     public bool IsOpen => _socket.State == WebSocketState.Open && !_ctsSource.IsCancellationRequested;
 
+    /// <summary>
+    /// The state of the websocket
+    /// </summary>
     public double IncomingKbps
     {
         get
@@ -71,15 +95,20 @@ public class WebSocketClient
         }
     }
 
-    public event Action OnClose;
-    public event Action<string> OnMessage;
-    public event Action<int> OnRequestSent;
-    public event Action<Exception> OnError;
-    public event Action OnOpen;
-    public event Action OnReconnecting;
-    public event Action OnReconnected;
+    public event Action? OnClose;
+    public event Action<string>? OnMessage;
+    public event Action<int>? OnRequestSent;
+    public event Action<Exception>? OnError;
+    public event Action? OnOpen;
+    public event Action? OnReconnecting;
+    public event Action? OnReconnected;
     public Func<Task<Uri>> GetReconnectionUrl { get; set; }
 
+    /// <summary>
+    /// WebSocket client constructor
+    /// </summary>
+    /// <param name="logger"></param>
+    /// <param name="parameters"></param>
     public WebSocketClient(ILogger logger, WebSocketParameters parameters)
     {
         Id = NextWebSocketId();
@@ -97,6 +126,10 @@ public class WebSocketClient
         _socket = CreateWebSocket();
     }
 
+    /// <summary>
+    /// Connect to the websocket
+    /// </summary>
+    /// <returns></returns>
     public virtual async Task<bool> ConnectAsync()
     {
         if (!await ConnectInternalAsync().ConfigureAwait(false))

@@ -20,5 +20,5 @@ public interface IRequestFactory
     /// <param name="options">HttpClient Options</param>
     /// <param name="proxy">Proxy settings to use</param>       
     /// <param name="client">Optional shared http client instance</param>
-    void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient client = null);
+    void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient? client = null);
 }

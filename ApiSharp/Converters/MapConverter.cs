@@ -102,7 +102,7 @@ public class MapConverter : JsonConverter
         return mapping;
     }
 
-    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object result)
+    private static bool GetValue(Type objectType, List<KeyValuePair<object, string>> enumMapping, string value, out object? result)
     {
         // Check for exact match first, then if not found fallback to a case insensitive match 
         var mapping = enumMapping.FirstOrDefault(kv => kv.Value.Equals(value, StringComparison.InvariantCulture));
@@ -129,7 +129,7 @@ public class MapConverter : JsonConverter
     }
 
     /// <inheritdoc />
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         if (value == null)
         {

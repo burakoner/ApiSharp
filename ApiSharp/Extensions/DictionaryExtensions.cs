@@ -57,7 +57,7 @@ public static class DictionaryExtensions
     /// <param name="parameters"></param>
     /// <param name="key"></param>
     /// <param name="value"></param>
-    public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object value)
+    public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object? value)
     {
         if (value != null)
         {
@@ -82,7 +82,7 @@ public static class DictionaryExtensions
     /// <param name="key"></param>
     /// <param name="value"></param>
     /// <param name="converter"></param>
-    public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object value, JsonConverter converter)
+    public static void AddOptionalParameter(this Dictionary<string, object> parameters, string key, object? value, JsonConverter converter)
     {
         if (value != null)
             parameters.Add(key, JsonConvert.SerializeObject(value, converter));

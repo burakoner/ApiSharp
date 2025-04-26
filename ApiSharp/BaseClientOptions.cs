@@ -8,7 +8,7 @@ public abstract class BaseClientOptions
     /// <summary>
     /// Base Address
     /// </summary>
-    public string BaseAddress { get; set; }
+    public string BaseAddress { get; set; } = "";
 
     /// <summary>
     /// Encoding
@@ -33,17 +33,17 @@ public abstract class BaseClientOptions
     /// <summary>
     /// Proxy
     /// </summary>
-    public ProxyCredentials Proxy { get; set; }
+    public ProxyCredentials? Proxy { get; set; }
 
     /// <summary>
     /// ApiCredentials
     /// </summary>
-    public ApiCredentials ApiCredentials { get; set; }
+    public ApiCredentials? ApiCredentials { get; set; }
 
     /// <summary>
     /// Authentication Provider
     /// </summary>
-    public AuthenticationProvider AuthenticationProvider { get; set; }
+    public AuthenticationProvider? AuthenticationProvider { get; set; }
 
     /// <summary>
     /// Constructor
@@ -73,6 +73,15 @@ public abstract class BaseClientOptions
     /// <param name="clientOptions"></param>
     public BaseClientOptions(BaseClientOptions clientOptions)
     {
+        // Encoding
+        Encoding = Encoding.UTF8;
+
+        // Json Options
+        JsonOptions = new JsonOptions
+        {
+            ErrorBehavior = ErrorBehavior.ThrowException,
+        };
+
         // Check Point
         if (clientOptions == null)
             return;

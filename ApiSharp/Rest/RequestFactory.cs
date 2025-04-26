@@ -4,7 +4,7 @@ public class RequestFactory : IRequestFactory
 {
     private HttpClient httpClient;
 
-    public void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient client = null)
+    public void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient? client = null)
     {
         if (client == null)
         {

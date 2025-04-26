@@ -2,7 +2,7 @@
 
 public static class JTokenExtensions
 {
-    public static JToken ToJToken(this string stringData, ILogger logger = null)
+    public static JToken? ToJToken(this string stringData, ILogger logger = null)
     {
         if (string.IsNullOrEmpty(stringData))
             return null;
@@ -27,7 +27,7 @@ public static class JTokenExtensions
         }
     }
 
-    public static TJToken RemoveFromLowestPossibleParent<TJToken>(this TJToken node) where TJToken : JToken
+    public static TJToken? RemoveFromLowestPossibleParent<TJToken>(this TJToken node) where TJToken : JToken
     {
         if (node == null)
             return null;

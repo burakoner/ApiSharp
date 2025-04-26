@@ -9,12 +9,25 @@ public class ArrayConverter : JsonConverter
     private static readonly ConcurrentDictionary<(MemberInfo, Type), Attribute> attributeByMemberInfoAndTypeCache = new();
     private static readonly ConcurrentDictionary<(Type, Type), Attribute> attributeByTypeAndTypeCache = new();
 
+    /// <summary>
+    /// Checks if the object type is supported. This converter can convert any type.
+    /// </summary>
+    /// <param name="objectType"></param>
+    /// <returns></returns>
     public override bool CanConvert(Type objectType)
     {
         return true;
     }
-    
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+
+    /// <summary>
+    /// Reads the object as an array. The properties are ordered by the index in the array. If the index is not set, the property is ignored.
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="objectType"></param>
+    /// <param name="existingValue"></param>
+    /// <param name="serializer"></param>
+    /// <returns></returns>
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         if (reader.TokenType == JsonToken.Null)
             return null;
@@ -100,7 +113,13 @@ public class ArrayConverter : JsonConverter
         return result;
     }
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    /// <summary>
+    /// Writes the object as an array. The properties are ordered by the index in the array. If the index is not set, the property is ignored.
+    /// </summary>
+    /// <param name="writer"></param>
+    /// <param name="value"></param>
+    /// <param name="serializer"></param>
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         if (value == null)
             return;
@@ -161,12 +180,10 @@ public class ArrayConverter : JsonConverter
 /// Mark property as an index in the array
 /// </summary>
 [AttributeUsage(AttributeTargets.Property)]
-public class ArrayPropertyAttribute: Attribute
+public class ArrayPropertyAttribute(int index) : Attribute
 {
-    public int Index { get; }
-
-    public ArrayPropertyAttribute(int index)
-    {
-        Index = index;
-    }
+    /// <summary>
+    /// Index of the property in the array. The index is 0 based. If the index is not set, the property is ignored.
+    /// </summary>
+    public int Index { get; } = index;
 }

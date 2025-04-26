@@ -16,8 +16,8 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     /// Client Options
     /// </summary>
     protected BaseClientOptions _options { get; } = options;
-    private ApiCredentials _credentials = options.ApiCredentials?.Copy();
-    private AuthenticationProvider _authenticationProvider;
+    private ApiCredentials? _credentials = options.ApiCredentials?.Copy();
+    private AuthenticationProvider? _authenticationProvider;
 
     /// <summary>
     /// Disposing or Disposed
@@ -39,7 +39,7 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
                 _created = true;
             }
 
-            return _authenticationProvider;
+            return _authenticationProvider ?? CreateAuthenticationProvider(_credentials!);
         }
     }
 
@@ -53,7 +53,7 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     //    Culture = CultureInfo.InvariantCulture,
     //});
 
-    private static ILoggerFactory _factory = null;
+    private static ILoggerFactory? _factory = null;
 
     /// <summary>
     /// Logger Factory
@@ -88,7 +88,7 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     public void SetApiCredentials(ApiCredentials credentials)
     {
         _created = false;
-        _credentials = credentials?.Copy();
+        _credentials = credentials.Copy();
         _authenticationProvider = null;
     }
 
@@ -145,7 +145,7 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     /// <param name="serializer"></param>
     /// <param name="requestId"></param>
     /// <returns></returns>
-    protected CallResult<T> Deserialize<T>(string data, JsonSerializer serializer = null, int? requestId = null)
+    protected CallResult<T> Deserialize<T>(string data, JsonSerializer? serializer = null, int? requestId = null)
     {
         var tokenResult = ValidateJson(data);
         if (!tokenResult)
@@ -165,7 +165,7 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     /// <param name="serializer"></param>
     /// <param name="requestId"></param>
     /// <returns></returns>
-    protected CallResult<T> Deserialize<T>(JToken obj, JsonSerializer serializer = null, int? requestId = null)
+    protected CallResult<T> Deserialize<T>(JToken obj, JsonSerializer? serializer = null, int? requestId = null)
     {
         serializer ??= _defaultSerializer;
 
@@ -203,10 +203,10 @@ public abstract class BaseClient(ILogger logger, BaseClientOptions options) : ID
     /// <param name="requestId"></param>
     /// <param name="elapsedMilliseconds"></param>
     /// <returns></returns>
-    protected async Task<CallResult<T>> DeserializeAsync<T>(Stream stream, JsonSerializer serializer = null, int? requestId = null, long? elapsedMilliseconds = null)
+    protected async Task<CallResult<T>> DeserializeAsync<T>(Stream stream, JsonSerializer? serializer = null, int? requestId = null, long? elapsedMilliseconds = null)
     {
         serializer ??= _defaultSerializer;
-        string data = null;
+        string? data = null;
 
         try
         {

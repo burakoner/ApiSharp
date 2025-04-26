@@ -1,11 +1,28 @@
 ﻿namespace ApiSharp.Models;
 
+/// <summary>
+/// Proxy Credentials
+/// </summary>
 public class ProxyCredentials
 {
+    /// <summary>
+    /// The proxy hostname/ip
+    /// </summary>
     public string Host { get; }
+
+    /// <summary>
+    /// The proxy port
+    /// </summary>
     public int Port { get; }
 
+    /// <summary>
+    /// The proxy login
+    /// </summary>
     public SensitiveString Username { get; }
+
+    /// <summary>
+    /// The proxy password
+    /// </summary>
     public SensitiveString Password { get; }
 
     /// <summary>
@@ -13,7 +30,7 @@ public class ProxyCredentials
     /// </summary>
     /// <param name="host">The proxy hostname/ip</param>
     /// <param name="port">The proxy port</param>
-    public ProxyCredentials(string host, int port) : this(host, port, null, (SensitiveString)null)
+    public ProxyCredentials(string host, int port) : this(host, port, "".ToSensitiveString(), "".ToSensitiveString())
     {
     }
 
@@ -24,7 +41,7 @@ public class ProxyCredentials
     /// <param name="port">The proxy port</param>
     /// <param name="username">The proxy login</param>
     /// <param name="password">The proxy password</param>
-    public ProxyCredentials(string host, int port, string username, string password) : this(host, port, username?.ToSensitiveString(), password?.ToSensitiveString())
+    public ProxyCredentials(string host, int port, string username, string password) : this(host, port, (username ?? "").ToSensitiveString(), (password ?? "").ToSensitiveString())
     {
     }
 
