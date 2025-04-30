@@ -104,6 +104,24 @@ public class WebSocketUpdateSubscription
     }
 
     /// <summary>
+    /// Get the connection this subscription is on
+    /// </summary>
+    /// <returns></returns>
+    public WebSocketSubscription GetSubscription()
+    {
+        return subscription;
+    }
+
+    /// <summary>
+    /// Get the connection this subscription is on
+    /// </summary>
+    /// <returns></returns>
+    public WebSocketConnection GetConnection()
+    {
+        return connection;
+    }
+    
+    /// <summary>
     /// Unsubscribe a subscription
     /// </summary>
     /// <returns></returns>

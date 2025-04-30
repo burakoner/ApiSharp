@@ -20,7 +20,7 @@ public class WebSocketApiClientOptions : BaseClientOptions
     /// <summary>
     /// The max time to wait for a response after sending a request on the socket before giving a timeout
     /// </summary>
-    public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public TimeSpan ResponseTimeout { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// The max time of not receiving any data after which the connection is assumed to be dropped. This can only be used for socket connections where a steady flow of data is expected,

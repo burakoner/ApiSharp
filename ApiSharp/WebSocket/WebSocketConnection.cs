@@ -566,7 +566,7 @@ public class WebSocketConnection
             if (pending.Completed)
                 return;
 
-            await pending.Event.WaitAsync(TimeSpan.FromMilliseconds(500)).ConfigureAwait(false);
+            await pending.Event.WaitAsync(TimeSpan.FromMilliseconds(50)).ConfigureAwait(false);
 
             if (pending.Completed)
                 return;
