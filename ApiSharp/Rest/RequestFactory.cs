@@ -1,9 +1,18 @@
 ﻿namespace ApiSharp.Rest;
 
+/// <summary>
+/// Request Factory
+/// </summary>
 public class RequestFactory : IRequestFactory
 {
-    private HttpClient httpClient;
+    private HttpClient? httpClient;
 
+    /// <summary>
+    /// Configure the requests created by this factory
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="proxy"></param>
+    /// <param name="client"></param>
     public void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient? client = null)
     {
         if (client == null)
@@ -28,6 +37,14 @@ public class RequestFactory : IRequestFactory
         }
     }
 
+    /// <summary>
+    /// Create a request for an uri
+    /// </summary>
+    /// <param name="method"></param>
+    /// <param name="uri"></param>
+    /// <param name="requestId"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
     public IRequest Create(HttpMethod method, Uri uri, int requestId)
     {
         if (httpClient == null)

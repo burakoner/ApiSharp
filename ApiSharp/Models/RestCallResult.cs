@@ -7,12 +7,27 @@
 /// <param name="method"></param>
 /// <param name="body"></param>
 /// <param name="headers"></param>
-public class RestCallRequest(string url, HttpMethod method, string body, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+public class RestCallRequest(string? url, HttpMethod? method, string? body, IEnumerable<KeyValuePair<string, IEnumerable<string>>>? headers)
 {
-    public string Url { get; set; } = url;
+    /// <summary>
+    /// Request URL
+    /// </summary>
+    public string Url { get; set; } = url ?? "";
+
+    /// <summary>
+    /// Method
+    /// </summary>
     public HttpMethod Method { get; set; } = method;
-    public string Body { get; set; } = body;
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers;
+
+    /// <summary>
+    /// Request Body
+    /// </summary>
+    public string Body { get; set; } = body ?? "";
+
+    /// <summary>
+    /// Request Headers
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers ?? [];
 }
 
 /// <summary>
@@ -21,11 +36,22 @@ public class RestCallRequest(string url, HttpMethod method, string body, IEnumer
 /// <param name="time"></param>
 /// <param name="statusCode"></param>
 /// <param name="headers"></param>
-public class RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>> headers)
+public class RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnumerable<KeyValuePair<string, IEnumerable<string>>>? headers)
 {
+    /// <summary>
+    /// Response Time
+    /// </summary>
     public TimeSpan? ResponseTime { get; set; } = time;
+
+    /// <summary>
+    /// Response Status Code
+    /// </summary>
     public HttpStatusCode? StatusCode { get; set; } = statusCode;
-    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers;
+
+    /// <summary>
+    /// Response Headers
+    /// </summary>
+    public IEnumerable<KeyValuePair<string, IEnumerable<string>>> Headers { get; set; } = headers ?? [];
 }
 
 /// <summary>
@@ -36,7 +62,14 @@ public class RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnume
 /// <param name="error"></param>
 public class RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : CallResult(error)
 {
+    /// <summary>
+    /// Request
+    /// </summary>
     public RestCallRequest Request { get; set; } = request;
+
+    /// <summary>
+    /// Response
+    /// </summary>
     public RestCallResponse Response { get; set; } = response;
 
     /// <summary>
@@ -59,9 +92,10 @@ public class RestCallResult(RestCallRequest request, RestCallResponse response, 
         HttpMethod requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
         Error error) : this(
-            new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders), 
-            new RestCallResponse(responseTime, responseCode, responseHeaders), 
-            error) { }
+            new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders),
+            new RestCallResponse(responseTime, responseCode, responseHeaders),
+            error)
+    { }
 
     /// <summary>
     /// Constructor
@@ -89,9 +123,16 @@ public class RestCallResult(RestCallRequest request, RestCallResponse response, 
 /// <param name="data"></param>
 /// <param name="raw"></param>
 /// <param name="error"></param>
-public class RestCallResult<T>(RestCallRequest request, RestCallResponse response, T data, string raw, Error error) : CallResult<T>(data, raw, error)
+public class RestCallResult<T>(RestCallRequest request, RestCallResponse response, T data, string raw, Error? error) : CallResult<T>(data, raw, error)
 {
+    /// <summary>
+    /// Request
+    /// </summary>
     public RestCallRequest Request { get; set; } = request;
+
+    /// <summary>
+    /// Response
+    /// </summary>
     public RestCallResponse Response { get; set; } = response;
 
     /// <summary>
@@ -109,22 +150,23 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
     /// <param name="error"></param>
     public RestCallResult(
         HttpStatusCode? responseCode,
-        IEnumerable<KeyValuePair<string, IEnumerable<string>>> responseHeaders,
+        IEnumerable<KeyValuePair<string, IEnumerable<string>>>? responseHeaders,
         TimeSpan? responseTime,
-        string responseRaw,
-        string requestUrl,
-        string requestBody,
-        HttpMethod requestMethod,
-        IEnumerable<KeyValuePair<string, IEnumerable<string>>> requestHeaders,
+        string? responseRaw,
+        string? requestUrl,
+        string? requestBody,
+        HttpMethod? requestMethod,
+        IEnumerable<KeyValuePair<string, IEnumerable<string>>>? requestHeaders,
         T data,
-        Error error) : this(
+        Error? error) : this(
             new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders),
-            new RestCallResponse(responseTime, responseCode, responseHeaders), 
-            data, responseRaw, error) { }
+            new RestCallResponse(responseTime, responseCode, responseHeaders),
+            data, responseRaw, error)
+    { }
 
     public RestCallResult(Error error) : this(null, null, default, null, error) { }
 
-    public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error error) : this(request, response, default, raw, error) { }
+    public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error? error) : this(request, response, default, raw, error) { }
 
     /// <summary>
     /// Copy the RestCallResult to a new data type
@@ -133,9 +175,9 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
     /// <param name="data">The data of the new type</param>
     /// <returns></returns>
     public new RestCallResult<K> As<K>(
-        #if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER
         [AllowNull] 
-        #endif
+#endif
         K data)
     {
         return new RestCallResult<K>(Request, Response, data, Raw, Error);

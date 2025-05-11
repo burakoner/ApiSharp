@@ -90,11 +90,11 @@ public abstract class RestApiClient : BaseClient
         HttpMethod method,
         CancellationToken cancellationToken,
         bool signed = false,
-        Dictionary<string, object> queryParameters = null,
-        Dictionary<string, object> bodyParameters = null,
-        Dictionary<string, string> headerParameters = null,
+        Dictionary<string, object>? queryParameters = null,
+        Dictionary<string, object>? bodyParameters = null,
+        Dictionary<string, string>? headerParameters = null,
         ArraySerialization? serialization = null,
-        JsonSerializer deserializer = null,
+        JsonSerializer? deserializer = null,
         bool ignoreRatelimit = false,
         int requestWeight = 1) // where T : class
     {
@@ -127,7 +127,7 @@ public abstract class RestApiClient : BaseClient
         Dictionary<string, object>? bodyParameters = null,
         Dictionary<string, string>? headerParameters = null,
         ArraySerialization? serialization = null,
-        JsonSerializer deserializer = null,
+        JsonSerializer? deserializer = null,
         bool ignoreRatelimit = false,
         int requestWeight = 1)
     {
@@ -219,16 +219,16 @@ public abstract class RestApiClient : BaseClient
                         // Validate if it is valid json. Sometimes other data will be returned, 502 error html pages for example
                         var parseResult = ValidateJson(data);
                         if (!parseResult.Success)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
+                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
 
                         // Let the library implementation see if it is an error response, and if so parse the error
                         var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
                         if (error != null)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
+                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
 
                         // Not an error, so continue deserializing
                         var deserializeResult = Deserialize<T>(parseResult.Data, deserializer, request.RequestId);
-                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), deserializeResult.Data, deserializeResult.Error);
+                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), deserializeResult.Data, deserializeResult.Error);
                     }
                     else
                     {
@@ -237,16 +237,16 @@ public abstract class RestApiClient : BaseClient
                             var parseResult = ValidateJson(data);
                             if (!parseResult.Success)
                                 // Not empty, and not json
-                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
+                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
 
                             var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
                             if (error != null)
                                 // Error response
-                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
+                                return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
                         }
 
                         // Empty success response; okay
-                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, default);
+                        return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, default);
                     }
                 }
                 else
@@ -257,7 +257,7 @@ public abstract class RestApiClient : BaseClient
                         responseStream.Close();
                         response.Close();
 
-                        return new RestCallResult<T>(statusCode, headers, sw.Elapsed, null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, null);
+                        return new RestCallResult<T>(statusCode, headers, sw.Elapsed, "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, null);
                     }
 
                     // Success status code, and we don't have to check for errors. Continue deserializing directly from the stream
@@ -265,7 +265,7 @@ public abstract class RestApiClient : BaseClient
                     responseStream.Close();
                     response.Close();
 
-                    return new RestCallResult<T>(statusCode, headers, sw.Elapsed, ClientOptions.RawResponse ? desResult.Raw : null, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), desResult.Data, desResult.Error);
+                    return new RestCallResult<T>(statusCode, headers, sw.Elapsed, ClientOptions.RawResponse ? desResult.Raw : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), desResult.Data, desResult.Error);
                 }
             }
             else
