@@ -36,7 +36,7 @@ public class RateLimiter : IRateLimiter
     /// <param name="period">The time period the limit is for</param>
     /// <param name="method">The HttpMethod the limit is for, null for all</param>
     /// <param name="ignoreOtherRateLimits">If set to true it ignores other rate limits</param>
-    public RateLimiter AddEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod method = null, bool ignoreOtherRateLimits = false)
+    public RateLimiter AddEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod? method = null, bool ignoreOtherRateLimits = false)
     {
         _limiters.Add(new EndpointRateLimiter([endpoint], limit, period, method, ignoreOtherRateLimits));
 
@@ -51,9 +51,9 @@ public class RateLimiter : IRateLimiter
     /// <param name="period">The time period the limit is for</param>
     /// <param name="method">The HttpMethod the limit is for, null for all</param>
     /// <param name="ignoreOtherRateLimits">If set to true it ignores other rate limits</param>
-    public RateLimiter AddEndpointLimit(IEnumerable<string> endpoints, int limit, TimeSpan period, HttpMethod method = null, bool ignoreOtherRateLimits = false)
+    public RateLimiter AddEndpointLimit(IEnumerable<string> endpoints, int limit, TimeSpan period, HttpMethod? method = null, bool ignoreOtherRateLimits = false)
     {
-        _limiters.Add(new EndpointRateLimiter(endpoints.ToArray(), limit, period, method, ignoreOtherRateLimits));
+        _limiters.Add(new EndpointRateLimiter([.. endpoints], limit, period, method, ignoreOtherRateLimits));
 
         return this;
     }
@@ -67,7 +67,7 @@ public class RateLimiter : IRateLimiter
     /// <param name="method">The HttpMethod the limit is for, null for all</param>
     /// <param name="countPerEndpoint">Whether all requests for this partial endpoint are bound to the same limit or each individual endpoint has its own limit</param>
     /// <param name="ignoreOtherRateLimits">If set to true it ignores other rate limits</param>
-    public RateLimiter AddPartialEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod method = null, bool countPerEndpoint = false, bool ignoreOtherRateLimits = false)
+    public RateLimiter AddPartialEndpointLimit(string endpoint, int limit, TimeSpan period, HttpMethod? method = null, bool countPerEndpoint = false, bool ignoreOtherRateLimits = false)
     {
         _limiters.Add(new PartialEndpointRateLimiter([endpoint], limit, period, countPerEndpoint, method, ignoreOtherRateLimits));
 

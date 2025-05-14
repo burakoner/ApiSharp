@@ -1,9 +1,27 @@
 ﻿namespace ApiSharp.Throttling.Enums;
 
-public enum RateLimiterType
+/// <summary>
+/// Rate Limiter Type
+/// </summary>
+public enum RateLimiterType:byte
 {
-    Total,
-    Endpoint,
-    PartialEndpoint,
-    ApiKey
+    /// <summary>
+    /// Total
+    /// </summary>
+    Total=1,
+
+    /// <summary>
+    /// Endpoint
+    /// </summary>
+    Endpoint = 2,
+
+    /// <summary>
+    /// Partial Endpoint
+    /// </summary>
+    PartialEndpoint = 3,
+
+    /// <summary>
+    /// Api Key
+    /// </summary>
+    ApiKey = 4
 }

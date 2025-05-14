@@ -35,7 +35,7 @@ public class MapConverter : JsonConverter
     }
 
     /// <inheritdoc />
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         var enumType = Nullable.GetUnderlyingType(objectType) ?? objectType;
         if (!_mapping.TryGetValue(enumType, out var mapping))
@@ -75,7 +75,7 @@ public class MapConverter : JsonConverter
         return result;
     }
 
-    private static object GetDefaultValue(Type objectType, Type enumType)
+    private static object? GetDefaultValue(Type objectType, Type enumType)
     {
         if (Nullable.GetUnderlyingType(objectType) != null)
             return null;
@@ -157,7 +157,7 @@ public class MapConverter : JsonConverter
     /// <returns></returns>
     public static string GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
 
-    private static string GetString(Type objectType, object mapValue)
+    private static string? GetString(Type objectType, object mapValue)
     {
         objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
 
@@ -199,7 +199,7 @@ public class MapConverter : JsonConverter
     /// <typeparam name="T"></typeparam>
     /// <param name="text"></param>
     /// <returns></returns>
-    public static T GetEnumByLabel<T>(string text) where T : Enum
+    public static T? GetEnumByLabel<T>(string text) where T : Enum
     {
         // Get Default Value
         var defaultValue = default(T);
@@ -227,7 +227,7 @@ public class MapConverter : JsonConverter
     /// <typeparam name="T"></typeparam>
     /// <param name="text"></param>
     /// <returns></returns>
-    public static T GetEnumByValue<T>(int text) where T : Enum
+    public static T? GetEnumByValue<T>(int text) where T : Enum
     {
         // Get Default Value
         var defaultValue = default(T);

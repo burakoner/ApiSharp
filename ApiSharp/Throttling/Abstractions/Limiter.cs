@@ -1,27 +1,47 @@
 ﻿namespace ApiSharp.Throttling.Abstractions;
 
-public abstract class Limiter
+/// <summary>
+/// Limiter Abstract Class
+/// </summary>
+/// <remarks>
+/// Constructor
+/// </remarks>
+/// <param name="type">Type</param>
+/// <param name="limit">Limit</param>
+/// <param name="period">Period</param>
+/// <param name="method">Method</param>
+/// <param name="ignoreOtherRateLimits">Ignore Other Rate Limits</param>
+public abstract class Limiter(RateLimiterType type, int limit, TimeSpan period, HttpMethod? method, bool ignoreOtherRateLimits)
 {
-    public HttpMethod Method { get; set; }
-    public RateLimiterType Type { get; set; }
+    /// <summary>
+    /// Method
+    /// </summary>
+    public HttpMethod? Method { get; set; } = method;
 
-    public int Limit { get; set; }
-    public TimeSpan Period { get; set; }
-    public SemaphoreSlim Semaphore { get; set; }
+    /// <summary>
+    /// Type of Rate Limiter
+    /// </summary>
+    public RateLimiterType Type { get; set; } = type;
 
-    public bool IgnoreOtherRateLimits { get; set; }
+    /// <summary>
+    /// Limit
+    /// </summary>
+    public int Limit { get; set; } = limit;
 
-    internal List<LimitEntry> Entries { get; set; } = new List<LimitEntry>();
+    /// <summary>
+    /// Period
+    /// </summary>
+    public TimeSpan Period { get; set; } = period;
 
-    public Limiter(RateLimiterType type, int limit, TimeSpan period, HttpMethod method, bool ignoreOtherRateLimits)
-    {
-        Type = type;
-        Method = method;
+    /// <summary>
+    /// SemaphoreSlim
+    /// </summary>
+    public SemaphoreSlim Semaphore { get; set; } = new SemaphoreSlim(1, 1);
 
-        Limit = limit;
-        Period = period;
-        Semaphore = new SemaphoreSlim(1, 1);
+    /// <summary>
+    /// Ignore Other Rate Limits
+    /// </summary>
+    public bool IgnoreOtherRateLimits { get; set; } = ignoreOtherRateLimits;
 
-        IgnoreOtherRateLimits = ignoreOtherRateLimits;
-    }
+    internal List<LimitEntry> Entries { get; set; } = [];
 }
