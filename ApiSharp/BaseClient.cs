@@ -5,7 +5,7 @@
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="options"></param>
-public abstract class BaseClient(ILogger logger, BaseClientOptions options) : IDisposable
+public abstract class BaseClient(ILogger? logger, BaseClientOptions options) : IDisposable
 {
     /// <summary>
     /// Logger

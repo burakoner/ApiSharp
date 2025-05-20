@@ -200,7 +200,60 @@ public static class Cryptology
     /// </summary>
     public enum HashType
     {
-        HMAC, HMACMD5, HMACSHA1, HMACSHA256, HMACSHA384, HMACSHA512, MD5, SHA1, SHA256, SHA384, SHA512
+        /// <summary>
+        /// HMAC (default)
+        /// </summary>
+        HMAC,
+
+        /// <summary>
+        /// HMAC with MD5
+        /// </summary>
+        HMACMD5,
+
+        /// <summary>
+        /// HMAC with SHA1
+        /// </summary>
+        HMACSHA1,
+
+        /// <summary>
+        /// HMAC with SHA256
+        /// </summary>
+        HMACSHA256,
+
+        /// <summary>
+        /// HMAC with SHA384
+        /// </summary>
+        HMACSHA384,
+
+        /// <summary>
+        /// HMAC with SHA512
+        /// </summary>
+        HMACSHA512,
+
+        /// <summary>
+        /// MD5
+        /// </summary>
+        MD5,
+
+        /// <summary>
+        /// SHA1
+        /// </summary>
+        SHA1,
+
+        /// <summary>
+        /// SHA256
+        /// </summary>
+        SHA256,
+
+        /// <summary>
+        /// SHA384
+        /// </summary>
+        SHA384,
+
+        /// <summary>
+        /// SHA512
+        /// </summary>
+        SHA512
     }
 
     private static byte[] GetHash(string source, HashType hash)
@@ -248,6 +301,11 @@ public static class Cryptology
         }
     }
 
+    /// <summary>
+    /// Gets the MD5 hash of a file
+    /// </summary>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
     public static string GetMD5HashFromFile(string fileName)
     {
         var file = new FileStream(fileName, FileMode.Open);
@@ -263,6 +321,12 @@ public static class Cryptology
         return sb.ToString();
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    /// <param name="secret"></param>
+    /// <returns></returns>
     public static string Hmac256(string message, string secret)
     {
         var encoding = Encoding.UTF8;
@@ -272,6 +336,12 @@ public static class Cryptology
         return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    /// <param name="secret"></param>
+    /// <returns></returns>
     public static string Hmac384(string message, string secret)
     {
         var encoding = Encoding.UTF8;
@@ -281,6 +351,12 @@ public static class Cryptology
         return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="message"></param>
+    /// <param name="secret"></param>
+    /// <returns></returns>
     public static string Hmac512(string message, string secret)
     {
         var encoding = Encoding.UTF8;
@@ -290,6 +366,12 @@ public static class Cryptology
         return BitConverter.ToString(hash).ToLower().Replace("-", string.Empty);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
     public static string Encode128(string data, string key)
     {
         try
@@ -312,6 +394,12 @@ public static class Cryptology
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
     public static string Decode128(string data, string key)
     {
         try
@@ -334,6 +422,12 @@ public static class Cryptology
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
     public static string Encode256(string data, string key)
     {
         try
@@ -356,6 +450,12 @@ public static class Cryptology
         }
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
     public static string Decode256(string data, string key)
     {
         try
@@ -378,6 +478,12 @@ public static class Cryptology
         }
     }
 
+    /// <summary>
+    /// Convert string to hex
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="encoding"></param>
+    /// <returns></returns>
     public static string ConvertStringToHex(string input, Encoding encoding)
     {
         var stringBytes = encoding.GetBytes(input);
@@ -389,6 +495,12 @@ public static class Cryptology
         return sbBytes.ToString();
     }
 
+    /// <summary>
+    /// Convert hex to string
+    /// </summary>
+    /// <param name="hexInput"></param>
+    /// <param name="encoding"></param>
+    /// <returns></returns>
     public static string ConvertHexToString(string hexInput, Encoding encoding)
     {
         var numberChars = hexInput.Length;
@@ -400,9 +512,25 @@ public static class Cryptology
         return encoding.GetString(bytes);
     }
 
+    /// <summary>
+    /// One way ticket hash type
+    /// </summary>
     public enum OneWayTicketHashType
     {
-        Hexadecimal, AlphaNumeric, AlphaNumericWithSpecialChars
+        /// <summary>
+        /// Hexadecimal (default)
+        /// </summary>
+        Hexadecimal,
+
+        /// <summary>
+        /// Alphanumeric
+        /// </summary>
+        AlphaNumeric,
+
+        /// <summary>
+        /// Alphanumeric with special characters
+        /// </summary>
+        AlphaNumericWithSpecialChars
     }
 
     private static readonly char[] _oneWayTicketHexadecimalChars = [
@@ -420,6 +548,13 @@ public static class Cryptology
         '!','#','$','&','(',')','[',']','{','}','+','-','*','/','%','|','^','~','?',':','.',',',':',';','=','~'
     ];
 
+    /// <summary>
+    /// One way ticket hash
+    /// </summary>
+    /// <param name="password"></param>
+    /// <param name="type"></param>
+    /// <param name="blockSize"></param>
+    /// <returns></returns>
     public static string OneWayTicket(string password, OneWayTicketHashType type = OneWayTicketHashType.AlphaNumeric, int blockSize = 32)
     {
         if (string.IsNullOrWhiteSpace(password)) return string.Empty;
@@ -427,6 +562,13 @@ public static class Cryptology
         return OneWayTicket(bytes, type, blockSize);
     }
 
+    /// <summary>
+    /// One way ticket hash
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="type"></param>
+    /// <param name="blockSize"></param>
+    /// <returns></returns>
     public static string OneWayTicket(byte[] data, OneWayTicketHashType type = OneWayTicketHashType.AlphaNumeric, int blockSize = 32)
     {
         if (data == null || data.Length == 0) return string.Empty;

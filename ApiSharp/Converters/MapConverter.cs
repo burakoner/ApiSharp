@@ -155,9 +155,9 @@ public class MapConverter : JsonConverter
     /// <typeparam name="T"></typeparam>
     /// <param name="mapValue"></param>
     /// <returns></returns>
-    public static string GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
+    public static string? GetString<T>(T mapValue) => GetString(typeof(T), mapValue);
 
-    private static string? GetString(Type objectType, object mapValue)
+    private static string? GetString(Type objectType, object? mapValue)
     {
         objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
 
@@ -174,7 +174,7 @@ public class MapConverter : JsonConverter
     /// <param name="mapValue"></param>
     /// <returns></returns>
     public static List<string> GetStrings<T>(T mapValue) => GetStrings(typeof(T), mapValue);
-    private static List<string> GetStrings(Type objectType, object mapValue)
+    private static List<string> GetStrings(Type objectType, object? mapValue)
     {
         objectType = Nullable.GetUnderlyingType(objectType) ?? objectType;
 
@@ -235,7 +235,8 @@ public class MapConverter : JsonConverter
         // Action
         foreach (T item in Enum.GetValues(typeof(T)))
         {
-            Enum test = Enum.Parse(typeof(T), item.ToString()) as Enum;
+            // Ensure the result of Enum.Parse is not null by using a direct cast
+            Enum test = (Enum)Enum.Parse(typeof(T), item.ToString()!);
             int intValue = Convert.ToInt32(test);
 
             if (text == intValue)

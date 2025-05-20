@@ -22,7 +22,7 @@ public abstract class BaseConverter<T>(bool useQuotes) : JsonConverter where T :
     /// <param name="writer"></param>
     /// <param name="value"></param>
     /// <param name="serializer"></param>
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         var stringValue = value == null ? null : GetValue((T)value);
         if (_quotes) writer.WriteValue(stringValue);
@@ -37,7 +37,7 @@ public abstract class BaseConverter<T>(bool useQuotes) : JsonConverter where T :
     /// <param name="existingValue"></param>
     /// <param name="serializer"></param>
     /// <returns></returns>
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         if (reader.Value == null)
             return null;

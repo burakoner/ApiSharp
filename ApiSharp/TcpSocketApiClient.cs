@@ -10,17 +10,65 @@ public abstract class TcpSocketApiClient : BaseClient
     /// </summary>
     public TcpSocketApiClientOptions ClientOptions { get { return (TcpSocketApiClientOptions)base._options; } }
 
-    // Public Properties
+    /// <summary>
+    /// Bytes Sent
+    /// </summary>
     public long BytesSent { get; private set; }
+
+    /// <summary>
+    /// Bytes Received
+    /// </summary>
     public long BytesReceived { get; private set; }
+
+    /// <summary>
+    /// Packets Sent
+    /// </summary>
     public long PacketsSent { get; private set; }
+
+    /// <summary>
+    /// Packets Received
+    /// </summary>
     public long PacketsReceived { get; private set; }
 
-    // Protected Abstract Methods
+    /// <summary>
+    /// Called when a connection is successfully established.
+    /// </summary>
+    /// <remarks>This method is invoked to handle logic that should occur immediately after a connection is
+    /// established. Derived classes must implement this method to define specific behavior upon connection.</remarks>
     protected abstract void OnConnected();
+
+    /// <summary>
+    /// Executes custom logic when a disconnection occurs.
+    /// </summary>
+    /// <remarks>This method is called when the connection is terminated. Derived classes must override this
+    /// method to define specific behavior that should occur upon disconnection. The implementation should handle any
+    /// necessary cleanup or state updates related to the disconnection.</remarks>
     protected abstract void OnDisconnected();
+
+    /// <summary>
+    /// Invoked when an error occurs during the execution of the derived class.
+    /// </summary>
+    /// <remarks>This method must be implemented by derived classes to define custom error-handling behavior.
+    /// It is called automatically when an error condition is detected.</remarks>
     protected abstract void OnError();
+
+    /// <summary>
+    /// Handles the processing of a received packet based on its type and content.
+    /// </summary>
+    /// <remarks>Derived classes must implement this method to define the specific behavior for handling
+    /// packets of various types. The implementation should account for the expected format and meaning of the <paramref
+    /// name="dataBody"/> based on the <paramref name="dataType"/>.</remarks>
+    /// <param name="dataType">The type of the packet, represented as a byte. This value determines how the packet should be processed.</param>
+    /// <param name="dataBody">The content of the packet, represented as a byte array. This array contains the data associated with the packet.</param>
     protected abstract void OnPacketReceived(byte dataType, byte[] dataBody);
+
+    /// <summary>
+    /// Handles the timer's elapsed event to perform a periodic operation.
+    /// </summary>
+    /// <remarks>This method is abstract and must be implemented by a derived class to define the specific
+    /// behavior that should occur when the timer elapses.</remarks>
+    /// <param name="source">The source of the timer event, typically the timer instance that triggered the event.</param>
+    /// <param name="e">The event data containing information about the elapsed event.</param>
     protected abstract void PingTimer(object source, System.Timers.ElapsedEventArgs e);
 
     // Private Properties
@@ -29,9 +77,16 @@ public abstract class TcpSocketApiClient : BaseClient
     private readonly BlockingCollection<byte[]> _packetBuffer = [];
     private readonly TcpSocketClient _socketClient;
 
-    // Cancellation Token
-    protected CancellationTokenSource CancellationTokenSource { get; set; }
-    protected CancellationToken CancellationToken { get; set; }
+    /// <summary>
+    /// Gets or sets the <see cref="CancellationTokenSource"/> used to signal cancellation for ongoing operations.
+    /// </summary>
+    protected CancellationTokenSource CancellationTokenSource { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the <see cref="System.Threading.CancellationToken"/> used to propagate notification  that
+    /// operations should be canceled.
+    /// </summary>
+    protected CancellationToken CancellationToken { get; set; } = CancellationToken.None;
 
     /// <summary>
     /// Constructor
@@ -45,7 +100,7 @@ public abstract class TcpSocketApiClient : BaseClient
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="options"></param>
-    protected TcpSocketApiClient(ILogger logger, TcpSocketApiClientOptions options) : base(logger, options ?? new())
+    protected TcpSocketApiClient(ILogger? logger, TcpSocketApiClientOptions options) : base(logger, options ?? new())
     {
         // Tcp Client
         _socketClient = new TcpSocketClient(ClientOptions.ServerHost, ClientOptions.ServerPort);

@@ -140,7 +140,7 @@ public class ArrayConverter : JsonConverter
 
             while (arrayProp.Index != last + 1)
             {
-                writer.WriteValue((string)null);
+                writer.WriteValue((string?)null);
                 last += 1;
             }
 

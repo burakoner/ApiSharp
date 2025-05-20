@@ -1,13 +1,29 @@
 ﻿namespace ApiSharp.Converters;
 
+/// <summary>
+/// DateTime converter for converting between DateTime and long values. The long value is the number of milliseconds since 1970-01-01T00:00:00Z. The DateTime value is in UTC.
+/// </summary>
 public class DateTimeConverter : JsonConverter
 {
+    /// <summary>
+    /// Can convert DateTime and DateTime? types. The converter will convert the DateTime to a long value in milliseconds since 1970-01-01T00:00:00Z.
+    /// </summary>
+    /// <param name="objectType"></param>
+    /// <returns></returns>
     public override bool CanConvert(Type objectType)
     {
         return objectType == typeof(DateTime) || objectType == typeof(DateTime?);
     }
 
-    public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+    /// <summary>
+    /// Reads the json value and converts it to a DateTime or DateTime? value. The converter will convert the long value to a DateTime value in UTC. The converter will also convert the string value to a DateTime value in UTC.
+    /// </summary>
+    /// <param name="reader"></param>
+    /// <param name="objectType"></param>
+    /// <param name="existingValue"></param>
+    /// <param name="serializer"></param>
+    /// <returns></returns>
+    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         if (reader.Value == null)
             return null;
@@ -113,7 +129,13 @@ public class DateTimeConverter : JsonConverter
         }
     }
 
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
+    /// <summary>
+    /// Writes the json value. The converter will convert the DateTime value to a long value in milliseconds since 1970-01-01T00:00:00Z. The converter will also convert the DateTime? value to a long value in milliseconds since 1970-01-01T00:00:00Z.
+    /// </summary>
+    /// <param name="writer"></param>
+    /// <param name="value"></param>
+    /// <param name="serializer"></param>
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
     {
         var datetimeValue = (DateTime?)value;
         if (datetimeValue == null)
