@@ -1,22 +1,49 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// RestApiClientOptions
+/// </summary>
 public class RestApiClientOptions : BaseClientOptions
 {
     /// <summary>
     /// Http client to use. If a HttpClient is provided in this property the RequestTimeout and Proxy options provided in these options will be ignored in requests and should be set on the provided HttpClient instance
     /// </summary>
-    public HttpClient HttpClient { get; set; }
+    public HttpClient? HttpClient { get; set; }
+
+    /// <summary>
+    /// Http Options
+    /// </summary>
     public HttpOptions HttpOptions { get; set; }
 
-    // Rate Limiters
+    /// <summary>
+    /// Ignore Rate Limiters
+    /// </summary>
     public bool IgnoreRateLimiters { get; set; }
-    public List<IRateLimiter> RateLimiters { get; set; }
+
+    /// <summary>
+    /// Rate Limiters
+    /// </summary>
+    public List<IRateLimiter> RateLimiters { get; set; } = [];
+
+    /// <summary>
+    /// Rate Limiting Behavior
+    /// </summary>
     public RateLimitingBehavior RateLimitingBehavior { get; set; }
 
-    // Request Body
+    /// <summary>
+    /// Gets or sets the collection of HTTP methods for which the request body should be set to empty content.
+    /// </summary>
     public IEnumerable<HttpMethod> SetRequestBodyEmptyContentMethods { get; set; } = [];
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     public RestApiClientOptions() : this(string.Empty) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="baseAddress"></param>
     public RestApiClientOptions(string baseAddress)
     {
         // Base Address

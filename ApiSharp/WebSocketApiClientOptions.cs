@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// WebSocket API Client Options
+/// </summary>
 public class WebSocketApiClientOptions : BaseClientOptions
 {
     /// <summary>
@@ -45,7 +48,15 @@ public class WebSocketApiClientOptions : BaseClientOptions
     /// </summary>
     public TimeSpan DelayAfterConnect { get; set; } = TimeSpan.Zero;
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     public WebSocketApiClientOptions() : this(string.Empty) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="baseAddress"></param>
     public WebSocketApiClientOptions(string baseAddress)
     {
         // Base Address

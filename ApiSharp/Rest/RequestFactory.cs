@@ -13,7 +13,7 @@ public class RequestFactory : IRequestFactory
     /// <param name="options"></param>
     /// <param name="proxy"></param>
     /// <param name="client"></param>
-    public void Configure(HttpOptions options, ProxyCredentials proxy, HttpClient? client = null)
+    public void Configure(HttpOptions options, ProxyCredentials? proxy, HttpClient? client = null)
     {
         if (client == null)
         {

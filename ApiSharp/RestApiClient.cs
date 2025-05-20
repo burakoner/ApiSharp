@@ -13,7 +13,7 @@ public abstract class RestApiClient : BaseClient
     /// <summary>
     /// Request headers to be sent with each request
     /// </summary>
-    protected Dictionary<string, string> StandardRequestHeaders { get; set; }
+    protected Dictionary<string, string>? StandardRequestHeaders { get; set; }
 
     /// <summary>
     /// Total amount of requests made with this API client
@@ -52,8 +52,9 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     /// <param name="logger"></param>
     /// <param name="options"></param>
-    protected RestApiClient(ILogger logger, RestApiClientOptions options) : base(logger, options ?? new())
+    protected RestApiClient(ILogger? logger, RestApiClientOptions options) : base(logger, options ?? new())
     {
+        options ??= new RestApiClientOptions();
         RequestFactory.Configure(options.HttpOptions, options.Proxy, options.HttpClient);
     }
 
@@ -190,7 +191,7 @@ public abstract class RestApiClient : BaseClient
     /// <param name="expectedEmptyResponse">If an empty response is expected</param>
     protected virtual async Task<RestCallResult<T>> GetResponseAsync<T>(
         IRequest request,
-        JsonSerializer deserializer,
+        JsonSerializer? deserializer,
         CancellationToken cancellationToken,
         bool expectedEmptyResponse)
     {

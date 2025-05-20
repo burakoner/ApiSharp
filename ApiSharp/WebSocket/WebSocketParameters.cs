@@ -28,7 +28,7 @@ public class WebSocketParameters
     /// <summary>
     /// Proxy for the connection
     /// </summary>
-    public ProxyCredentials Proxy { get; set; }
+    public ProxyCredentials? Proxy { get; set; }
 
     /// <summary>
     /// Whether the socket should automatically reconnect when connection is lost
@@ -53,17 +53,17 @@ public class WebSocketParameters
     /// <summary>
     /// Origin header value to send in the connection handshake
     /// </summary>
-    public string Origin { get; set; }
+    public string Origin { get; set; } = "";
 
     /// <summary>
     /// Delegate used for processing byte data received from socket connections before it is processed by handlers
     /// </summary>
-    public Func<byte[], string> DataInterpreterBytes { get; set; }
+    public Func<byte[], string>? DataInterpreterBytes { get; set; }
 
     /// <summary>
     /// Delegate used for processing string data received from socket connections before it is processed by handlers
     /// </summary>
-    public Func<string, string> DataInterpreterString { get; set; }
+    public Func<string, string>? DataInterpreterString { get; set; }
 
     /// <summary>
     /// Encoding for sending/receiving data

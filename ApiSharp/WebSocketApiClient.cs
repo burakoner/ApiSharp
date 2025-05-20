@@ -5,13 +5,16 @@
 /// </summary>
 /// <param name="logger"></param>
 /// <param name="options"></param>
-public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptions options) : BaseClient(logger, options ?? new())
+public abstract class WebSocketApiClient(ILogger? logger, WebSocketApiClientOptions? options) : BaseClient(logger, options ?? new())
 {
     /// <summary>
     /// Client Options
     /// </summary>
     public WebSocketApiClientOptions ClientOptions { get { return (WebSocketApiClientOptions)base._options; } }
 
+    /// <summary>
+    /// Ignore handling list.
+    /// </summary>
     protected internal List<string> IgnoreHandlingList = [];
 
     /// <summary>
@@ -37,12 +40,12 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <summary>
     /// Delegate used for processing byte data received from socket connections before it is processed by handlers
     /// </summary>
-    protected Func<byte[], string> DataInterpreterBytes;
+    protected Func<byte[], string>? DataInterpreterBytes;
 
     /// <summary>
     /// Delegate used for processing string data received from socket connections before it is processed by handlers
     /// </summary>
-    protected Func<string, string> DataInterpreterString;
+    protected Func<string, string>? DataInterpreterString;
 
     /// <summary>
     /// Handlers for data from the socket which doesn't need to be forwarded to the caller. Ping or welcome messages for example.
@@ -52,12 +55,12 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <summary>
     /// The task that is sending periodic data on the websocket. Can be used for sending Ping messages every x seconds or similair. Not necesarry.
     /// </summary>
-    protected Task PeriodicTask;
+    protected Task PeriodicTask=Task.CompletedTask;
 
     /// <summary>
     /// Wait event for the periodicTask
     /// </summary>
-    protected AsyncResetEvent PeriodicEvent;
+    protected AsyncResetEvent PeriodicEvent = new();
 
     /// <summary>
     /// If true; data which is a response to a query will also be distributed to subscriptions
@@ -75,6 +78,9 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// </summary>
     protected internal int? RateLimitPerConnectionPerSecond { get; set; }
 
+    /// <summary>
+    /// Incoming Kbps for all connections combined
+    /// </summary>
     public double IncomingKbps
     {
         get
@@ -85,7 +91,15 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
             return WebSocketConnections.Sum(s => s.Value.IncomingKbps);
         }
     }
+
+    /// <summary>
+    /// Current connections to the server
+    /// </summary>
     public int CurrentConnections => WebSocketConnections.Count;
+
+    /// <summary>
+    /// Current subscriptions on all connections combined
+    /// </summary>
     public int CurrentSubscriptions
     {
         get
@@ -97,6 +111,9 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
         }
     }
 
+    /// <summary>
+    /// Constructor for the WebSocketApiClient. Sets the default options and creates a new semaphore for socket connections
+    /// </summary>
     protected WebSocketApiClient() : this(null, new())
     {
     }
@@ -106,7 +123,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// </summary>
     /// <param name="byteHandler">Handler for byte data</param>
     /// <param name="stringHandler">Handler for string data</param>
-    protected void SetDataInterpreter(Func<byte[], string> byteHandler, Func<string, string> stringHandler)
+    protected void SetDataInterpreter(Func<byte[], string>? byteHandler, Func<string, string>? stringHandler)
     {
         DataInterpreterBytes = byteHandler;
         DataInterpreterString = stringHandler;
@@ -144,7 +161,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
             return new CallResult<WebSocketUpdateSubscription>(new InvalidOperationError("Client disposed, can't subscribe"));
 
         WebSocketConnection connection;
-        WebSocketSubscription subscription;
+        WebSocketSubscription? subscription;
         var released = false;
         // Wait for a semaphore here, so we only connect 1 socket at a time.
         // This is necessary for being able to see if connections can be combined
@@ -239,7 +256,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <returns></returns>
     public virtual async Task<CallResult<bool>> SubscribeAndWaitAsync(WebSocketConnection connection, object request, WebSocketSubscription subscription)
     {
-        CallResult<object> callResult = null;
+        CallResult<object>? callResult = null;
         await connection.SendAndWaitAsync(request, ClientOptions.ResponseTimeout, data => HandleSubscriptionResponse(connection, subscription, request, data, out callResult)).ConfigureAwait(false);
 
         if (callResult?.Success == true)
@@ -385,7 +402,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <param name="data">The message received from the server</param>
     /// <param name="callResult">The interpretation (null if message wasn't a response to the request)</param>
     /// <returns>True if the message was a response to the query</returns>
-    protected internal abstract bool HandleQueryResponse<T>(WebSocketConnection connection, object request, JToken data, out CallResult<T> callResult);
+    protected internal abstract bool HandleQueryResponse<T>(WebSocketConnection connection, object request, JToken data, out CallResult<T>? callResult);
     /// <summary>
     /// The socketConnection received data (the data JToken parameter). The implementation of this method should check if the received data is a response to the subscription request that was send (the request parameter).
     /// For example; A subscribe request message is send with an Id parameter with value 10. The socket receives data and calls this method to see if the data it received is an
@@ -399,7 +416,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <param name="data">The message received from the server</param>
     /// <param name="callResult">The interpretation (null if message wasn't a response to the request)</param>
     /// <returns>True if the message was a response to the subscription request</returns>
-    protected internal abstract bool HandleSubscriptionResponse(WebSocketConnection connection, WebSocketSubscription subscription, object request, JToken data, out CallResult<object> callResult);
+    protected internal abstract bool HandleSubscriptionResponse(WebSocketConnection connection, WebSocketSubscription subscription, object request, JToken data, out CallResult<object>? callResult);
     /// <summary>
     /// Needs to check if a received message matches a handler by request. After subscribing data message will come in. 
     /// These data messages need to be matched to a specific connection to pass the correct data to the correct handler. 
@@ -456,7 +473,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <param name="dataHandler">The handler of the data received</param>
     /// <param name="authenticated">Whether the subscription needs authentication</param>
     /// <returns></returns>
-    protected virtual WebSocketSubscription AddSubscription<T>(object request, string identifier, bool userSubscription, WebSocketConnection connection, Action<WebSocketDataEvent<T>> dataHandler, bool authenticated)
+    protected virtual WebSocketSubscription? AddSubscription<T>(object request, string identifier, bool userSubscription, WebSocketConnection connection, Action<WebSocketDataEvent<T>> dataHandler, bool authenticated)
     {
         void InternalHandler(WebSocketMessageEvent messageEvent)
         {
@@ -495,8 +512,7 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     {
         GenericHandlers.Add(identifier, action);
         var subscription = WebSocketSubscription.CreateForIdentifier(NextId(), identifier, false, false, action);
-        foreach (var connection in WebSocketConnections.Values)
-            connection.AddSubscription(subscription);
+        foreach (var connection in WebSocketConnections.Values)            connection.AddSubscription(subscription);
     }
 
     /// <summary>
@@ -687,8 +703,8 @@ public abstract class WebSocketApiClient(ILogger logger, WebSocketApiClientOptio
     /// <returns></returns>
     public virtual async Task<bool> UnsubscribeAsync(int subscriptionId)
     {
-        WebSocketSubscription subscription = null;
-        WebSocketConnection connection = null;
+        WebSocketSubscription? subscription = null;
+        WebSocketConnection? connection = null;
         foreach (var conn in WebSocketConnections.Values.ToList())
         {
             subscription = conn.GetSubscription(subscriptionId);

@@ -1,22 +1,49 @@
 ﻿namespace ApiSharp;
 
+/// <summary>
+/// TCP Socket API Client Options
+/// </summary>
 public class TcpSocketApiClientOptions : BaseClientOptions
 {
-    // Header
-    public byte[] HeaderBytes = new byte[] { 0xF1, 0xF2 };
+    /// <summary>
+    /// Header Bytes
+    /// </summary>
+    public byte[] HeaderBytes = [0xF1, 0xF2];
 
-    // Security
+    /// <summary>
+    /// Socket Security
+    /// </summary>
     public TcpSocketSecurity SocketSecurity { get; set; }
 
-    // TCP Server
-    public string ServerHost { get; set; }
+    /// <summary>
+    /// Server Host
+    /// </summary>
+    public string ServerHost { get; set; } = "";
+
+    /// <summary>
+    /// Server Port
+    /// </summary>
     public int ServerPort { get; set; }
 
-    // Ping-Pong
+    /// <summary>
+    /// Heartbeat Enabled
+    /// </summary>
     public bool HeartBeatEnabled { get; set; }
+
+    /// <summary>
+    /// Heartbeat Interval (in milliseconds)
+    /// </summary>
     public int HeartBeatInterval { get; set; }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
     public TcpSocketApiClientOptions() : this(string.Empty) { }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="baseAddress"></param>
     public TcpSocketApiClientOptions(string baseAddress)
     {
         // Base Address

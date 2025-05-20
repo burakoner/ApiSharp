@@ -100,7 +100,7 @@ public class RateLimiter : IRateLimiter
     /// <param name="requestWeight"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    public async Task<CallResult<int>> LimitRequestAsync(ILogger logger, string endpoint, HttpMethod method, bool signed, SensitiveString apikey, RateLimitingBehavior limitBehaviour, int requestWeight, CancellationToken ct)
+    public async Task<CallResult<int>> LimitRequestAsync(ILogger logger, string endpoint, HttpMethod method, bool signed, SensitiveString? apikey, RateLimitingBehavior limitBehaviour, int requestWeight, CancellationToken ct)
     {
         var totalWaitTime = 0;
 

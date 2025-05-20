@@ -14,12 +14,12 @@ public class WebSocketDataEvent<T>
     /// <summary>
     /// The topic of the update, what symbol/asset etc..
     /// </summary>
-    public string Topic { get; set; }
+    public string? Topic { get; set; }
 
     /// <summary>
     /// The original data that was received, only available when OutputRaw is set to true in the client options
     /// </summary>
-    public string Raw { get; set; }
+    public string? Raw { get; set; }
 
     /// <summary>
     /// The received data deserialized into an object
@@ -37,14 +37,14 @@ public class WebSocketDataEvent<T>
         Timestamp = timestamp;
     }
 
-    internal WebSocketDataEvent(T data, string topic, DateTime timestamp)
+    internal WebSocketDataEvent(T data, string? topic, DateTime timestamp)
     {
         Data = data;
         Topic = topic;
         Timestamp = timestamp;
     }
 
-    internal WebSocketDataEvent(T data, string topic, string raw, DateTime timestamp)
+    internal WebSocketDataEvent(T data, string? topic, string? raw, DateTime timestamp)
     {
         Raw = raw;
         Data = data;

@@ -164,8 +164,19 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
             data, responseRaw, error)
     { }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="error"></param>
     public RestCallResult(Error error) : this(null, null, default, null, error) { }
 
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="response"></param>
+    /// <param name="raw"></param>
+    /// <param name="error"></param>
     public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error? error) : this(request, response, default, raw, error) { }
 
     /// <summary>
@@ -187,7 +198,7 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
     /// Copy as a dataless result
     /// </summary>
     /// <returns></returns>
-    public RestCallResult AsDataless()
+    public new RestCallResult AsDataless()
     {
         return new RestCallResult(Request, Response, Error);
     }
@@ -196,7 +207,7 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
     /// Copy as a dataless result
     /// </summary>
     /// <returns></returns>
-    public RestCallResult AsDatalessError(Error error)
+    public new RestCallResult AsDatalessError(Error error)
     {
         return new RestCallResult(Request, Response, error);
     }
