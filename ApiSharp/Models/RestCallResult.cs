@@ -17,7 +17,7 @@ public class RestCallRequest(string? url, HttpMethod? method, string? body, IEnu
     /// <summary>
     /// Method
     /// </summary>
-    public HttpMethod Method { get; set; } = method;
+    public HttpMethod? Method { get; set; } = method;
 
     /// <summary>
     /// Request Body
@@ -60,17 +60,17 @@ public class RestCallResponse(TimeSpan? time, HttpStatusCode? statusCode, IEnume
 /// <param name="request"></param>
 /// <param name="response"></param>
 /// <param name="error"></param>
-public class RestCallResult(RestCallRequest request, RestCallResponse response, Error error) : CallResult(error)
+public class RestCallResult(RestCallRequest? request, RestCallResponse? response, Error? error) : CallResult(error)
 {
     /// <summary>
     /// Request
     /// </summary>
-    public RestCallRequest Request { get; set; } = request;
+    public RestCallRequest? Request { get; set; } = request;
 
     /// <summary>
     /// Response
     /// </summary>
-    public RestCallResponse Response { get; set; } = response;
+    public RestCallResponse? Response { get; set; } = response;
 
     /// <summary>
     /// Constructor
@@ -123,17 +123,17 @@ public class RestCallResult(RestCallRequest request, RestCallResponse response, 
 /// <param name="data"></param>
 /// <param name="raw"></param>
 /// <param name="error"></param>
-public class RestCallResult<T>(RestCallRequest request, RestCallResponse response, T data, string raw, Error? error) : CallResult<T>(data, raw, error)
+public class RestCallResult<T>(RestCallRequest? request, RestCallResponse? response, T? data, string? raw, Error? error) : CallResult<T>(data, raw, error)
 {
     /// <summary>
     /// Request
     /// </summary>
-    public RestCallRequest Request { get; set; } = request;
+    public RestCallRequest? Request { get; set; } = request;
 
     /// <summary>
     /// Response
     /// </summary>
-    public RestCallResponse Response { get; set; } = response;
+    public RestCallResponse? Response { get; set; } = response;
 
     /// <summary>
     /// Constructor
@@ -157,7 +157,7 @@ public class RestCallResult<T>(RestCallRequest request, RestCallResponse respons
         string? requestBody,
         HttpMethod? requestMethod,
         IEnumerable<KeyValuePair<string, IEnumerable<string>>>? requestHeaders,
-        T data,
+        T? data,
         Error? error) : this(
             new RestCallRequest(requestUrl, requestMethod, requestBody, requestHeaders),
             new RestCallResponse(responseTime, responseCode, responseHeaders),

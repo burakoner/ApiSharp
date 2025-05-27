@@ -145,7 +145,7 @@ public abstract class RestApiClient : BaseClient
                 if (!syncTimeResult)
                 {
                     _logger.Log(LogLevel.Debug, $"[{requestId}] Failed to sync time, aborting request: " + syncTimeResult.Error);
-                    return syncTimeResult.As<IRequest>(default);
+                    return syncTimeResult.As<IRequest>(default!);
                 }
             }
         }
@@ -317,7 +317,7 @@ public abstract class RestApiClient : BaseClient
     /// <returns>Null if not an error, Error otherwise</returns>
     protected virtual Task<ServerError> TryParseErrorAsync(JToken data)
     {
-        return Task.FromResult<ServerError>(null);
+        return Task.FromResult<ServerError>(null!);
     }
 
     /// <summary>
@@ -483,6 +483,10 @@ public abstract class RestApiClient : BaseClient
     protected virtual Task<RestCallResult<DateTime>> GetServerTimestampAsync()
         => Task.FromResult(new RestCallResult<DateTime>(null, null, DateTime.UtcNow, null, null));
 
+    /// <summary>
+    /// Syncs the time between the client and server to prevent authentication issues due to time differences
+    /// </summary>
+    /// <returns></returns>
     protected internal virtual async Task<RestCallResult<bool>> SyncTimeAsync()
     {
         var timeSyncParams = GetTimeSyncInfo();
@@ -515,7 +519,7 @@ public abstract class RestApiClient : BaseClient
             }
 
             // Calculate time offset between local and server
-            var offset = result.Data - (localTime.AddMilliseconds(result.Response.ResponseTime!.Value.TotalMilliseconds / 2));
+            var offset = result.Data - (localTime.AddMilliseconds(result.Response!.ResponseTime!.Value.TotalMilliseconds / 2));
             timeSyncParams.UpdateTimeOffset(offset);
             timeSyncParams.TimeSyncState.Semaphore.Release();
         }
