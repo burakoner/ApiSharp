@@ -97,7 +97,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddOptionalMilliseconds(string key, DateTime? value)
     {
         if (value != null)
-            Add(key, value.ConvertToMilliseconds());
+            Add(key, value.ConvertToMilliseconds()!);
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddOptionalMillisecondsString(string key, DateTime? value)
     {
         if (value != null)
-            Add(key, value.ConvertToMilliseconds().Value.ToString(CultureInfo.InvariantCulture));
+            Add(key, value.ConvertToMilliseconds()!.Value.ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -139,7 +139,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddOptionalSeconds(string key, DateTime? value)
     {
         if (value != null)
-            Add(key, value.ConvertToSeconds());
+            Add(key, value.ConvertToSeconds()!);
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddOptionalEnum<T>(string key, T? value)
     {
         if (value != null)
-            Add(key, MapConverter.GetString(value));
+            Add(key, MapConverter.GetString(value)!);
     }
 
     /// <summary>

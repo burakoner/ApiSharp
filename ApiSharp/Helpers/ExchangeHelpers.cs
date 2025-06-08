@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Helpers;
 
+/// <summary>
+/// Exchange Helpers
+/// </summary>
 public static class ExchangeHelpers
 {
     /// <summary>

@@ -60,8 +60,8 @@ public class WebSocketUpdateSubscription
     /// </summary>
     public event Action<Exception> Exception
     {
-        add => subscription.Exception += value;
-        remove => subscription.Exception -= value;
+        add => subscription.OnException += value;
+        remove => subscription.OnException -= value;
     }
 
     /// <summary>

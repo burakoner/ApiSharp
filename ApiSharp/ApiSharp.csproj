@@ -9,10 +9,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>3.7.0</Version>
-		<FileVersion>3.7.0</FileVersion>
-		<PackageVersion>3.7.0</PackageVersion>
-		<AssemblyVersion>3.7.0</AssemblyVersion>
+		<Version>3.8.0</Version>
+		<FileVersion>3.8.0</FileVersion>
+		<PackageVersion>3.8.0</PackageVersion>
+		<AssemblyVersion>3.8.0</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
@@ -20,6 +20,7 @@
 		<NeutralLanguage>en</NeutralLanguage>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageReleaseNotes>
+			Version 3.8.0 - 08 Jun 2025
 			Version 3.7.0 - 20 May 2025
 			Version 3.6.5 - 20 May 2025
 			Version 3.6.0 - 14 May 2025
@@ -65,32 +66,17 @@
 		<PackageProjectUrl>https://github.com/burakoner/ApiSharp</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/burakoner/ApiSharp</RepositoryUrl>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
 		<DebugType>embedded</DebugType>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
-		<DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-		<DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
-		<DebugType>embedded</DebugType>
-	</PropertyGroup>
-
-	<ItemGroup>
-		<None Include="ApiSharp.png" Pack="true" PackagePath="" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="ApiSharp.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>

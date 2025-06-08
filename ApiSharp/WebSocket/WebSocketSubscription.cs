@@ -13,7 +13,7 @@ public class WebSocketSubscription
     /// <summary>
     /// Exception event
     /// </summary>
-    public event Action<Exception> Exception;
+    public event Action<Exception>? OnException;
 
     /// <summary>
     /// Message handlers for this subscription. Should return true if the message is handled and should not be distributed to the other handlers
@@ -23,18 +23,18 @@ public class WebSocketSubscription
     /// <summary>
     /// The request object send when subscribing on the server. Either this or the `Identifier` property should be set
     /// </summary>
-    public object Request { get; set; }
+    public object? Request { get; set; }
 
     /// <summary>
     /// The subscription identifier, used instead of a `Request` object to identify the subscription
     /// </summary>
-    public string Identifier { get; set; }
+    public string? Identifier { get; set; }
 
     /// <summary>
     /// Whether this is a user subscription or an internal listener
     /// </summary>
     public bool UserSubscription { get; set; }
-    
+
     /// <summary>
     /// If the subscription has been confirmed to be subscribed by the server
     /// </summary>
@@ -56,7 +56,7 @@ public class WebSocketSubscription
     /// </summary>
     public CancellationTokenRegistration? CancellationTokenRegistration { get; set; }
 
-    private WebSocketSubscription(int id, object request, string identifier, bool userSubscription, bool authenticated, Action<WebSocketMessageEvent> dataHandler)
+    private WebSocketSubscription(int id, object? request, string? identifier, bool userSubscription, bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
         Id = id;
         UserSubscription = userSubscription;
@@ -75,8 +75,7 @@ public class WebSocketSubscription
     /// <param name="authenticated"></param>
     /// <param name="dataHandler"></param>
     /// <returns></returns>
-    public static WebSocketSubscription CreateForRequest(int id, object request, bool userSubscription,
-        bool authenticated, Action<WebSocketMessageEvent> dataHandler)
+    public static WebSocketSubscription CreateForRequest(int id, object request, bool userSubscription, bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
         return new WebSocketSubscription(id, request, null, userSubscription, authenticated, dataHandler);
     }
@@ -90,8 +89,7 @@ public class WebSocketSubscription
     /// <param name="authenticated"></param>
     /// <param name="dataHandler"></param>
     /// <returns></returns>
-    public static WebSocketSubscription CreateForIdentifier(int id, string identifier, bool userSubscription,
-        bool authenticated, Action<WebSocketMessageEvent> dataHandler)
+    public static WebSocketSubscription CreateForIdentifier(int id, string identifier, bool userSubscription, bool authenticated, Action<WebSocketMessageEvent> dataHandler)
     {
         return new WebSocketSubscription(id, null, identifier, userSubscription, authenticated, dataHandler);
     }
@@ -102,6 +100,6 @@ public class WebSocketSubscription
     /// <param name="e"></param>
     public void InvokeExceptionHandler(Exception e)
     {
-        Exception?.Invoke(e);
+        OnException?.Invoke(e);
     }
 }

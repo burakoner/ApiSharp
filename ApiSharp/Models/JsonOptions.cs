@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Models;
 
+/// <summary>
+/// Json Options
+/// </summary>
 public class JsonOptions
 {
     /// <summary>

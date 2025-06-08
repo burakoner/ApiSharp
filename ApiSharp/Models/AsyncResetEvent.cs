@@ -94,6 +94,6 @@ public class AsyncResetEvent(bool initialState = false, bool reset = true) : IDi
         _cts.Clear();
         _waits.Clear();
 #endif
-        _waits = null;
+        _waits = [];
     }
 }

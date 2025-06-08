@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Extensions;
 
+/// <summary>
+/// Extensions for Exception handling
+/// </summary>
 public static class ExceptionExtensions
 {
     /// <summary>

@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Security;
 
+/// <summary>
+/// CRC16 checksum implementation
+/// </summary>
 public static class CRC16
 {
     private static ushort[] _crc16Table = 
@@ -73,6 +76,11 @@ public static class CRC16
         0x3DE3, 0x2C6A, 0x1EF1, 0x0F78,
     };
 
+    /// <summary>
+    /// Compute the CRC16 checksum for the given byte array
+    /// </summary>
+    /// <param name="bytes">Data</param>
+    /// <returns></returns>
     public static ushort ComputeChecksum(byte[] bytes)
     {
         ushort crc = 0;
@@ -82,6 +90,12 @@ public static class CRC16
         return crc;
     }
 
+    /// <summary>
+    /// Check if the given byte array has the correct CRC16 checksum
+    /// </summary>
+    /// <param name="bytes">Data</param>
+    /// <param name="crc16">CRC16</param>
+    /// <returns></returns>
     public static bool CheckChecksum(byte[] bytes, ushort crc16)
     {
         return ComputeChecksum(bytes) == crc16;

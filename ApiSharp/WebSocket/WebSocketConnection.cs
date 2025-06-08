@@ -8,32 +8,32 @@ public class WebSocketConnection
     /// <summary>
     /// Connection lost event
     /// </summary>
-    public event Action ConnectionLost;
+    public event Action? ConnectionLost;
 
     /// <summary>
     /// Connection closed and no reconnect is happening
     /// </summary>
-    public event Action ConnectionClosed;
+    public event Action? ConnectionClosed;
 
     /// <summary>
     /// Connecting restored event
     /// </summary>
-    public event Action<TimeSpan> ConnectionRestored;
+    public event Action<TimeSpan>? ConnectionRestored;
 
     /// <summary>
     /// The connection is paused event
     /// </summary>
-    public event Action ActivityPaused;
+    public event Action? ActivityPaused;
 
     /// <summary>
     /// The connection is unpaused event
     /// </summary>
-    public event Action ActivityUnpaused;
+    public event Action? ActivityUnpaused;
 
     /// <summary>
     /// Unhandled message event
     /// </summary>
-    public event Action<JToken> UnhandledMessage;
+    public event Action<JToken>? UnhandledMessage;
 
     /// <summary>
     /// The amount of subscriptions on this connection
@@ -481,9 +481,9 @@ public class WebSocketConnection
     /// </summary>
     /// <param name="messageEvent"></param>
     /// <returns>True if the data was successfully handled</returns>
-    private (bool, TimeSpan, WebSocketSubscription) HandleData(WebSocketMessageEvent messageEvent)
+    private (bool, TimeSpan, WebSocketSubscription?) HandleData(WebSocketMessageEvent messageEvent)
     {
-        WebSocketSubscription currentSubscription = null;
+        WebSocketSubscription? currentSubscription = null;
         try
         {
             var handled = false;

@@ -1,7 +1,16 @@
 ﻿namespace ApiSharp.Extensions;
 
+/// <summary>
+/// JToken extensions for parsing and manipulating JSON data
+/// </summary>
 public static class JTokenExtensions
 {
+    /// <summary>
+    /// Try to parse a string into a JToken.
+    /// </summary>
+    /// <param name="stringData"></param>
+    /// <param name="logger"></param>
+    /// <returns></returns>
     public static JToken? ToJToken(this string stringData, ILogger? logger = null)
     {
         if (string.IsNullOrEmpty(stringData))
@@ -27,6 +36,12 @@ public static class JTokenExtensions
         }
     }
 
+    /// <summary>
+    /// Remove a JToken from its lowest possible parent, which is the first ancestor that has a parent that is not a JProperty.
+    /// </summary>
+    /// <typeparam name="TJToken"></typeparam>
+    /// <param name="node"></param>
+    /// <returns></returns>
     public static TJToken? RemoveFromLowestPossibleParent<TJToken>(this TJToken node) where TJToken : JToken
     {
         if (node == null)
@@ -42,14 +57,32 @@ public static class JTokenExtensions
         return node;
     }
 
+    /// <summary>
+    /// AsList extension method for JToken to return the JToken as an IList of JToken.
+    /// </summary>
+    /// <param name="container"></param>
+    /// <returns></returns>
     public static IList<JToken> AsList(this IList<JToken> container) { return container; }
 
-    public static object ToObjectCollectionSafe(this JToken jToken, Type objectType)
+    /// <summary>
+    /// Convert a JToken to an object of the specified type, handling collections and single objects safely.
+    /// </summary>
+    /// <param name="jToken"></param>
+    /// <param name="objectType"></param>
+    /// <returns></returns>
+    public static object? ToObjectCollectionSafe(this JToken jToken, Type objectType)
     {
         return ToObjectCollectionSafe(jToken, objectType, JsonSerializer.CreateDefault());
     }
 
-    public static object ToObjectCollectionSafe(this JToken jToken, Type objectType, JsonSerializer jsonSerializer)
+    /// <summary>
+    /// Convert a JToken to an object of the specified type, handling collections and single objects safely.
+    /// </summary>
+    /// <param name="jToken"></param>
+    /// <param name="objectType"></param>
+    /// <param name="jsonSerializer"></param>
+    /// <returns></returns>
+    public static object? ToObjectCollectionSafe(this JToken jToken, Type objectType, JsonSerializer jsonSerializer)
     {
         var expectArray = typeof(IEnumerable).IsAssignableFrom(objectType);
 
@@ -62,7 +95,7 @@ public static class JTokenExtensions
                     return JValue.CreateNull().ToObject(objectType, jsonSerializer);
 
                 if (jArray.Count == 1)
-                    return jArray.First.ToObject(objectType, jsonSerializer);
+                    return jArray?.First?.ToObject(objectType, jsonSerializer);
             }
         }
         else if (expectArray)
@@ -74,13 +107,26 @@ public static class JTokenExtensions
         return jToken.ToObject(objectType, jsonSerializer);
     }
 
-    public static T ToObjectCollectionSafe<T>(this JToken jToken)
+    /// <summary>
+    /// Convert a JToken to an object of the specified type, handling collections and single objects safely.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="jToken"></param>
+    /// <returns></returns>
+    public static T? ToObjectCollectionSafe<T>(this JToken jToken)
     {
-        return (T)ToObjectCollectionSafe(jToken, typeof(T));
+        return (T?)ToObjectCollectionSafe(jToken, typeof(T));
     }
 
-    public static T ToObjectCollectionSafe<T>(this JToken jToken, JsonSerializer jsonSerializer)
+    /// <summary>
+    /// Convert a JToken to an object of the specified type, handling collections and single objects safely.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="jToken"></param>
+    /// <param name="jsonSerializer"></param>
+    /// <returns></returns>
+    public static T? ToObjectCollectionSafe<T>(this JToken jToken, JsonSerializer jsonSerializer)
     {
-        return (T)ToObjectCollectionSafe(jToken, typeof(T), jsonSerializer);
+        return (T?)ToObjectCollectionSafe(jToken, typeof(T), jsonSerializer);
     }
 }

@@ -24,8 +24,8 @@ public class WebSocketClient
     private ClientWebSocket _socket;
     private CancellationTokenSource _ctsSource;
     private DateTime _lastReceivedMessagesUpdate;
-    private Task _processTask;
-    private Task _closeTask;
+    private Task? _processTask;
+    private Task? _closeTask;
     private bool _stopRequested;
     private bool _disposed;
     private ProcessState _processState;
@@ -95,14 +95,45 @@ public class WebSocketClient
         }
     }
 
+    /// <summary>
+    /// OnClose event, triggered when the websocket is closed
+    /// </summary>
     public event Action? OnClose;
+
+    /// <summary>
+    /// OnMessage event, triggered when a message is received
+    /// </summary>
     public event Action<string>? OnMessage;
+
+    /// <summary>
+    /// OnRequestSent event, triggered when a request is sent
+    /// </summary>
     public event Action<int>? OnRequestSent;
+
+    /// <summary>
+    /// OnError event, triggered when an error occurs
+    /// </summary>
     public event Action<Exception>? OnError;
+
+    /// <summary>
+    /// OnOpen event, triggered when the websocket is opened
+    /// </summary>
     public event Action? OnOpen;
+
+    /// <summary>
+    /// OnReconnecting event, triggered when the websocket is reconnecting
+    /// </summary>
     public event Action? OnReconnecting;
+
+    /// <summary>
+    /// OnReconnected event, triggered when the websocket is reconnected
+    /// </summary>
     public event Action? OnReconnected;
-    public Func<Task<Uri>> GetReconnectionUrl { get; set; }
+
+    /// <summary>
+    /// GetReconnectionUrl event, triggered when the websocket is reconnecting and a new URL is needed
+    /// </summary>
+    public Func<Task<Uri>>? GetReconnectionUrl { get; set; }
 
     /// <summary>
     /// WebSocket client constructor
@@ -255,6 +286,10 @@ public class WebSocketClient
         _processState = ProcessState.Idle;
     }
 
+    /// <summary>
+    /// Send data to the websocket
+    /// </summary>
+    /// <param name="data"></param>
     public virtual void Send(string data)
     {
         if (_ctsSource.IsCancellationRequested)
@@ -266,6 +301,10 @@ public class WebSocketClient
         _sendEvent.Set();
     }
 
+    /// <summary>
+    /// Reconnect the websocket
+    /// </summary>
+    /// <returns></returns>
     public virtual async Task ReconnectAsync()
     {
         if (_processState != ProcessState.Processing && IsOpen)
@@ -276,6 +315,10 @@ public class WebSocketClient
         await _closeTask.ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Close the websocket connection
+    /// </summary>
+    /// <returns></returns>
     public virtual async Task CloseAsync()
     {
         await _closeSem.WaitAsync().ConfigureAwait(false);
@@ -348,6 +391,9 @@ public class WebSocketClient
         }
     }
 
+    /// <summary>
+    /// Dispose the websocket client
+    /// </summary>
     public void Dispose()
     {
         if (_disposed)
@@ -442,8 +488,8 @@ public class WebSocketClient
                 if (_ctsSource.IsCancellationRequested)
                     break;
 
-                MemoryStream memoryStream = null;
-                WebSocketReceiveResult receiveResult = null;
+                MemoryStream? memoryStream = null;
+                WebSocketReceiveResult? receiveResult = null;
                 bool multiPartMessage = false;
                 while (true)
                 {

@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Extensions;
 
+/// <summary>
+/// Validations for parameters and objects
+/// </summary>
 public static class Validations
 {
     /// <summary>

@@ -7,7 +7,7 @@
 /// <param name="jsonData"></param>
 /// <param name="raw"></param>
 /// <param name="timestamp"></param>
-public class WebSocketMessageEvent(WebSocketConnection connection, JToken jsonData, string raw, DateTime timestamp)
+public class WebSocketMessageEvent(WebSocketConnection connection, JToken jsonData, string? raw, DateTime timestamp)
 {
     /// <summary>
     /// The connection the message was received on
@@ -22,7 +22,7 @@ public class WebSocketMessageEvent(WebSocketConnection connection, JToken jsonDa
     /// <summary>
     /// The originally received string data
     /// </summary>
-    public string Raw { get; set; } = raw;
+    public string? Raw { get; set; } = raw;
 
     /// <summary>
     /// The timestamp of when the data was received

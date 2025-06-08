@@ -16,7 +16,7 @@ public class OnClientConnectedEventArgs : EventArgs
     /// <summary>
     /// ServerHost
     /// </summary>
-    public string ServerHost { get; internal set; }
+    public string ServerHost { get; internal set; } = "";
 
     /// <summary>
     /// ServerPort

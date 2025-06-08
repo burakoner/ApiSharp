@@ -1,5 +1,8 @@
 ﻿namespace ApiSharp.Security;
 
+/// <summary>
+/// CRC32 checksum implementation
+/// </summary>
 public static class CRC32
 {
     private static uint[] _crc32Table =
@@ -73,6 +76,11 @@ public static class CRC32
         0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D,
     };
 
+    /// <summary>
+    /// Compute the CRC32 checksum for a byte array
+    /// </summary>
+    /// <param name="bytes">Data</param>
+    /// <returns></returns>
     public static uint ComputeChecksum(byte[] bytes)
     {
         uint crc32 = 0xFFFFFFFF;
@@ -82,6 +90,12 @@ public static class CRC32
         return ~crc32;
     }
 
+    /// <summary>
+    /// Check if the CRC32 checksum of the given byte array matches the provided checksum
+    /// </summary>
+    /// <param name="bytes">Data</param>
+    /// <param name="crc32">CRC32</param>
+    /// <returns></returns>
     public static bool CheckChecksum(byte[] bytes, uint crc32)
     {
         return ComputeChecksum(bytes) == crc32;

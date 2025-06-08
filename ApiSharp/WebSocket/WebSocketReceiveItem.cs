@@ -15,6 +15,11 @@ public struct WebSocketReceiveItem
     /// </summary>
     public int Bytes { get; set; }
 
+    /// <summary>
+    /// Construct a new WebSocketReceiveItem
+    /// </summary>
+    /// <param name="timestamp"></param>
+    /// <param name="bytes"></param>
     public WebSocketReceiveItem(DateTime timestamp, int bytes)
     {
         Timestamp = timestamp;
