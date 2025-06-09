@@ -177,7 +177,7 @@ public class RestCallResult<T>(RestCallRequest? request, RestCallResponse? respo
     /// <param name="response"></param>
     /// <param name="raw"></param>
     /// <param name="error"></param>
-    public RestCallResult(RestCallRequest request, RestCallResponse response, string raw, Error? error) : this(request, response, default, raw, error) { }
+    public RestCallResult(RestCallRequest? request, RestCallResponse? response, string? raw, Error? error) : this(request, response, default, raw, error) { }
 
     /// <summary>
     /// Copy the RestCallResult to a new data type
