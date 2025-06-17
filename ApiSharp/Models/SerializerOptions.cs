@@ -10,6 +10,7 @@ public static class SerializerOptions
     /// </summary>
     public static JsonSerializerSettings WithConverters => new JsonSerializerSettings
     {
+        MissingMemberHandling = MissingMemberHandling.Ignore,
         DateTimeZoneHandling = DateTimeZoneHandling.Utc,
         Culture = CultureInfo.InvariantCulture,
         Converters =
@@ -25,6 +26,7 @@ public static class SerializerOptions
     /// </summary>
     public static JsonSerializerSettings Default => new JsonSerializerSettings
     {
+        MissingMemberHandling = MissingMemberHandling.Ignore,
         DateTimeZoneHandling = DateTimeZoneHandling.Utc,
         Culture = CultureInfo.InvariantCulture
     };
