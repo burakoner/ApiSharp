@@ -390,6 +390,16 @@ public abstract class AuthenticationProvider
     /// <param name="dataEncoding"></param>
     /// <returns></returns>
     protected string SignEd25519(string data, SignatureOutputType? outputType = null, Encoding? keyEncoding = null, Encoding? dataEncoding = null)
+        => SignEd25519((dataEncoding ?? Encoding.ASCII).GetBytes(data), outputType, keyEncoding);
+
+    /// <summary>
+    /// Sign data using Ed25519 algorithm
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="outputType"></param>
+    /// <param name="keyEncoding"></param>
+    /// <returns></returns>
+    protected string SignEd25519(byte[] data, SignatureOutputType? outputType = null, Encoding? keyEncoding = null)
     {
 #if NET8_0_OR_GREATER
         // Algorithm
@@ -405,8 +415,7 @@ public abstract class AuthenticationProvider
         using var key = Key.Import(algorithm, (keyEncoding ?? Encoding.ASCII).GetBytes(secret), KeyBlobFormat.PkixPrivateKeyText);
 
         // Signature
-        var bytes = (dataEncoding ?? Encoding.ASCII).GetBytes(data);
-        var signatureBytes = algorithm.Sign(key, bytes);
+        var signatureBytes = algorithm.Sign(key, data);
 
         // Return
         return outputType == SignatureOutputType.Base64 ? BytesToBase64String(signatureBytes) : BytesToHexString(signatureBytes);
