@@ -186,7 +186,7 @@ public class RestCallResult<T>(RestCallRequest? request, RestCallResponse? respo
     /// <param name="data">The data of the new type</param>
     /// <returns></returns>
     public new RestCallResult<K> As<K>(
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER
         [AllowNull] 
 #endif
         K data)

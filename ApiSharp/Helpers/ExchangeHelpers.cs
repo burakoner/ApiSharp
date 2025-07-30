@@ -148,7 +148,7 @@ public static class ExchangeHelpers
     {
         var randomChars = new char[length];
 
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER
         for (int i = 0; i < length; i++)
             randomChars[i] = _allowedRandomChars[RandomNumberGenerator.GetInt32(0, _allowedRandomChars.Length)];
 #else

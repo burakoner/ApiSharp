@@ -448,7 +448,7 @@ public class TcpSocketServer
         /* Keep Alive */
         if (this.KeepAlive && this.KeepAliveInterval > 0)
         {
-#if NETCOREAPP || NET5_0 || NET6_0
+#if NETCOREAPP || NET5_0 || NET6_0 || NET7_0 || NET8_0_OR_GREATER
             _listener.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
             _listener.Server.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, this.KeepAliveTime);
             _listener.Server.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, this.KeepAliveInterval);
@@ -493,9 +493,9 @@ public class TcpSocketServer
         {
             // Getting new connections
             var tcpClient = this._listener.AcceptTcpClient();
-            var ipEndPoint = (IPEndPoint)tcpClient.Client.RemoteEndPoint;
-            var ipAddress = ((IPEndPoint)tcpClient.Client.RemoteEndPoint).Address.ToString();
-            var port = ((IPEndPoint)tcpClient.Client.RemoteEndPoint).Port;
+            var ipEndPoint = (IPEndPoint?)tcpClient.Client.RemoteEndPoint;
+            var ipAddress = ((IPEndPoint?)tcpClient.Client.RemoteEndPoint)?.Address.ToString();
+            var port = ((IPEndPoint?)tcpClient.Client.RemoteEndPoint).Port;
             var cr_args = new OnServerConnectionRequestEventArgs
             {
                 IPEndPoint = ipEndPoint,

@@ -90,7 +90,7 @@ public class AsyncResetEvent(bool initialState = false, bool reset = true) : IDi
             cts.Dispose();
         }
 
-#if NETSTANDARD2_1_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER
         _cts.Clear();
         _waits.Clear();
 #endif

@@ -327,7 +327,7 @@ public class TcpSocketClient
             /* Keep Alive */
             if (this.KeepAlive && this.KeepAliveInterval > 0)
             {
-#if NETCOREAPP || NET5_0 || NET6_0
+#if NETCOREAPP || NET5_0 || NET6_0 || NET7_0 || NET8_0_OR_GREATER
                 _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
                 _socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveTime, this.KeepAliveTime);
                 _socket.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.TcpKeepAliveInterval, this.KeepAliveInterval);

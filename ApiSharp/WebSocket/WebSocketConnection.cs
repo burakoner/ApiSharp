@@ -459,7 +459,7 @@ public class WebSocketConnection
     /// Get a subscription on this connection by id
     /// </summary>
     /// <param name="id"></param>
-    public WebSocketSubscription GetSubscription(int id)
+    public WebSocketSubscription? GetSubscription(int id)
     {
         lock (_subscriptionLock)
             return _subscriptions.SingleOrDefault(s => s.Id == id);
@@ -470,7 +470,7 @@ public class WebSocketConnection
     /// </summary>
     /// <param name="predicate">Filter for a request</param>
     /// <returns></returns>
-    public WebSocketSubscription GetSubscriptionByRequest(Func<object, bool> predicate)
+    public WebSocketSubscription? GetSubscriptionByRequest(Func<object, bool> predicate)
     {
         lock (_subscriptionLock)
             return _subscriptions.SingleOrDefault(s => predicate(s.Request));

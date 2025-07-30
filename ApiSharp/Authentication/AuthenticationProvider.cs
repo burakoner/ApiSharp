@@ -1,4 +1,8 @@
-﻿namespace ApiSharp.Authentication;
+﻿#if NET8_0_OR_GREATER
+using NSec.Cryptography;
+#endif
+
+namespace ApiSharp.Authentication;
 
 /// <summary>
 /// AuthenticationProvider
@@ -376,6 +380,40 @@ public abstract class AuthenticationProvider
         var resultBytes = rsa.SignHash(hash, HashAlgorithmName.SHA512, RSASignaturePadding.Pkcs1);
         return outputType == SignatureOutputType.Base64 ? BytesToBase64String(resultBytes) : BytesToHexString(resultBytes);
     }
+
+    /// <summary>
+    /// Sign data using Ed25519 algorithm
+    /// </summary>
+    /// <param name="data"></param>
+    /// <param name="outputType"></param>
+    /// <param name="keyEncoding"></param>
+    /// <param name="dataEncoding"></param>
+    /// <returns></returns>
+    protected string SignEd25519(string data, SignatureOutputType? outputType = null, Encoding? keyEncoding = null, Encoding? dataEncoding = null)
+    {
+#if NET8_0_OR_GREATER
+        // Algorithm
+        var algorithm = SignatureAlgorithm.Ed25519;
+
+        // Import Key
+        var secret = Credentials.Secret!.GetString()
+                    .Replace("\n", "")
+                    .Replace("\r", "")
+                    .Replace("-----BEGIN PRIVATE KEY-----", "")
+                    .Replace("-----END PRIVATE KEY-----", "")
+                    .Trim();
+        using var key = Key.Import(algorithm, (keyEncoding ?? Encoding.ASCII).GetBytes(secret), KeyBlobFormat.PkixPrivateKeyText);
+
+        // Signature
+        var bytes = (dataEncoding ?? Encoding.ASCII).GetBytes(data);
+        var signatureBytes = algorithm.Sign(key, bytes);
+
+        // Return
+        return outputType == SignatureOutputType.Base64 ? BytesToBase64String(signatureBytes) : BytesToHexString(signatureBytes);
+#else
+        throw new NotSupportedException("Ed25519 Algorithm is supported only .Net 8.0 or greater.");
+#endif
+    }
     #endregion
 
     #region RSA Methods
@@ -384,10 +422,11 @@ public abstract class AuthenticationProvider
         var rsa = RSA.Create();
         if (Credentials.Type == ApiCredentialsType.RsaPem)
         {
-#if NETSTANDARD2_1_OR_GREATER || NET9_0_OR_GREATER
+#if NETSTANDARD2_1_OR_GREATER || NET8_0_OR_GREATER
             // Read from pem private key
             var key = Credentials.Secret!.GetString()
                     .Replace("\n", "")
+                    .Replace("\r", "")
                     .Replace("-----BEGIN PRIVATE KEY-----", "")
                     .Replace("-----END PRIVATE KEY-----", "")
                     .Trim();
