@@ -219,13 +219,11 @@ public abstract class RestApiClient : BaseClient
                     {
                         // Validate if it is valid json. Sometimes other data will be returned, 502 error html pages for example
                         var parseResult = ValidateJson(data);
-                        if (!parseResult.Success)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
+                        if (!parseResult.Success)                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, parseResult.Error!);
 
                         // Let the library implementation see if it is an error response, and if so parse the error
                         var error = await TryParseErrorAsync(parseResult.Data).ConfigureAwait(false);
-                        if (error != null)
-                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
+                        if (error != null)                            return new RestCallResult<T>(response.StatusCode, response.ResponseHeaders, sw.Elapsed, ClientOptions.RawResponse ? data : "", request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error!);
 
                         // Not an error, so continue deserializing
                         var deserializeResult = Deserialize<T>(parseResult.Data, deserializer, request.RequestId);
@@ -279,8 +277,8 @@ public abstract class RestApiClient : BaseClient
                 response.Close();
                 var parseResult = ValidateJson(data);
                 var error = parseResult.Success ? ParseErrorResponse(parseResult.Data) : new ServerError(data)!;
-                if (error.Code == null || error.Code == 0)
-                    error.Code = (int)response.StatusCode;
+                if (error.Code == null || error.Code == 0) error.Code = (int)response.StatusCode;
+
                 return new RestCallResult<T>(statusCode, headers, sw.Elapsed, data, request.Uri.ToString(), request.Content, request.Method, request.GetHeaders(), default, error);
             }
         }
@@ -315,9 +313,9 @@ public abstract class RestApiClient : BaseClient
     /// </summary>
     /// <param name="data">Received data</param>
     /// <returns>Null if not an error, Error otherwise</returns>
-    protected virtual Task<ServerError> TryParseErrorAsync(JToken data)
+    protected virtual Task<ServerError?> TryParseErrorAsync(JToken data)
     {
-        return Task.FromResult<ServerError>(null!);
+        return Task.FromResult<ServerError?>(null);
     }
 
     /// <summary>
