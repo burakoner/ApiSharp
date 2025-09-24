@@ -16,8 +16,8 @@ public abstract class BaseClient(ILogger? logger, BaseClientOptions options) : I
     /// Client Options
     /// </summary>
     protected BaseClientOptions _options { get; } = options;
-    private ApiCredentials? _credentials = options.ApiCredentials?.Copy();
     private AuthenticationProvider? _authenticationProvider;
+    private ApiCredentials? _credentials = options.ApiCredentials?.Copy();
 
     /// <summary>
     /// Disposing or Disposed
@@ -302,6 +302,7 @@ public abstract class BaseClient(ILogger? logger, BaseClientOptions options) : I
         _logger.Log(LogLevel.Debug, "Disposing client");
         _disposing = true;
         _credentials?.Dispose();
-        AuthenticationProvider?.Credentials?.Dispose();
+        _authenticationProvider?.Credentials?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
