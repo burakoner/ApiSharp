@@ -110,9 +110,14 @@ public abstract class BaseClient(ILogger? logger, BaseClientOptions options) : I
     {
         if (string.IsNullOrEmpty(data))
         {
-            var info = "Empty data object received";
-            _logger.Log(LogLevel.Error, info);
-            return new CallResult<JToken>(new DeserializeError(info, data));
+            if (_options.FailOnEmptyResponse)
+            {
+                var info = "Empty data object received";
+                _logger.Log(LogLevel.Error, info);
+                return new CallResult<JToken>(new DeserializeError(info, data));
+            }
+
+            return new CallResult<JToken>(JValue.CreateNull(), data);
         }
 
         try

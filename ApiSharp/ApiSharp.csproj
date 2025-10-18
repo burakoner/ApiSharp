@@ -9,10 +9,10 @@
 	<PropertyGroup>
 		<PackageId>ApiSharp</PackageId>
 		<Authors>Burak Öner</Authors>
-		<Version>4.0.5</Version>
-		<FileVersion>4.0.5</FileVersion>
-		<PackageVersion>4.0.5</PackageVersion>
-		<AssemblyVersion>4.0.5</AssemblyVersion>
+		<Version>4.1.0</Version>
+		<FileVersion>4.1.0</FileVersion>
+		<PackageVersion>4.1.0</PackageVersion>
+		<AssemblyVersion>4.1.0</AssemblyVersion>
 		<Description>Base for Rest Api, Websocket Api, Tcp Socket Api Wrappers</Description>
 		<PackageTags>Binance;Coinbase;Kraken;KuCoin;Bitstamp;Gate;Huobi;OKX;Okex;ApiSharp;Api;Sharp;Coin;Token;BNB;BTC;ETH;Bitcoin;Ether;Ethereum;Rest;Web;Socket;Websocket;Stream;Webstream;Api;Client;Wrapper;Connector;Crypto;Currency;Cryptocurrency;Exchange;Trade;Trading;Spot;Margin;Futures;Derivates;Stock;Options;Swap;</PackageTags>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -20,6 +20,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageReleaseNotes>
+			Version 4.1.0 - 18 Oct 2025
 			Version 4.0.5 - 24 Sep 2025
 			Version 4.0.4 - 17 Sep 2025
 			Version 4.0.2 - 30 Aug 2025

@@ -31,6 +31,11 @@ public abstract class BaseClientOptions
     public bool RawResponse { get; set; }
 
     /// <summary>
+    /// Fail On Empty Response
+    /// </summary>
+    public bool FailOnEmptyResponse { get; set; }
+
+    /// <summary>
     /// Proxy
     /// </summary>
     public ProxyCredentials? Proxy { get; set; }
@@ -61,6 +66,9 @@ public abstract class BaseClientOptions
 
         // Output
         RawResponse = false;
+
+        // Empty Response
+        FailOnEmptyResponse = true;
 
         // Authentication
         ApiCredentials = null;

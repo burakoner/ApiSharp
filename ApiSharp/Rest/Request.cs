@@ -71,7 +71,8 @@ public class Request : IRequest
     /// <param name="value"></param>
     public void AddHeader(string key, string value)
     {
-        request.Headers.Add(key, value);
+        // request.Headers.Add(key, value);
+        request.Headers.TryAddWithoutValidation(key, value);
     }
 
     /// <summary>
