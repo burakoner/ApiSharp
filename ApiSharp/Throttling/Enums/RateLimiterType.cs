@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Enums;
+﻿namespace ApiSharp.Throttling;
 
 /// <summary>
 /// Rate Limiter Type

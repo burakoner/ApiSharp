@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Enums;
+﻿namespace ApiSharp.Throttling;
 
 /// <summary>
 /// What to do when a request would exceed the rate limit

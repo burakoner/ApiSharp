@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Structs;
+﻿namespace ApiSharp.Throttling;
 
 internal struct LimitEntry(DateTime timestamp, int weight)
 {

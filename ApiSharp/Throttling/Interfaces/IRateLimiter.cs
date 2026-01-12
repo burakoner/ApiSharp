@@ -1,4 +1,4 @@
-namespace ApiSharp.Throttling.Interfaces;
+﻿namespace ApiSharp.Throttling;
 
 /// <summary>
 /// Rate limiter interface

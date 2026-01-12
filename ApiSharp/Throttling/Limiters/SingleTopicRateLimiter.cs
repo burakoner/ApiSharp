@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Limiters;
+﻿namespace ApiSharp.Throttling;
 
 internal class SingleTopicRateLimiter(object topic, Limiter limiter) : Limiter(limiter.Type, limiter.Limit, limiter.Period, limiter.Method, limiter.IgnoreOtherRateLimits)
 {

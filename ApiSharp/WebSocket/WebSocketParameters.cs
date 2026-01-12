@@ -48,6 +48,7 @@ public class WebSocketParameters
     /// <summary>
     /// The max amount of messages to send per second
     /// </summary>
+    [Obsolete("Use RateLimiter instead")]
     public int? RateLimitPerSecond { get; set; }
 
     /// <summary>

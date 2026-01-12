@@ -7,6 +7,11 @@
 public class CallResult(Error? error)
 {
     /// <summary>
+    /// Static success result
+    /// </summary>
+    public static CallResult SuccessResult { get; } = new CallResult(null);
+
+    /// <summary>
     /// Error
     /// </summary>
     public Error? Error { get; internal set; } = error;

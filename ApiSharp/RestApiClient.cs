@@ -150,6 +150,21 @@ public abstract class RestApiClient : BaseClient
             }
         }
 
+
+        /*
+        var error = await RateLimitAsync(
+            baseAddress,
+            requestId,
+            definition,
+            weight ?? definition.Weight,
+            cancellationToken,
+            weightSingleLimiter,
+            rateLimitKeySuffix).ConfigureAwait(false);
+        if (error != null)
+            return new WebCallResult<T>(error);
+        */
+
+
         if (!ignoreRatelimit)
         {
             foreach (var limiter in ClientOptions.RateLimiters)
@@ -159,6 +174,8 @@ public abstract class RestApiClient : BaseClient
                     return new CallResult<IRequest>(limitResult.Error!);
             }
         }
+
+
 
         if (signed && AuthenticationProvider == null)
         {

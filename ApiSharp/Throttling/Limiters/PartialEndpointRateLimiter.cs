@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Limiters;
+﻿namespace ApiSharp.Throttling;
 
 internal class PartialEndpointRateLimiter(string[] partialEndpoints, int limit, TimeSpan period, bool countPerEndpoint, HttpMethod? method, bool ignoreOtherRateLimits) : Limiter(RateLimiterType.PartialEndpoint, limit, period, method, ignoreOtherRateLimits)
 {

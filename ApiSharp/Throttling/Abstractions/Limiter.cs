@@ -1,4 +1,4 @@
-﻿namespace ApiSharp.Throttling.Abstractions;
+﻿namespace ApiSharp.Throttling;
 
 /// <summary>
 /// Limiter Abstract Class

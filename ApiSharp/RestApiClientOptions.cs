@@ -18,17 +18,24 @@ public class RestApiClientOptions : BaseClientOptions
     /// <summary>
     /// Ignore Rate Limiters
     /// </summary>
+    [Obsolete]
     public bool IgnoreRateLimiters { get; set; }
 
     /// <summary>
     /// Rate Limiters
     /// </summary>
+    [Obsolete]
     public List<IRateLimiter> RateLimiters { get; set; } = [];
 
     /// <summary>
-    /// Rate Limiting Behavior
+    /// Whether or not client side rate limiting should be applied
     /// </summary>
-    public RateLimitingBehavior RateLimitingBehavior { get; set; }
+    public bool RateLimiterEnabled { get; set; } = true;
+
+    /// <summary>
+    /// What should happen when a rate limit is reached
+    /// </summary>
+    public RateLimitingBehavior RateLimitingBehavior { get; set; } = RateLimitingBehavior.Wait;
 
     /// <summary>
     /// Gets or sets the collection of HTTP methods for which the request body should be set to empty content.
