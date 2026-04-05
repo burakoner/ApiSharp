@@ -269,7 +269,7 @@ public class TcpSocketServer
         }
 
         // Stop Listener
-        this._listener.Stop();
+        this._listener?.Stop();
         this.IsListening = false;
 
         // Stop Thread
@@ -492,10 +492,28 @@ public class TcpSocketServer
         while (!this._cancellationToken.IsCancellationRequested)
         {
             // Getting new connections
-            var tcpClient = this._listener.AcceptTcpClient();
-            var ipEndPoint = (IPEndPoint?)tcpClient.Client.RemoteEndPoint;
-            var ipAddress = ((IPEndPoint?)tcpClient.Client.RemoteEndPoint)?.Address.ToString();
-            var port = ((IPEndPoint?)tcpClient.Client.RemoteEndPoint).Port;
+            TcpClient tcpClient;
+            try
+            {
+                tcpClient = this._listener.AcceptTcpClient();
+            }
+            catch (SocketException socketException) when (_cancellationToken.IsCancellationRequested
+                                                          || !IsListening
+                                                          || socketException.SocketErrorCode == SocketError.Interrupted
+                                                          || socketException.SocketErrorCode == SocketError.OperationAborted)
+            {
+                // Listener was stopped while waiting for a new connection.
+                break;
+            }
+            catch (ObjectDisposedException) when (_cancellationToken.IsCancellationRequested || !IsListening)
+            {
+                // Listener was disposed while stopping.
+                break;
+            }
+
+            var ipEndPoint = tcpClient.Client.RemoteEndPoint as IPEndPoint ?? new IPEndPoint(IPAddress.None, 0);
+            var ipAddress = ipEndPoint.Address.ToString();
+            var port = ipEndPoint.Port;
             var cr_args = new OnServerConnectionRequestEventArgs
             {
                 IPEndPoint = ipEndPoint,

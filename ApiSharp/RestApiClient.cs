@@ -361,23 +361,32 @@ public abstract class RestApiClient : BaseClient
         bodyParameters ??= [];
         headerParameters ??= [];
 
-        for (var i = 0; i < queryParameters.Count; i++)
+        foreach (var key in queryParameters.Keys.ToList())
         {
-            var kvp = queryParameters.ElementAt(i);
-            if (kvp.Value is Func<object> delegateValue)
-                queryParameters[kvp.Key] = delegateValue();
+            if (queryParameters[key] is Func<object> delegateValue)
+                queryParameters[key] = delegateValue();
+
+            if (queryParameters[key] == null)
+                queryParameters.Remove(key);
         }
 
-        for (var i = 0; i < bodyParameters.Count; i++)
+        foreach (var key in bodyParameters.Keys.ToList())
         {
-            var kvp = bodyParameters.ElementAt(i);
-            if (kvp.Value is Func<object> delegateValue)
-                bodyParameters[kvp.Key] = delegateValue();
+            if (bodyParameters[key] is Func<object> delegateValue)
+                bodyParameters[key] = delegateValue();
         }
 
-        foreach (var parameter in queryParameters)
+        if (queryParameters.Count > 0)
         {
-            uri = uri.AddQueryParmeter(parameter.Key, parameter.Value.ToString());
+            var queryCollection = HttpUtility.ParseQueryString(uri.Query);
+            foreach (var parameter in queryParameters)
+            {
+                var value = parameter.Value.ToString();
+                queryCollection.Remove(parameter.Key);
+                queryCollection.Add(parameter.Key, value);
+            }
+
+            uri = new UriBuilder(uri) { Query = queryCollection.ToString() }.Uri;
         }
 
         var parameters = new List<string>();

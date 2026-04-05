@@ -1,6 +1,6 @@
 ﻿namespace ApiSharp.WebSocket;
 
-internal class WebSocketRequest
+internal class WebSocketRequest : IDisposable
 {
     public Func<JToken, bool> Handler { get; }
     public JToken Result { get; private set; }
@@ -9,7 +9,9 @@ internal class WebSocketRequest
     public DateTime RequestTimestamp { get; set; }
     public TimeSpan Timeout { get; }
 
-    private CancellationTokenSource cts;
+    private readonly CancellationTokenSource cts;
+    private readonly CancellationTokenRegistration timeoutRegistration;
+    private int disposeState;
 
     public WebSocketRequest(Func<JToken, bool> handler, TimeSpan timeout)
     {
@@ -19,16 +21,15 @@ internal class WebSocketRequest
         Timeout = timeout;
 
         cts = new CancellationTokenSource(timeout);
-        cts.Token.Register(Fail, false);
+        timeoutRegistration = cts.Token.Register(Fail, false);
     }
 
     public bool CheckData(JToken data)
     {
-        if (Handler(data))
+        if (!Completed && Handler(data))
         {
             Result = data;
-            Completed = true;
-            Event.Set();
+            Complete();
             return true;
         }
 
@@ -37,7 +38,25 @@ internal class WebSocketRequest
 
     public void Fail()
     {
+        if (Completed)
+            return;
+
+        Complete();
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref disposeState, 1) == 1)
+            return;
+
+        timeoutRegistration.Dispose();
+        cts.Dispose();
+    }
+
+    private void Complete()
+    {
         Completed = true;
         Event.Set();
+        Dispose();
     }
 }

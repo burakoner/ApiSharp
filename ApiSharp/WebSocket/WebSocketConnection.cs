@@ -241,6 +241,7 @@ public class WebSocketConnection
                 foreach (var pendingRequest in _pendingRequests.ToList())
                 {
                     pendingRequest.Fail();
+                    pendingRequest.Dispose();
                     _pendingRequests.Remove(pendingRequest);
                 }
             }
@@ -318,7 +319,17 @@ public class WebSocketConnection
         WebSocketRequest[] requests;
         lock (_pendingRequests)
         {
-            _pendingRequests.RemoveAll(r => r.Completed && DateTime.UtcNow - r.RequestTimestamp > TimeSpan.FromMinutes(5));
+            var expiryTime = DateTime.UtcNow;
+            for (var i = _pendingRequests.Count - 1; i >= 0; i--)
+            {
+                var request = _pendingRequests[i];
+                if (request.Completed && expiryTime - request.RequestTimestamp > TimeSpan.FromMinutes(5))
+                {
+                    _pendingRequests.RemoveAt(i);
+                    request.Dispose();
+                }
+            }
+
             requests = [.. _pendingRequests];
         }
 
@@ -329,6 +340,7 @@ public class WebSocketConnection
             {
                 lock (_pendingRequests)
                     _pendingRequests.Remove(pendingRequest);
+                pendingRequest.Dispose();
 
                 if (!ApiClient.ContinueOnQueryResponse)
                     return;
@@ -599,6 +611,7 @@ public class WebSocketConnection
         {
             lock (_pendingRequests)
                 _pendingRequests.Remove(pending);
+            pending.Dispose();
         }
     }
 
