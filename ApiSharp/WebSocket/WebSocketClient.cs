@@ -789,8 +789,9 @@ public class WebSocketClient
             if (_closeTask?.IsCompleted == false)
                 return _closeTask;
 
-            _closeTask = CloseInternalAsync();
-            return _closeTask;
+            var closeTask = CloseInternalAsync();
+            _closeTask = closeTask;
+            return closeTask;
         }
     }
 
