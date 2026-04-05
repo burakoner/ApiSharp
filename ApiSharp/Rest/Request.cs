@@ -46,7 +46,7 @@ public class Request : IRequest
     /// <summary>
     /// Uri of the request, the endpoint to which the request is sent
     /// </summary>
-    public Uri Uri => request.RequestUri;
+    public Uri Uri => request.RequestUri!;
 
     /// <summary>
     /// Request id for tracing purposes, can be used to track requests in logs or debugging

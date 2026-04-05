@@ -52,7 +52,7 @@ public static class JTokenExtensions
 
         // Also detach the node from its immediate containing property -- Remove() does not do this even though it seems like it should
         if (node.Parent is JProperty property)
-            property.Value = null;
+            property.Value = JValue.CreateNull();
 
         return node;
     }

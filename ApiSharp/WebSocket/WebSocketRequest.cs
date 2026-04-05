@@ -3,7 +3,7 @@
 internal class WebSocketRequest : IDisposable
 {
     public Func<JToken, bool> Handler { get; }
-    public JToken Result { get; private set; }
+    public JToken? Result { get; private set; }
     public bool Completed { get; private set; }
     public AsyncResetEvent Event { get; }
     public DateTime RequestTimestamp { get; set; }

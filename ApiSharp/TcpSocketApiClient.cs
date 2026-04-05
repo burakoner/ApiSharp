@@ -69,7 +69,7 @@ public abstract class TcpSocketApiClient : BaseClient
     /// behavior that should occur when the timer elapses.</remarks>
     /// <param name="source">The source of the timer event, typically the timer instance that triggered the event.</param>
     /// <param name="e">The event data containing information about the elapsed event.</param>
-    protected abstract void PingTimer(object source, System.Timers.ElapsedEventArgs e);
+    protected abstract void PingTimer(object? source, System.Timers.ElapsedEventArgs e);
 
     // Private Properties
     private readonly System.Timers.Timer _hbTimer;
@@ -147,7 +147,7 @@ public abstract class TcpSocketApiClient : BaseClient
         }
     }
 
-    private void Client_OnConnected(object sender, OnClientConnectedEventArgs e)
+    private void Client_OnConnected(object? sender, OnClientConnectedEventArgs e)
     {
         // Check Point
         if (!_socketClient.Connected) return;
@@ -167,7 +167,7 @@ public abstract class TcpSocketApiClient : BaseClient
         this.OnConnected();
     }
 
-    private void Client_OnDisconnected(object sender, OnClientDisconnectedEventArgs e)
+    private void Client_OnDisconnected(object? sender, OnClientDisconnectedEventArgs e)
     {
         // Cancellation Token
         if (!this.CancellationTokenSource.IsCancellationRequested)
@@ -181,13 +181,13 @@ public abstract class TcpSocketApiClient : BaseClient
         this.OnDisconnected();
     }
 
-    private void Client_OnDataReceived(object sender, OnClientDataReceivedEventArgs e)
+    private void Client_OnDataReceived(object? sender, OnClientDataReceivedEventArgs e)
     {
         BytesReceived += e.Data.Length;
         OnDataIn(e.Data);
     }
 
-    private void Client_OnError(object sender, OnClientErrorEventArgs e)
+    private void Client_OnError(object? sender, OnClientErrorEventArgs e)
     {
         // Execute OnError Logic
         this.OnError();

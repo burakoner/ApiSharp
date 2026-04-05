@@ -208,13 +208,13 @@ public class TcpSocketServer
     #endregion
 
     #region Readonly Properties
-    private TcpListener _listener;
+    private TcpListener _listener = null!;
     private readonly SnowflakeGenerator _idGenerator;
     private readonly ConcurrentDictionary<long, TcpSocketServerClient> _clients;
     #endregion
 
     #region Listener Thread
-    private Thread _thread;
+    private Thread _thread = null!;
     private CancellationTokenSource _cancellationTokenSource;
     private CancellationToken _cancellationToken;
     #endregion

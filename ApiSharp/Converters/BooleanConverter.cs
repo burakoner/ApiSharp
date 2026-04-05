@@ -31,10 +31,14 @@ public class BooleanConverter : JsonConverter
     /// </returns>
     public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
-        if(string.IsNullOrWhiteSpace(reader.Value?.ToString()))
+        var stringValue = reader.Value?.ToString();
+        if (stringValue == null)
             return null;
 
-        return (reader.Value?.ToString().ToLower().Trim()) switch
+        if (string.IsNullOrWhiteSpace(stringValue))
+            return null;
+
+        return stringValue.Trim().ToLowerInvariant() switch
         {
             "true" or "t" or "yes" or "y" or "1" or "on" => true,
             "false" or "f" or "no" or "n" or "0" or "off" or "-1" => false,

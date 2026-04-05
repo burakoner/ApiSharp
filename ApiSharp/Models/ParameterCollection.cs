@@ -160,7 +160,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddOptionalSecondsString(string key, DateTime? value)
     {
         if (value != null)
-            Add(key, value.ConvertToSeconds().ToString());
+            Add(key, value.Value.ConvertToSeconds().ToString(CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -181,7 +181,7 @@ public class ParameterCollection : Dictionary<string, object>
     public void AddEnumAsInt<T>(string key, T value)
     {
         var stringVal = MapConverter.GetString(value);
-        Add(key, int.Parse(stringVal)!);
+        Add(key, int.Parse(stringVal!, CultureInfo.InvariantCulture));
     }
 
     /// <summary>
@@ -205,7 +205,7 @@ public class ParameterCollection : Dictionary<string, object>
         if (value != null)
         {
             var stringVal = MapConverter.GetString(value);
-            Add(key, int.Parse(stringVal));
+            Add(key, int.Parse(stringVal!, CultureInfo.InvariantCulture));
         }
     }
 

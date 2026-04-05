@@ -532,7 +532,7 @@ public class WebSocketClient
                         multiPartMessage = true;
                         memoryStream ??= new MemoryStream();
                         _logger.Log(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
-                        await memoryStream.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
+                        await memoryStream.WriteAsync(buffer.Array!, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
                     }
                     else
                     {
@@ -546,7 +546,7 @@ public class WebSocketClient
                         {
                             // Received the end of a multipart message, write to memory stream for reassembling
                             _logger.Log(LogLevel.Trace, $"WebSocket {Id} received {receiveResult.Count} bytes in partial message");
-                            await memoryStream!.WriteAsync(buffer.Array, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
+                            await memoryStream!.WriteAsync(buffer.Array!, buffer.Offset, receiveResult.Count).ConfigureAwait(false);
                         }
                         break;
                     }

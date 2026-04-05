@@ -259,13 +259,13 @@ public class TcpSocketClient
     #endregion
 
     #region Private Fields
-    private System.Net.Sockets.Socket _socket;
+    private System.Net.Sockets.Socket _socket = null!;
     private byte[] _recvBuffer = [];
     private byte[] _sendBuffer = [];
     #endregion
 
     #region Receiver Thread
-    private Thread _thread;
+    private Thread _thread = null!;
     private CancellationTokenSource _cancellationTokenSource;
     private CancellationToken _cancellationToken;
     #endregion

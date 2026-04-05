@@ -14,17 +14,18 @@ public static class ExceptionExtensions
     {
         var message = new StringBuilder();
         var indent = 0;
-        while (exception != null)
+        Exception? current = exception;
+        while (current != null)
         {
             for (var i = 0; i < indent; i++) message.Append(' ');
-            message.Append(exception.GetType().Name);
+            message.Append(current.GetType().Name);
             message.Append(" - ");
-            message.AppendLine(exception.Message);
+            message.AppendLine(current.Message);
             for (var i = 0; i < indent; i++) message.Append(' ');
-            message.AppendLine(exception.StackTrace);
+            message.AppendLine(current.StackTrace);
 
             indent += 2;
-            exception = exception.InnerException;
+            current = current.InnerException;
         }
 
         return message.ToString();

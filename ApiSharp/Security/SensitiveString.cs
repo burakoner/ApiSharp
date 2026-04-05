@@ -17,7 +17,7 @@ public class SensitiveString:IDisposable
     public SensitiveString(string secret)
     {
         this._key = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16);
-        this._aes = Aes.Create("AesManaged");
+        this._aes = Aes.Create() ?? throw new InvalidOperationException("Failed to initialize AES algorithm");
         this._aes.Mode = CipherMode.CBC;
         this._aes.Padding = PaddingMode.PKCS7;
         this._aes.KeySize = 0x80;

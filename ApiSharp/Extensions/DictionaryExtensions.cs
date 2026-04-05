@@ -169,7 +169,7 @@ public static class DictionaryExtensions
             else
                 formData.Add(kvp.Key, kvp.Value.ToString());
         }
-        return formData.ToString();
+        return formData.ToString() ?? string.Empty;
     }
 
     /// <summary>
@@ -191,6 +191,6 @@ public static class DictionaryExtensions
             else
                 formData.Add(kvp.Key, kvp.Value.ToString());
         }
-        return formData.ToString();
+        return formData.ToString() ?? string.Empty;
     }
 }
