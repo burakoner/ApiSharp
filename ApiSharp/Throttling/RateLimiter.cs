@@ -205,74 +205,77 @@ public class RateLimiter : IRateLimiter
 
     private static async Task<CallResult<int>> ProcessTopicAsync(ILogger logger, Limiter historyTopic, string endpoint, int requestWeight, RateLimitingBehavior limitBehaviour, CancellationToken ct)
     {
-        var sw = Stopwatch.StartNew();
+        var lockAcquired = false;
         try
         {
             await historyTopic.Semaphore.WaitAsync(ct).ConfigureAwait(false);
+            lockAcquired = true;
         }
         catch (OperationCanceledException)
         {
             return new CallResult<int>(new CancellationRequestedError());
         }
-        sw.Stop();
 
-        var totalWaitTime = 0;
-        while (true)
+        try
         {
-            // Remove requests no longer in time period from the history
-            var checkTime = DateTime.UtcNow;
-            for (var i = 0; i < historyTopic.Entries.Count; i++)
+            var totalWaitTime = 0;
+            while (true)
             {
-                if (historyTopic.Entries[i].Timestamp < checkTime - historyTopic.Period)
+                // Remove requests no longer in time period from the history
+                var checkTime = DateTime.UtcNow;
+                for (var i = 0; i < historyTopic.Entries.Count; i++)
                 {
-                    historyTopic.Entries.Remove(historyTopic.Entries[i]);
-                    i--;
-                }
-                else break;
-            }
-
-            var currentWeight = !historyTopic.Entries.Any() ? 0 : historyTopic.Entries.Sum(h => h.Weight);
-            if (currentWeight + requestWeight > historyTopic.Limit)
-            {
-                if (currentWeight == 0)
-                    throw new Exception("Request limit reached without any prior request. " +
-                        $"This request can never execute with the current rate limiter. Request weight: {requestWeight}, Ratelimit: {historyTopic.Limit}");
-
-                // Wait until the next entry should be removed from the history
-                var thisWaitTime = (int)Math.Round((historyTopic.Entries.First().Timestamp - (checkTime - historyTopic.Period)).TotalMilliseconds);
-                if (thisWaitTime > 0)
-                {
-                    if (limitBehaviour == RateLimitingBehavior.Fail)
+                    if (historyTopic.Entries[i].Timestamp < checkTime - historyTopic.Period)
                     {
-                        historyTopic.Semaphore.Release();
-                        var msg = $"Request to {endpoint} failed because of rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}";
-                        logger.Log(LogLevel.Warning, msg);
-                        return new CallResult<int>(new ClientRateLimitError(msg));
+                        historyTopic.Entries.Remove(historyTopic.Entries[i]);
+                        i--;
                     }
+                    else break;
+                }
 
-                    logger.Log(LogLevel.Information, $"Request to {endpoint} waiting {thisWaitTime}ms for rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}");
-                    try
+                var currentWeight = !historyTopic.Entries.Any() ? 0 : historyTopic.Entries.Sum(h => h.Weight);
+                if (currentWeight + requestWeight > historyTopic.Limit)
+                {
+                    if (currentWeight == 0)
+                        throw new Exception("Request limit reached without any prior request. " +
+                            $"This request can never execute with the current rate limiter. Request weight: {requestWeight}, Ratelimit: {historyTopic.Limit}");
+
+                    // Wait until the next entry should be removed from the history
+                    var thisWaitTime = (int)Math.Round((historyTopic.Entries.First().Timestamp - (checkTime - historyTopic.Period)).TotalMilliseconds);
+                    if (thisWaitTime > 0)
                     {
+                        if (limitBehaviour == RateLimitingBehavior.Fail)
+                        {
+                            var msg = $"Request to {endpoint} failed because of rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}";
+                            logger.Log(LogLevel.Warning, msg);
+                            return new CallResult<int>(new ClientRateLimitError(msg));
+                        }
+
+                        logger.Log(LogLevel.Information, $"Request to {endpoint} waiting {thisWaitTime}ms for rate limit `{historyTopic.Type}`. Current weight: {currentWeight}/{historyTopic.Limit}, request weight: {requestWeight}");
                         await Task.Delay(thisWaitTime, ct).ConfigureAwait(false);
+                        totalWaitTime += thisWaitTime;
                     }
-                    catch (OperationCanceledException)
-                    {
-                        return new CallResult<int>(new CancellationRequestedError());
-                    }
-                    totalWaitTime += thisWaitTime;
+                }
+                else
+                {
+                    break;
                 }
             }
-            else
-            {
-                break;
-            }
+
+            var newTime = DateTime.UtcNow;
+            historyTopic.Entries.Add(new LimitEntry(newTime, requestWeight));
+
+            return new CallResult<int>(totalWaitTime);
         }
-
-        var newTime = DateTime.UtcNow;
-        historyTopic.Entries.Add(new LimitEntry(newTime, requestWeight));
-        historyTopic.Semaphore.Release();
-
-        return new CallResult<int>(totalWaitTime);
+        catch (OperationCanceledException)
+        {
+            return new CallResult<int>(new CancellationRequestedError());
+        }
+        finally
+        {
+            if (lockAcquired)
+                historyTopic.Semaphore.Release();
+        }
     }
 
 }

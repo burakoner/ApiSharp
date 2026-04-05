@@ -560,9 +560,12 @@ public class TcpSocketClient
         // Reconnect
         if (this.Reconnect)
         {
+            var reconnectDelayMs = Math.Max(0, this.ReconnectDelayInSeconds * 1000);
             while (!this.Connected)
             {
-                Task.Delay(this.ReconnectDelayInSeconds * 1000);
+                if (reconnectDelayMs > 0)
+                    Thread.Sleep(reconnectDelayMs);
+
                 this.Connect();
             }
         }

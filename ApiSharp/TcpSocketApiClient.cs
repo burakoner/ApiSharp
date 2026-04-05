@@ -226,7 +226,7 @@ public abstract class TcpSocketApiClient : BaseClient
                 {
                     // lenghtValue = Data Type (1) + Content (X)
                     // lenghtValue CRC bytelarını kapsamıyor.
-                    var lenghtValue = BitConverter.ToUInt16(buff, lengthLength);
+                    var lenghtValue = BitConverter.ToUInt16(buff, syncLength);
 
                     // Paket yeterki kadar büyük mü? 
                     // Paketin gereğinden fazla büyük olması sorun değil.
@@ -311,6 +311,7 @@ public abstract class TcpSocketApiClient : BaseClient
                     // Parse Bytes
                     var dataType = item[0];
                     var dataBody = new byte[item.Length - 1];
+                    Array.Copy(item, 1, dataBody, 0, dataBody.Length);
 
                     // Execute OnPacketReceived Logic
                     this.OnPacketReceived(dataType, dataBody);
