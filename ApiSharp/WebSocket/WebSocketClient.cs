@@ -19,6 +19,7 @@ public class WebSocketClient
     private readonly AsyncResetEvent _sendEvent;
     private readonly ConcurrentQueue<byte[]> _sendBuffer;
     private readonly SemaphoreSlim _closeSem;
+    private readonly object _closeTaskLock;
     private readonly List<DateTime> _outgoingMessages;
 
     private ClientWebSocket _socket;
@@ -150,6 +151,7 @@ public class WebSocketClient
         _receivedMessages = [];
         _sendEvent = new AsyncResetEvent();
         _sendBuffer = new ConcurrentQueue<byte[]>();
+        _closeTaskLock = new object();
         _ctsSource = new CancellationTokenSource();
         _receivedMessagesLock = new object();
 
@@ -228,11 +230,12 @@ public class WebSocketClient
             _logger.Log(LogLevel.Debug, $"WebSocket {Id} processing tasks finished");
 
             _processState = ProcessState.WaitingForClose;
-            while (_closeTask == null)
+            Task? closeTask;
+            while ((closeTask = GetCloseTask()) == null)
                 await Task.Delay(50).ConfigureAwait(false);
 
-            await _closeTask.ConfigureAwait(false);
-            _closeTask = null;
+            await closeTask.ConfigureAwait(false);
+            ClearCloseTask(closeTask);
 
             if (!Parameters.AutoReconnect)
             {
@@ -311,8 +314,8 @@ public class WebSocketClient
             return;
 
         _logger.Log(LogLevel.Debug, $"WebSocket {Id} reconnect requested");
-        _closeTask = CloseInternalAsync();
-        await _closeTask.ConfigureAwait(false);
+        var closeTask = EnsureCloseTask();
+        await closeTask.ConfigureAwait(false);
     }
 
     /// <summary>
@@ -321,33 +324,36 @@ public class WebSocketClient
     /// <returns></returns>
     public virtual async Task CloseAsync()
     {
+        Task? closeTask = null;
         await _closeSem.WaitAsync().ConfigureAwait(false);
         _stopRequested = true;
 
         try
         {
-            if (_closeTask?.IsCompleted == false)
+            closeTask = GetCloseTask();
+            if (closeTask?.IsCompleted == false)
             {
                 _logger.Log(LogLevel.Debug, $"WebSocket {Id} CloseAsync() waiting for existing close task");
-                await _closeTask.ConfigureAwait(false);
-                return;
             }
-
-            if (!IsOpen)
+            else if (!IsOpen)
             {
                 _logger.Log(LogLevel.Debug, $"WebSocket {Id} CloseAsync() socket not open");
                 return;
             }
-
-            _logger.Log(LogLevel.Debug, $"WebSocket {Id} closing");
-            _closeTask = CloseInternalAsync();
+            else
+            {
+                _logger.Log(LogLevel.Debug, $"WebSocket {Id} closing");
+                closeTask = SetCloseTask(CloseInternalAsync());
+            }
         }
         finally
         {
             _closeSem.Release();
         }
 
-        await _closeTask.ConfigureAwait(false);
+        if (closeTask != null)
+            await closeTask.ConfigureAwait(false);
+
         if (_processTask != null)
             await _processTask.ConfigureAwait(false);
         OnClose?.Invoke();
@@ -451,8 +457,7 @@ public class WebSocketClient
                     {
                         // Connection closed unexpectedly, .NET framework
                         OnError?.Invoke(ioe);
-                        if (_closeTask?.IsCompleted != false)
-                            _closeTask = CloseInternalAsync();
+                        _ = EnsureCloseTask();
                         break;
                     }
                 }
@@ -509,8 +514,7 @@ public class WebSocketClient
                     {
                         // Connection closed unexpectedly
                         OnError?.Invoke(wse);
-                        if (_closeTask?.IsCompleted != false)
-                            _closeTask = CloseInternalAsync();
+                        _ = EnsureCloseTask();
                         break;
                     }
 
@@ -518,8 +522,7 @@ public class WebSocketClient
                     {
                         // Connection closed unexpectedly        
                         _logger.Log(LogLevel.Debug, $"WebSocket {Id} received `Close` message");
-                        if (_closeTask?.IsCompleted != false)
-                            _closeTask = CloseInternalAsync();
+                        _ = EnsureCloseTask();
                         break;
                     }
 
@@ -761,6 +764,42 @@ public class WebSocketClient
                     _receivedMessages.Remove(msg);
 
             _lastReceivedMessagesUpdate = checkTime;
+        }
+    }
+
+    private Task? GetCloseTask()
+    {
+        lock (_closeTaskLock)
+            return _closeTask;
+    }
+
+    private Task SetCloseTask(Task closeTask)
+    {
+        lock (_closeTaskLock)
+        {
+            _closeTask = closeTask;
+            return closeTask;
+        }
+    }
+
+    private Task EnsureCloseTask()
+    {
+        lock (_closeTaskLock)
+        {
+            if (_closeTask?.IsCompleted == false)
+                return _closeTask;
+
+            _closeTask = CloseInternalAsync();
+            return _closeTask;
+        }
+    }
+
+    private void ClearCloseTask(Task closeTask)
+    {
+        lock (_closeTaskLock)
+        {
+            if (ReferenceEquals(_closeTask, closeTask))
+                _closeTask = null;
         }
     }
 

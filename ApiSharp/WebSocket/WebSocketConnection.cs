@@ -226,31 +226,52 @@ public class WebSocketConnection
     /// <summary>
     /// Handler for a socket which has reconnected
     /// </summary>
-    protected virtual async void HandleReconnectedAsync()
+    protected virtual void HandleReconnectedAsync()
     {
-        Status = WebSocketStatus.Resubscribing;
-        lock (_pendingRequests)
+        _ = HandleReconnectedInternalAsync();
+    }
+
+    private async Task HandleReconnectedInternalAsync()
+    {
+        try
         {
-            foreach (var pendingRequest in _pendingRequests.ToList())
+            Status = WebSocketStatus.Resubscribing;
+            lock (_pendingRequests)
             {
-                pendingRequest.Fail();
-                _pendingRequests.Remove(pendingRequest);
+                foreach (var pendingRequest in _pendingRequests.ToList())
+                {
+                    pendingRequest.Fail();
+                    _pendingRequests.Remove(pendingRequest);
+                }
+            }
+
+            if (await ProcessReconnectAsync().ConfigureAwait(false))
+            {
+                Status = WebSocketStatus.Connected;
+                var disconnectTime = DisconnectTime;
+                _ = Task.Run(() =>
+                {
+                    ConnectionRestored?.Invoke(disconnectTime.HasValue ? DateTime.UtcNow - disconnectTime.Value : TimeSpan.Zero);
+                    DisconnectTime = null;
+                });
+            }
+            else
+            {
+                _logger.Log(LogLevel.Warning, "Failed reconnect processing, reconnecting again");
+                await _wsc.ReconnectAsync().ConfigureAwait(false);
             }
         }
-
-        if (await ProcessReconnectAsync().ConfigureAwait(false))
+        catch (Exception ex)
         {
-            Status = WebSocketStatus.Connected;
-            _ = Task.Run(() =>
+            _logger.Log(LogLevel.Error, $"WebSocket {Id} unhandled exception while handling reconnection: " + ex.ToLogString());
+            try
             {
-                ConnectionRestored?.Invoke(DateTime.UtcNow - DisconnectTime!.Value);
-                DisconnectTime = null;
-            });
-        }
-        else
-        {
-            _logger.Log(LogLevel.Warning, "Failed reconnect processing, reconnecting again");
-            await _wsc.ReconnectAsync().ConfigureAwait(false);
+                await _wsc.ReconnectAsync().ConfigureAwait(false);
+            }
+            catch (Exception reconnectException)
+            {
+                _logger.Log(LogLevel.Warning, $"WebSocket {Id} error during forced reconnect: " + reconnectException.ToLogString());
+            }
         }
     }
 
