@@ -534,7 +534,8 @@ public abstract class RestApiClient : BaseClient
             }
 
             // Calculate time offset between local and server
-            var offset = result.Data - (localTime.AddMilliseconds(result.Response!.ResponseTime!.Value.TotalMilliseconds / 2));
+            var responseTimeMs = result.Response?.ResponseTime?.TotalMilliseconds ?? 0;
+            var offset = result.Data - localTime.AddMilliseconds(responseTimeMs / 2);
             timeSyncParams.UpdateTimeOffset(offset);
             timeSyncParams.TimeSyncState.Semaphore.Release();
         }

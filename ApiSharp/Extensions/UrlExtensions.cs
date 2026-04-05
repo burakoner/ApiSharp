@@ -61,13 +61,13 @@ public static class UrlExtensions
         var httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
         foreach (var parameter in parameters)
         {
-            if (parameter.Value.GetType().IsArray)
+            if (parameter.Value is Array array)
             {
-                foreach (var item in (object[])parameter.Value)
-                    httpValueCollection.Add(arraySerialization == ArraySerialization.Array ? parameter.Key + "[]" : parameter.Key, item.ToString());
+                foreach (var item in array)
+                    httpValueCollection.Add(arraySerialization == ArraySerialization.Array ? parameter.Key + "[]" : parameter.Key, item?.ToString() ?? string.Empty);
             }
             else
-                httpValueCollection.Add(parameter.Key, parameter.Value.ToString());
+                httpValueCollection.Add(parameter.Key, parameter.Value?.ToString() ?? string.Empty);
         }
         uriBuilder.Query = httpValueCollection.ToString();
         return uriBuilder.Uri;
@@ -92,13 +92,13 @@ public static class UrlExtensions
         var httpValueCollection = HttpUtility.ParseQueryString(string.Empty);
         foreach (var parameter in parameters)
         {
-            if (parameter.Value.GetType().IsArray)
+            if (parameter.Value is Array array)
             {
-                foreach (var item in (object[])parameter.Value)
-                    httpValueCollection.Add(arraySerialization == ArraySerialization.Array ? parameter.Key + "[]" : parameter.Key, item.ToString());
+                foreach (var item in array)
+                    httpValueCollection.Add(arraySerialization == ArraySerialization.Array ? parameter.Key + "[]" : parameter.Key, item?.ToString() ?? string.Empty);
             }
             else
-                httpValueCollection.Add(parameter.Key, parameter.Value.ToString());
+                httpValueCollection.Add(parameter.Key, parameter.Value?.ToString() ?? string.Empty);
         }
         uriBuilder.Query = httpValueCollection.ToString();
         return uriBuilder.Uri;

@@ -494,7 +494,7 @@ public class WebSocketConnection
     public WebSocketSubscription? GetSubscriptionByRequest(Func<object, bool> predicate)
     {
         lock (_subscriptionLock)
-            return _subscriptions.SingleOrDefault(s => predicate(s.Request));
+            return _subscriptions.SingleOrDefault(s => s.Request != null && predicate(s.Request));
     }
 
     /// <summary>
@@ -569,28 +569,36 @@ public class WebSocketConnection
             _pendingRequests.Add(pending);
         }
 
-        var sendOk = Send(obj);
-        if (!sendOk)
+        try
         {
-            pending.Fail();
-            return;
-        }
-
-        while (true)
-        {
-            if (!_wsc.IsOpen)
+            var sendOk = Send(obj);
+            if (!sendOk)
             {
                 pending.Fail();
                 return;
             }
 
-            if (pending.Completed)
-                return;
+            while (true)
+            {
+                if (!_wsc.IsOpen)
+                {
+                    pending.Fail();
+                    return;
+                }
 
-            await pending.Event.WaitAsync(TimeSpan.FromMilliseconds(50)).ConfigureAwait(false);
+                if (pending.Completed)
+                    return;
 
-            if (pending.Completed)
-                return;
+                await pending.Event.WaitAsync(TimeSpan.FromMilliseconds(50)).ConfigureAwait(false);
+
+                if (pending.Completed)
+                    return;
+            }
+        }
+        finally
+        {
+            lock (_pendingRequests)
+                _pendingRequests.Remove(pending);
         }
     }
 

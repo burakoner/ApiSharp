@@ -122,23 +122,32 @@ public static class DictionaryExtensions
     /// <returns></returns>
     public static string CreateParamString(this Dictionary<string, object> parameters, bool urlEncodeValues, ArraySerialization serializationType)
     {
-        var uriString = string.Empty;
-        var arraysParameters = parameters.Where(p => p.Value.GetType().IsArray).ToList();
-        foreach (var arrayEntry in arraysParameters)
+        var parts = new List<string>();
+        foreach (var parameter in parameters)
         {
-            if (serializationType == ArraySerialization.Array)
-                uriString += $"{string.Join("&", ((object[])(urlEncodeValues ? Uri.EscapeDataString(arrayEntry.Value.ToString()) : arrayEntry.Value)).Select(v => $"{arrayEntry.Key}[]={v}"))}&";
+            if (parameter.Value is Array array)
+            {
+                foreach (var item in array)
+                {
+                    var key = serializationType == ArraySerialization.Array ? parameter.Key + "[]" : parameter.Key;
+                    var value = item?.ToString() ?? string.Empty;
+                    if (urlEncodeValues)
+                        value = Uri.EscapeDataString(value);
+
+                    parts.Add($"{key}={value}");
+                }
+            }
             else
             {
-                var array = (Array)arrayEntry.Value;
-                uriString += string.Join("&", array.OfType<object>().Select(a => $"{arrayEntry.Key}={Uri.EscapeDataString(a.ToString())}"));
-                uriString += "&";
+                var value = parameter.Value?.ToString() ?? string.Empty;
+                if (urlEncodeValues)
+                    value = Uri.EscapeDataString(value);
+
+                parts.Add($"{parameter.Key}={value}");
             }
         }
 
-        uriString += $"{string.Join("&", parameters.Where(p => !p.Value.GetType().IsArray).Select(s => $"{s.Key}={(urlEncodeValues ? Uri.EscapeDataString(s.Value.ToString()) : s.Value)}"))}";
-        uriString = uriString.TrimEnd('&');
-        return uriString;
+        return string.Join("&", parts);
     }
 
     /// <summary>
